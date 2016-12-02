@@ -40,7 +40,7 @@ class FilterMeta(ABCMeta):
         #   template.
         templates = {}
         for base in bases:
-            if issubclass(base, FilterMeta):
+            if isinstance(base, FilterMeta):
                 templates.update(base.templates)
 
         if templates:
