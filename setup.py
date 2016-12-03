@@ -2,7 +2,12 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
+from codecs import StreamReader, open
 from setuptools import setup
+
+
+with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
+    long_description = f.read()
 
 # noinspection SpellCheckingInspection
 setup(
@@ -11,6 +16,8 @@ setup(
     url         = 'https://github.com/eflglobal/filters/',
     version     = '1.0.0',
     packages    = ['filters'],
+
+    long_description = long_description,
 
     install_requires = [
         'py2casefold ; python_version < "3"',
