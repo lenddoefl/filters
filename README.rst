@@ -3,7 +3,7 @@ Filters
 =======
 
 The Filters library provides an easy and readable way to create complex
-  data validation and processing pipelines.
+data validation and processing pipelines.
 
 Here's an example of using Filters to validate and process some JSON::
 
