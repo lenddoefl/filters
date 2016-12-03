@@ -7,7 +7,7 @@ from setuptools import setup
 # noinspection SpellCheckingInspection
 setup(
     name        = 'Filters',
-    description = 'Data pipelines made easy!',
+    description = 'Validation and data pipelines made easy!',
     url         = 'https://github.com/eflglobal/filters/',
     version     = '1.0.0',
     packages    = ['filters'],
