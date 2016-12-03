@@ -2,15 +2,16 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+from itertools import starmap
 from pprint import pformat
 from traceback import format_exception
-from typing import Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 from unittest import TestCase
 
 from collections import OrderedDict
 from six import iterkeys, string_types
 
-from filters import FilterRunner
+from filters import BaseFilter, FilterRunner
 
 
 def sorted_dict(value):
