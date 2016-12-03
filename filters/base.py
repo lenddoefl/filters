@@ -5,11 +5,26 @@ from __future__ import absolute_import, division, print_function, \
 from abc import ABCMeta, abstractmethod as abstract_method
 from copy import copy
 from functools import partial, WRAPPER_ASSIGNMENTS
-from typing import Any, Dict, Iterable, List, Optional, Text, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Text,
+    Tuple,
+    Union,
+)
 from weakref import ProxyTypes, proxy
 
-from six import python_2_unicode_compatible, with_metaclass, text_type, \
-    binary_type
+from six import (
+    binary_type,
+    python_2_unicode_compatible,
+    with_metaclass,
+    text_type,
+)
 
 from filters import FilterCompatible
 from filters.handlers import (
@@ -568,13 +583,20 @@ def filter_macro(func, *args, **kwargs):
 #   error messages.
 # :see: Type.__init__
 JSON_ALIASES = {
+    # Builtins
     bool:           'Boolean',
     dict:           'Object',
     float:          'Number',
     int:            'Number',
     list:           'Array',
+
+    # Compat
     binary_type:    'String',
     text_type:      'String',
+
+    # Typing
+    Mapping:        'Array',
+    Sequence:       'Array',
 }
 
 

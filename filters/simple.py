@@ -6,7 +6,16 @@ import json
 import unicodedata
 from datetime import date, datetime, time, tzinfo
 from decimal import Decimal as DecimalType, InvalidOperation
-from typing import Hashable, Iterable, Sized, Text, Union
+from typing import (
+    Hashable,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    Sized,
+    Text,
+    Union,
+)
 from xml.etree.ElementTree import Element, tostring
 
 # noinspection PyCompatibility
@@ -25,6 +34,7 @@ from six import (
 from filters import BaseFilter, Min, Max, Type
 
 __all__ = [
+    'Array',
     'ByteArray',
     'ByteString',
     'Choice',
@@ -42,6 +52,34 @@ __all__ = [
     'Required',
     'Unicode',
 ]
+
+
+class Array(Type):
+    """
+    Validates that the incoming value is a non-string sequence.
+    """
+    def __init__(self, aliases=None):
+        # type: (Optional[Mapping[type, Text]]) -> None
+        super(Array, self).__init__(Sequence, True, aliases)
+
+    def _apply(self, value):
+        value = super(Array, self)._apply(value) # type: Sequence
+
+        if self._has_errors:
+            return None
+
+        if isinstance(value, (binary_type, text_type)):
+            return self._invalid_value(
+                value   = value,
+                reason  = self.CODE_WRONG_TYPE,
+
+                template_vars = {
+                    'incoming': self.get_type_name(type(value)),
+                    'allowed':  self.get_allowed_type_names(),
+                },
+            )
+
+        return value
 
 
 class ByteArray(BaseFilter):

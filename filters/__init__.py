@@ -17,5 +17,4 @@ from .complex import *
 from .string import *
 
 
-# Don't forget to update version number in setup.py!
-__version__ = '1.0.0'
+__version__ = '1.0.2'
