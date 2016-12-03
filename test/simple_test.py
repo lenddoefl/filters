@@ -11,7 +11,7 @@ from pytz import utc
 from six import PY2, binary_type, python_2_unicode_compatible, text_type
 
 import filters as f
-from test import BaseFilterTestCase
+from filters.test import BaseFilterTestCase
 
 
 class Lengthy(object):

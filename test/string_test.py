@@ -2,15 +2,15 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-import re
-from collections import OrderedDict
 from uuid import UUID
 
+import re
 # noinspection PyCompatibility
 import regex
+from collections import OrderedDict
 
 import filters as f
-from test import BaseFilterTestCase
+from filters.test import BaseFilterTestCase
 
 
 # noinspection SpellCheckingInspection

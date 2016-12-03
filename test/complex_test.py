@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import filters as f
-from test import BaseFilterTestCase
+from filters.test import BaseFilterTestCase
 
 
 class FilterChainTestCase(BaseFilterTestCase):

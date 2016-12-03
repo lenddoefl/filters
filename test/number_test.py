@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, \
 from decimal import Decimal, ROUND_CEILING
 
 import filters as f
-from test import BaseFilterTestCase
+from filters.test import BaseFilterTestCase
 
 
 class MaxTestCase(BaseFilterTestCase):
