@@ -11,7 +11,7 @@ Here's an example of using Filters to validate and process some JSON::
     import decimal
     import filters as f
 
-    data = '{"birthday": "2006-11-23", "gender": "M", "utcOffset": "-5"}'
+    data = u'{"birthday": "2006-11-23", "gender": "M", "utcOffset": "-5"}'
 
     filter_ = f.FilterRunner(
         f.JsonDecode
