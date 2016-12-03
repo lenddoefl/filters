@@ -16,7 +16,7 @@ setup(
     url         = 'https://github.com/eflglobal/filters/',
 
     # Don't forget to update version number in `filters/__init__.py`!
-    version = '1.0.2',
+    version = '1.0.3',
 
     packages = ['filters'],
 

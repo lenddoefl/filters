@@ -126,7 +126,12 @@ class BaseFilterTestCase(TestCase):
                 ),
             )
 
-        if expected_value is not self.skip_value_check:
+        check_value = (
+                (self.skip_value_check is not True)
+            and (expected_value is not self.skip_value_check)
+        )
+
+        if check_value:
             self._check_filter_value(
                 runner.cleaned_data,
                 runner.data
