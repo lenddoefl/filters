@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
+from collections import Sequence
 from datetime import datetime, date
 from decimal import Decimal
 from xml.etree.ElementTree import Element
@@ -59,14 +60,72 @@ class Unicody(object):
         return text_type(self.value)
 
 
+class ArrayTestCase(BaseFilterTestCase):
+    filter_type = f.Array
+
+    def test_pass_none(self):
+        """
+        `None` always passes this filter.
+
+        Use `Required | Array` if you want to reject null values.
+        """
+        self.assertFilterPasses(None)
+
+    def test_pass_sequence(self):
+        """The incoming value is a sequence."""
+        self.assertFilterPasses(tuple())
+        self.assertFilterPasses(list())
+
+    def test_pass_custom_sequence_type(self):
+        """The incoming value has a type that extends Sequence."""
+        class CustomSequence(Sequence):
+            """Technically, it's a Sequence. Technically."""
+            def __len__(self): return 0
+            def __getitem__(self, index): return None
+
+        self.assertFilterPasses(CustomSequence())
+
+    def test_fail_string(self):
+        """The incoming value is a string."""
+        self.assertFilterErrors(binary_type(), [f.Array.CODE_WRONG_TYPE])
+        self.assertFilterErrors(text_type(), [f.Array.CODE_WRONG_TYPE])
+
+    def test_fail_mapping(self):
+        """The incoming value is a mapping."""
+        self.assertFilterErrors(dict(), [f.Array.CODE_WRONG_TYPE])
+
+    def test_fail_set(self):
+        """The incoming value is a set."""
+        self.assertFilterErrors(set(), [f.Array.CODE_WRONG_TYPE])
+
+    def test_fail_custom_sequence_type(self):
+        """
+        The incoming value looks like a Sequence, but it's not official.
+        """
+        class CustomSequence(object):
+            """Walks, talks and quacks like a Sequence, but isn't."""
+            def __len__(self): return 0
+            def __getitem__(self, index): return None
+
+        self.assertFilterErrors(CustomSequence(), [f.Array.CODE_WRONG_TYPE])
+
+        # If you can't (or don't want) to modify the base class for
+        #   your custom sequence, you can register it.
+        # Note: Code included here for documentation purposes, but it's
+        #   commented out to avoid side effects; registering a subclass
+        #   this way is basically irreversible.
+        # Sequence.register(CustomSequence)
+        # self.assertFilterPasses(CustomSequence())
+
+
 class ByteArrayTestCase(BaseFilterTestCase):
     filter_type = f.ByteArray
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        `None` always passes this filter.
 
-        Use `Required | ByteArray` if you want to reject `None`.
+        Use `Required | ByteArray` if you want to reject null values.
         """
         self.assertFilterPasses(None)
 

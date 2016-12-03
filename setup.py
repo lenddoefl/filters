@@ -14,8 +14,11 @@ setup(
     name        = 'filters',
     description = 'Validation and data pipelines made easy!',
     url         = 'https://github.com/eflglobal/filters/',
-    version     = '1.0.0',
-    packages    = ['filters'],
+
+    # Don't forget to update version number in `filters/__init__.py`!
+    version = '1.0.1',
+
+    packages = ['filters'],
 
     long_description = long_description,
 
