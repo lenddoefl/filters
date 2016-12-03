@@ -43,8 +43,10 @@ Here's an example of using Filters to validate and process some JSON::
         'utcOffset':  decimal.Decimal('-5.0'),
       }
     else:
-      for key, errors in filter_.errors:
-        # ... output validation errors ...
+      for key, errors in filter_.errors.items():
+        print('{key}:'.format(key=key))
+        for error in errors:
+          print('  - ({error[code]}) {error[message]}'.format(error=error))
 
 ============
 Requirements
