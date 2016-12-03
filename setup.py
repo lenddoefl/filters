@@ -11,7 +11,7 @@ with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
 
 # noinspection SpellCheckingInspection
 setup(
-    name        = 'Filters',
+    name        = 'filters',
     description = 'Validation and data pipelines made easy!',
     url         = 'https://github.com/eflglobal/filters/',
     version     = '1.0.0',
