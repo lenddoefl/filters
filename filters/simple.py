@@ -413,6 +413,7 @@ class Int(BaseFilter):
 
     Note that Python handles really, really big int values
         transparently, so you don't need to worry about overflow.
+
     :see: http://stackoverflow.com/a/538583
     """
     CODE_DECIMAL = 'not_int'
