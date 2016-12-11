@@ -3,78 +3,26 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import sys
-from abc import ABCMeta, abstractmethod as abstract_method
-from collections import OrderedDict
 from logging import Logger, LoggerAdapter, ERROR
 from traceback import format_exc
-from types import TracebackType
 from typing import Any, Dict, List, Text, Tuple, Union
 
+from collections import OrderedDict
 from six import (
     iteritems,
     python_2_unicode_compatible,
-    with_metaclass,
     text_type,
 )
+from types import TracebackType
 
-from filters import FilterCompatible
+from filters.base import BaseFilter, BaseInvalidValueHandler, FilterCompatible
 
 __all__ = [
-    'ExceptionHandler',
-    'FilterError',
+    'FilterMessage',
     'FilterRunner',
     'LogHandler',
     'MemoryHandler',
 ]
-
-
-class BaseInvalidValueHandler(with_metaclass(ABCMeta)):
-    """Base functionality for classes that handle invalid values."""
-    @abstract_method
-    def handle_invalid_value(self, message, exc_info, context):
-        # type: (Text, bool, dict) -> Any
-        """
-        Handles an invalid value.
-
-        :param message: Error message.
-        :param exc_info: Whether to use `sys.exc_info()`.
-        :param context: Additional context values about the error.
-        """
-        raise NotImplementedError(
-            'Not implemented in {cls}.'.format(cls=type(self).__name__),
-        )
-
-    def handle_exception(self, message, exc):
-        # type: (Text, Exception) -> Any
-        """Handles an uncaught exception."""
-        return self.handle_invalid_value(
-            message     = message,
-            exc_info    = True,
-            context     = getattr(exc, 'context', {}),
-        )
-
-
-class FilterError(ValueError):
-    """
-    Indicates that a parsed value could not be filtered because the
-        value was invalid.
-    """
-    def __init__(self, *args, **kwargs):
-        self.context = {}
-        """
-        Provides a container to include additional variables and other
-            information to help troubleshoot errors.
-        """
-
-        super(FilterError, self).__init__(*args, **kwargs)
-
-
-class ExceptionHandler(BaseInvalidValueHandler):
-    """Invalid value handler that raises an exception."""
-    def handle_invalid_value(self, message, exc_info, context):
-        error = FilterError(message)
-        error.context = context
-        raise error
 
 
 class LogHandler(BaseInvalidValueHandler):
@@ -131,8 +79,9 @@ class FilterMessage(object):
         """
         Returns a dict representation of the FilterMessage.
 
-        :param with_debug_info: Whether to include context and
-            exception traceback in the result.
+        :param with_debug_info:
+            Whether to include context and exception traceback in the
+            result.
         """
         res = {
             'code':     self.code,
@@ -151,14 +100,15 @@ class MemoryHandler(BaseInvalidValueHandler):
     def __init__(self, capture_exc_info=False):
         # type: (bool) -> None
         """
-        :param capture_exc_info: Whether to capture `sys.exc_info`
-            when an handling an exception.
+        :param capture_exc_info:
+            Whether to capture `sys.exc_info` when an handling an
+            exception.
 
             This is turned off by default to reduce memory usage, but
             it is useful in certain cases (e.g., if you want to send
             exceptions to a logger that expect exc_info).
 
-            Regardless, you can still check `self.has_exceptions` to
+            Regardless, you can still check ``self.has_exceptions`` to
             see if an exception occurred.
         """
         super(MemoryHandler, self).__init__()
@@ -193,32 +143,33 @@ class MemoryHandler(BaseInvalidValueHandler):
 @python_2_unicode_compatible
 class FilterRunner(object):
     """
-    Wrapper for a Filter that provides an API similar to what you would
-        expect from a Django form (at least, when it comes to methods
-        related to data validation).
+    Wrapper for a filter that provides an API similar to what you would
+    expect from a Django form (at least, when it comes to methods
+    related to data validation).
 
     Note that FilterRunner is intended to be a "one-shot" tool; once
-        initialized, it does not expect the data it is filtering to
-        change.
+    initialized, it does not expect the data it is filtering to
+    change.
     """
     def __init__(self, starting_filter, incoming_data, capture_exc_info=False):
         # type: (FilterCompatible, Any, bool) -> None
         """
         :param incoming_data: E.g., `request.POST`.
 
-        :param capture_exc_info: Whether to capture `sys.exc_info`
-            when an handling an exception.
+        :param capture_exc_info:
+            Whether to capture `sys.exc_info` when an handling an
+            exception.
 
             This is turned off by default to reduce memory usage, but
             it is useful in certain cases (e.g., if you want to send
             exceptions to a logger).
 
-            Regardless, you can still check `self.has_exceptions` to
+            Regardless, you can still check ``self.has_exceptions`` to
             see if an exception occurred.
         """
         super(FilterRunner, self).__init__()
 
-        self.filter_chain       = starting_filter # type: FilterCompatible
+        self.filter_chain       = BaseFilter.normalize(starting_filter) # type: FilterCompatible
         self.data               = incoming_data
         self.capture_exc_info   = capture_exc_info
 
@@ -242,10 +193,10 @@ class FilterRunner(object):
         # type: () -> Dict[Text, List[Dict[Text, Text]]]
         """
         Returns a dict of error messages generated by the Filter, in a
-            format suitable for inclusion in e.g., an API 400 response
-            payload.
+        format suitable for inclusion in e.g., an API 400 response
+        payload.
 
-        E.g.:
+        E.g.::
 
             {
                 'authToken': [
@@ -272,11 +223,14 @@ class FilterRunner(object):
         # type: (bool) -> Dict[Text, List[Dict[Text, Text]]]
         """
         Returns a dict of error messages generated by the Filter, in a
-            format suitable for inclusion in e.g., an API 400 response
-            payload.
+        format suitable for inclusion in e.g., an API 400 response
+        payload.
 
-        :param with_context: Whether to include the context object in
-            the result (for debugging purposes).
+        :param with_context:
+            Whether to include the context object in the result (for
+            debugging purposes).
+
+            Note: context is usually not safe to expose to end users!
         """
         return {
             key: [m.as_dict(with_context) for m in messages]
@@ -288,8 +242,6 @@ class FilterRunner(object):
         # type: () -> Dict[Text, List[Text]]
         """
         Returns a dict of error codes generated by the Filter.
-
-        This property is useful for testing.
         """
         return {
             key: [m.code for m in messages]
@@ -301,7 +253,7 @@ class FilterRunner(object):
         # type: () -> bool
         """
         Returns whether any unhandled exceptions occurred while
-            filtering the value.
+        filtering the value.
         """
         self.full_clean()
         return self._handler.has_exceptions
@@ -320,9 +272,7 @@ class FilterRunner(object):
         # type: () -> Dict[Text, List[FilterMessage]]
         """
         Returns the raw FilterMessages that were generated by the
-            Filter.
-
-        This property is generally only used internally.
+        Filter.
         """
         self.full_clean()
         return self._handler.messages
@@ -331,7 +281,7 @@ class FilterRunner(object):
         # type: () -> bool
         """
         Returns whether the request payload successfully passed the
-            filter.
+        filter.
         """
         return not self.filter_messages
 
@@ -341,7 +291,7 @@ class FilterRunner(object):
             self._handler = MemoryHandler(self.capture_exc_info)
 
             # Inject our own handler (temporarily) while the Filter
-            #   runs so we can capture error messages.
+            # runs so we can capture error messages.
             prev_handler = self.filter_chain.handler
             self.filter_chain.handler = self._handler
             try:

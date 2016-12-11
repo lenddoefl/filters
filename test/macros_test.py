@@ -8,6 +8,7 @@ from unittest import TestCase
 from pytz import utc
 
 import filters as f
+from filters.macros import filter_macro
 
 
 class FilterMacroTestCase(TestCase):
@@ -15,14 +16,14 @@ class FilterMacroTestCase(TestCase):
     def test_decorator(self):
         """
         A common use case for Filter macros is to use them as
-            decorators for functions.
+        decorators for functions.
         """
-        @f.filter_macro
+        @filter_macro
         def MyFilter():
             return f.Unicode | f.Strip | f.MinLength(12)
 
         # As you would expect, invoking the macro returns a
-        #   FilterChain.
+        # FilterChain.
         the_filter = MyFilter()
 
         self.assertEqual(
@@ -36,16 +37,16 @@ class FilterMacroTestCase(TestCase):
     def test_chain(self):
         """
         You can chain Filter macros with other Filters, the same as you
-            would with any other Filter.
+        would with any other Filter.
         """
-        @f.filter_macro
+        @filter_macro
         def MyFilter():
             return f.Unicode | f.Strip | f.MinLength(12)
 
         # Note that you don't have to invoke the macro to include it in
-        #   a chain.
+        # a chain.
         # If you don't believe me, try removing the decorator from
-        #   `MyFilter`, and watch this test explode.
+        # `MyFilter`, and watch this test explode.
         filter_chain = MyFilter | f.Split(r'\s+')
 
         self.assertEqual(
@@ -57,14 +58,12 @@ class FilterMacroTestCase(TestCase):
             filter_chain.apply('Hi there!')
 
     def test_chain_macros(self):
-        """
-        Yup, you can chain Filter macros together, too.
-        """
-        @f.filter_macro
+        """Yup, you can chain Filter macros together, too."""
+        @filter_macro
         def Filter1():
             return f.Unicode | f.Strip
 
-        @f.filter_macro
+        @filter_macro
         def Filter2():
             return f.Split(r'\s+') | f.MinLength(2)
 
@@ -78,12 +77,29 @@ class FilterMacroTestCase(TestCase):
         with self.assertRaises(f.FilterError):
             filter_chain.apply('whazzup!')
 
+    def test_decorator_optional_parameters(self):
+        """A filter macro may accept optional parameters."""
+        @filter_macro
+        def MyFilter(min_length=12):
+            return f.Unicode | f.MinLength(min_length)
+
+        # `MyFilter` is configured to require 12 chars by default.
+        filter_chain = f.Required | MyFilter
+
+        self.assertEqual(
+            filter_chain.apply('Hello, world!'),
+            'Hello, world!',
+        )
+
+        with self.assertRaises(f.FilterError):
+            filter_chain.apply('Hi there!')
+
     def test_partial(self):
         """
         You can use Filter macros to create partials from other Filter
-            types.
+        types.
         """
-        MyDatetime = f.filter_macro(f.Datetime, timezone=12)
+        MyDatetime = filter_macro(f.Datetime, timezone=12)
 
         self.assertEqual(
             MyDatetime().apply('2015-10-13 15:22:18'),

@@ -17,7 +17,8 @@ from typing import (
 
 from six import iteritems, iterkeys, python_2_unicode_compatible
 
-from filters import BaseFilter, FilterCompatible, FilterError, Type, Unicode
+from filters.base import BaseFilter, FilterCompatible, FilterError, Type
+from filters.string import Unicode
 
 __all__ = [
     'FilterMapper',
@@ -28,16 +29,13 @@ __all__ = [
 @python_2_unicode_compatible
 class FilterRepeater(BaseFilter):
     """
-    Applies a Filter to every value in an Iterable.
+    Applies a filter to every value in an Iterable.
 
     You can apply a FilterRepeater to a dict (or other Mapping).  The
-        Filters will be applied to the Mapping's values.
+    filters will be applied to the Mapping's values.
 
     Note:  The resulting value will be coerced to a list or OrderedDict
-        (depending on the input value).
-
-    Use `Type | FilterRepeater` if you want to restrict the type of
-        value to operate on.
+    (depending on the input value).
     """
     CODE_EXTRA_KEY = 'unexpected'
 
@@ -51,21 +49,23 @@ class FilterRepeater(BaseFilter):
     def __init__(self, filter_chain, restrict_keys=None):
         # type: (FilterCompatible, Optional[Iterable]) -> None
         """
-        :param filter_chain: The filter(s) that will be applied to
-            each item in the incoming iterables.
+        :param filter_chain:
+            The filter(s) that will be applied to each item in the
+            incoming iterables.
 
-        :param restrict_keys: Only these keys/indexes will be allowed
-            (any other keys/indexes encountered will be treated as
-            invalid values).
+        :param restrict_keys:
+            Only these keys/indexes will be allowed (any other
+            keys/indexes encountered will be treated as invalid
+            values).
 
             Important:  If this is an empty container will result in
-                EVERY key/index being rejected!
+            EVERY key/index being rejected!
 
-            Set to `None` (default) to allow any key/index.
+            Set to ``None`` (default) to allow any key/index.
         """
         super(FilterRepeater, self).__init__()
 
-        self._filter_chain = self._normalize(filter_chain, parent=self)
+        self._filter_chain = self.normalize(filter_chain, parent=self)
 
         self.restrict_keys = (
             None
@@ -82,11 +82,7 @@ class FilterRepeater(BaseFilter):
     @classmethod
     def __copy__(cls, the_filter):
         # type: (FilterRepeater) -> FilterRepeater
-        """
-        Creates a shallow copy of the object.
-
-        :see: copy.copy
-        """
+        """Creates a shallow copy of the object."""
         new_filter = super(FilterRepeater, cls).__copy__(the_filter) # type: FilterRepeater
 
         new_filter._filter_chain = the_filter._filter_chain
@@ -123,9 +119,9 @@ class FilterRepeater(BaseFilter):
                         yield k, self._apply_item(u_key, v, self._filter_chain)
                     else:
                         # For consistency with FilterMapper, invalid
-                        #   keys are not included in the filtered
-                        #   value (hence this statement does not
-                        #   `yield`).
+                        # keys are not included in the filtered
+                        # value (hence this statement does not
+                        # `yield`).
                         self._invalid_value(
                             value   = v,
                             reason  = self.CODE_EXTRA_KEY,
@@ -142,10 +138,10 @@ class FilterRepeater(BaseFilter):
                         yield self._apply_item(u_key, v, self._filter_chain)
                     else:
                         # Unlike in mappings, it is not possible to
-                        #   identify a "missing" item in a collection,
-                        #   so we have to ensure that something ends up
-                        #   in the filtered value at the same position
-                        #   as the invalid incoming value.
+                        # identify a "missing" item in a collection,
+                        # so we have to ensure that something ends up
+                        # in the filtered value at the same position
+                        # as the invalid incoming value.
                         yield self._invalid_value(
                             value   = v,
                             reason  = self.CODE_EXTRA_KEY,
@@ -158,7 +154,7 @@ class FilterRepeater(BaseFilter):
         Applies filters to a single value in the iterable.
 
         Override this method in a subclass if you want to customize the
-            way specific items get filtered.
+        way specific items get filtered.
         """
         return self._filter(value, filter_chain, sub_key=key)
 
@@ -167,7 +163,7 @@ class FilterRepeater(BaseFilter):
         # type: (Hashable) -> Text
         """
         Converts a key value into a unicode so that it can be
-            represented in e.g., error message contexts.
+        represented in e.g., error message contexts.
         """
         if key is None:
             return 'None'
@@ -181,15 +177,15 @@ class FilterRepeater(BaseFilter):
 @python_2_unicode_compatible
 class FilterMapper(BaseFilter):
     """
-    Given a dict of Filters, applies each Filter to the corresponding
-        value in another dict.
+    Given a dict of filters, applies each filter to the corresponding
+    value in incoming mappings.
 
     The resulting value is an OrderedDict.  The order of keys in the
-        `filter_map` passed to the initializer determines the order of
-        keys in the filtered value.
+    ``filter_map`` passed to the initializer determines the order of
+    keys in the filtered value.
 
-    Note:  The order of extra keys is undefined, but they will always
-        be last.
+    Note: The order of extra keys is undefined, but they will always be
+    last.
     """
     CODE_EXTRA_KEY      = 'unexpected'
     CODE_MISSING_KEY    = 'missing'
@@ -209,25 +205,30 @@ class FilterMapper(BaseFilter):
     ):
         # type: (Dict[Hashable, FilterCompatible], Union[bool, Iterable[Hashable]], Union[bool, Iterable[Hashable]]) -> None
         """
-        :param filter_map: This mapping also determines the key order
-            of the resulting OrderedDict.  If necessary, make sure that
-            your code provides `filter_map` as an OrderedDict.
+        :param filter_map:
+            This mapping also determines the key order of the resulting
+            OrderedDict.  If necessary, make sure that your code
+            provides ``filter_map`` as an OrderedDict.
 
-        :param allow_missing_keys: Determines how values with missing
-            keys (according to `filter_map`) get handled:
-            - True: The missing values are set to `None` and then
-                filtered as normal.
+        :param allow_missing_keys:
+            Determines how values with missing keys (according to
+            ``filter_map``) get handled:
+
+            - True: The missing values are set to ``None`` and then
+              filtered as normal.
             - False: Missing keys are treated as invalid values.
-            - Iterable: Only the specified keys are allowed to be
-                omitted.
+            - <Iterable>: Only the specified keys are allowed to be
+              omitted.
 
-        :param allow_extra_keys: Determines how values with extra keys
-            (according to `filter_map`) get handled:
+        :param allow_extra_keys:
+            Determines how values with extra keys (according to
+            ``filter_map``) get handled:
+
             - True: The extra values are passed through to the filtered
-                value.
+              value.
             - False: Extra values are treated as invalid values and
-                omitted from the filtered value.
-            - Iterable: Only the specified extra keys are allowed.
+              omitted from the filtered value.
+            - <Iterable>: Only the specified extra keys are allowed.
         """
         super(FilterMapper, self).__init__()
 
@@ -251,11 +252,11 @@ class FilterMapper(BaseFilter):
                 # Note that the normalized Filter could be `None`.
                 #
                 # This has the effect of making a key "required"
-                #   (depending on `allow_missing_keys`) without
-                #   applying any Filters to the value.
+                # (depending on `allow_missing_keys`) without
+                # applying any Filters to the value.
                 #
                 self._filters[key] =\
-                    self._normalize(filter_chain, parent=self, key=key)
+                    self.normalize(filter_chain, parent=self, key=key)
 
 
     def __str__(self):
@@ -302,8 +303,8 @@ class FilterMapper(BaseFilter):
                     yield key, value[key]
                 else:
                     # Handle the extra value just like any other
-                    #   invalid value, but do not include it in the
-                    #   result (note that there is no `yield` here).
+                    # invalid value, but do not include it in the
+                    # result (note that there is no `yield` here).
                     self._invalid_value(
                         value   = value[key],
                         reason  = self.CODE_EXTRA_KEY,
@@ -316,7 +317,7 @@ class FilterMapper(BaseFilter):
         Applies filters to a single item in the mapping.
 
         Override this method in a subclass if you want to customize the
-            way specific items get filtered.
+        way specific items get filtered.
         """
         return self._filter(value, filter_chain, sub_key=key)
 
@@ -324,7 +325,7 @@ class FilterMapper(BaseFilter):
         # type: (Hashable) -> bool
         """
         Returns whether the specified key is allowed to be omitted from
-            the incoming value.
+        the incoming value.
         """
         if self.allow_missing_keys is True:
             return True
@@ -350,7 +351,7 @@ class FilterMapper(BaseFilter):
         # type: (Hashable) -> Text
         """
         Converts a key value into a unicode so that it can be
-            represented in e.g., error message contexts.
+        represented in e.g., error message contexts.
         """
         if key is None:
             return 'None'

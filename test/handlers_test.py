@@ -12,14 +12,14 @@ from unittest import TestCase
 import logging
 
 import filters as f
-from filters.handlers import FilterMessage
+from filters.base import ExceptionHandler
 
 
 class ExceptionHandlerTestCase(TestCase):
     def setUp(self):
         super(ExceptionHandlerTestCase, self).setUp()
 
-        self.handler = f.ExceptionHandler()
+        self.handler = ExceptionHandler()
 
     def test_invalid_value(self):
         """Sends an invalid value to the handler."""
@@ -30,9 +30,9 @@ class ExceptionHandlerTestCase(TestCase):
         }
 
         # When ExceptionHandler encounters an invalid value, it raises
-        #   an exception.
+        # an exception.
         # The exception always has the same type (FilterError) so that
-        #   the caller can capture it.
+        # the caller can capture it.
         with self.assertRaises(f.FilterError) as exc:
             self.handler.handle_invalid_value(message, False, context)
 
@@ -40,9 +40,7 @@ class ExceptionHandlerTestCase(TestCase):
         self.assertEqual(exc.exception.context, context)
 
     def test_exception(self):
-        """
-        Sends an exception to the handler.
-        """
+        """Sends an exception to the handler."""
         message = 'An exception occurred!'
         context = {
             'key':      'test',
@@ -51,24 +49,24 @@ class ExceptionHandlerTestCase(TestCase):
 
         #
         # ExceptionHandler converts any exception it encounters into a
-        #   FilterError.
+        # FilterError.
         # The exception always has the same type (FilterError) so that
-        #   the caller can capture it.
+        # the caller can capture it.
         #
         # Note that the FilterError completely replaces the original
-        #   exception, but it leaves the traceback intact.
+        # exception, but it leaves the traceback intact.
         # To make things more convenient, Filters add the exception
-        #   info to the context dict, but you can still use
-        #   `sys.exc_info()[2]` to inspect the original exception's
-        #   stack.
+        # info to the context dict, but you can still use
+        # `sys.exc_info()[2]` to inspect the original exception's
+        # stack.
         #
-        # :see: importer.core.filters.base.BaseFilter._invalid_value
+        # :see: importer.core.f.BaseFilter._invalid_value
         #
         try:
             # Raise an exception so that the handler has a traceback to
-            #   work with.
+            # work with.
             # Note that the ValueError's message will get replaced (but
-            #   it can still be accessed via the traceback).
+            # it can still be accessed via the traceback).
             exc = ValueError('Needs more cowbell.')
             exc.context = context
             raise exc
@@ -85,9 +83,11 @@ class MemoryLogHandler(logging.Handler):
     A log handler that retains all of its records in a list in memory.
 
     This class is similar in function (though not in purpose) to
-        BufferingHandler.
+    BufferingHandler.
 
-    :see: logging.handlers.BufferingHandler
+    References:
+
+        - :py:class:`logging.handlers.BufferingHandler`
     """
     def __init__(self, level=logging.NOTSET):
         # type: (int) -> None
@@ -136,9 +136,7 @@ class MemoryLogHandler(logging.Handler):
 
 
 class LogHandlerTestCase(TestCase):
-    """
-    Unit tests for LogHandler.
-    """
+    """Unit tests for LogHandler."""
     def setUp(self):
         super(LogHandlerTestCase, self).setUp()
 
@@ -151,9 +149,7 @@ class LogHandlerTestCase(TestCase):
         self.handler = f.LogHandler(logger, WARNING)
 
     def test_invalid_value(self):
-        """
-        Sends an invalid value to the handler.
-        """
+        """Sends an invalid value to the handler."""
         message = 'Needs more cowbell.'
         context = {
             'key':      'test',
@@ -182,9 +178,9 @@ class LogHandlerTestCase(TestCase):
 
         try:
             # Raise an exception so that the handler has a traceback to
-            #   work with.
+            # work with.
             # Note that the ValueError's message will get replaced (but
-            #   it can still be accessed via the traceback).
+            # it can still be accessed via the traceback).
             exc = ValueError('Needs more cowbell.')
             exc.context = context
             raise exc
@@ -200,9 +196,9 @@ class LogHandlerTestCase(TestCase):
             self.assertEqual(getattr(self.logs[0], 'context'), context)
 
             # The log message level is set in the handler's
-            #   initializer.
+            # initializer.
             # Note that both invalid values and exceptions have the
-            #   same log level.
+            # same log level.
             self.assertEqual(self.logs[0].levelname, getLevelName(WARNING))
 
             # Traceback is captured for exceptions.
@@ -216,9 +212,7 @@ class MemoryHandlerTestCase(TestCase):
         self.handler = f.MemoryHandler()
 
     def test_invalid_value(self):
-        """
-        Sends an invalid value to the handler.
-        """
+        """Sends an invalid value to the handler."""
         code    = 'foo'
         key     = 'test'
         message = 'Needs more cowbell.'
@@ -231,7 +225,7 @@ class MemoryHandlerTestCase(TestCase):
         self.handler.handle_invalid_value(message, False, context)
 
         # Add a couple of additional messages, just to make sure the
-        #   handler stores them correctly.
+        # handler stores them correctly.
         self.handler.handle_invalid_value(
             message     = 'Test message 1',
             exc_info    = False,
@@ -240,27 +234,27 @@ class MemoryHandlerTestCase(TestCase):
         self.handler.handle_invalid_value('Test message 2', False, {})
 
         # As filter messages are captured, they are sorted according to
-        #   their contexts' `key` values.
+        # their contexts' `key` values.
         # If a message doesn't have a `key` value, an empty string is
-        #   used.
+        # used.
         self.assertListEqual(sorted(self.handler.messages.keys()), ['', key])
 
         filter_message_0 = self.handler.messages[key][0]
-        self.assertIsInstance(filter_message_0, FilterMessage)
+        self.assertIsInstance(filter_message_0, f.FilterMessage)
         self.assertEqual(filter_message_0.code, code)
         self.assertEqual(filter_message_0.message, message)
         self.assertEqual(filter_message_0.context, context)
         self.assertIsNone(filter_message_0.exc_info)
 
         filter_message_1 = self.handler.messages[key][1]
-        self.assertIsInstance(filter_message_1, FilterMessage)
+        self.assertIsInstance(filter_message_1, f.FilterMessage)
         self.assertEqual(filter_message_1.code, 'Test message 1')
         self.assertEqual(filter_message_1.message, 'Test message 1')
         self.assertEqual(filter_message_1.context, {'key': key})
         self.assertIsNone(filter_message_1.exc_info)
 
         filter_message_blank = self.handler.messages[''][0]
-        self.assertIsInstance(filter_message_blank, FilterMessage)
+        self.assertIsInstance(filter_message_blank, f.FilterMessage)
         self.assertEqual(filter_message_blank.code, 'Test message 2')
         self.assertEqual(filter_message_blank.message, 'Test message 2')
         self.assertEqual(filter_message_blank.context, {})
@@ -282,9 +276,9 @@ class MemoryHandlerTestCase(TestCase):
 
         try:
             # Raise an exception so that the handler has a traceback to
-            #   work with.
+            # work with.
             # Note that the ValueError's message will get replaced (but
-            #   it can still be accessed via the traceback).
+            # it can still be accessed via the traceback).
             exc = ValueError('Needs more cowbell.')
             exc.context = context
             raise exc
@@ -296,7 +290,7 @@ class MemoryHandlerTestCase(TestCase):
             self.assertListEqual(list(self.handler.messages.keys()), [key])
 
             filter_message_0 = self.handler.messages[key][0]
-            self.assertIsInstance(filter_message_0, FilterMessage)
+            self.assertIsInstance(filter_message_0, f.FilterMessage)
             self.assertEqual(filter_message_0.code, code)
             self.assertEqual(filter_message_0.message, message)
             self.assertEqual(filter_message_0.context, context)
@@ -307,23 +301,23 @@ class MemoryHandlerTestCase(TestCase):
             self.assertTrue(self.handler.has_exceptions)
 
             # By default, the handler does NOT keep the traceback
-            #   object.
+            # object.
             # :see: test_capture_exc_info
             self.assertListEqual(self.handler.exc_info, [])
 
     def test_capture_exc_info(self):
         """
         The handler is configured to capture `sys.exc_info()` in the
-            event of an exception.
+        event of an exception.
 
         This is generally turned off because the filter already
-            captures a formatted traceback in the event of an
-            exception, so there is no need to store the raw traceback
-            object.
+        captures a formatted traceback in the event of an
+        exception, so there is no need to store the raw traceback
+        object.
 
         However, there are a few cases where it is useful to collect
-            this, such as when you want to send exceptions to a logger
-            that expects `sys.exc_info()`.
+        this, such as when you want to send exceptions to a logger
+        that expects `sys.exc_info()`.
         """
         self.handler.capture_exc_info = True
 
