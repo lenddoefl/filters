@@ -8,31 +8,53 @@ data validation and processing pipelines, including:
 - Parsing timestamps and converting to UTC.
 - Converting Unicode strings to NFC, normalizing line endings and removing
   unprintable characters.
+- Decoding Base64, including URL-safe variants.
 
 And much more!
 
-Here are a few simple examples:
+The output from one filter can be "piped" into the input of another, enabling
+you to "chain" filters together to quickly and easily create complex data
+pipelines.
+
+Examples
+========
+
+Validate a latitude position and round to manageable precision:
 
 .. code:: python
 
-   # Validate a latitude position and round to manageable precision.
    (
        f.Required
      | f.Decimal
      | f.Min(Decimal(-90))
-     | f.Max(Decimal(90)
+     | f.Max(Decimal(90))
      | f.Round(to_nearest='0.000001')
-   ).apply(int_or_string_value)
+   ).apply('-12.0431842')
 
-   # Convert an incoming value into a naive datetime.
-   f.Datetime(naive=True).apply(string_or_datetime_value)
+Parse an incoming value as a datetime, convert to UTC and strip tzinfo:
 
-   # Convert every value in an iterable (e.g., list) to unicode.
-   # This also applies Unicode normalization, strips unprintable
-   #  characters and normalizes line endings automatically.
-   f.FilterRepeater(f.Unicode).apply(iterable_value)
+.. code:: python
 
-   # Parse a JSON string and check that it has correct structure.
+   f.Datetime(naive=True).apply('2015-04-08T15:11:22-05:00')
+
+Convert every value in an iterable (e.g., list) to unicode and strip
+leading/trailing whitespace.
+This also applies `Unicode normalization`_, strips unprintable characters and
+normalizes line endings automatically.
+
+.. code:: python
+
+   f.FilterRepeater(f.Unicode | f.Strip).apply([
+     b'\xe2\x99\xaa ',
+     b'\xe2\x94\x8f(\xc2\xb0.\xc2\xb0)\xe2\x94\x9b ',
+     b'\xe2\x94\x97(\xc2\xb0.\xc2\xb0)\xe2\x94\x93 ',
+     b'\xe2\x99\xaa ',
+   ])
+
+Parse a JSON string and check that it has correct structure:
+
+.. code:: python
+
    (
        f.JsonDecode
      | f.FilterMapper(
@@ -50,11 +72,7 @@ Here are a few simple examples:
          allow_extra_keys   = False,
          allow_missing_keys = False,
        )
-   ).apply(json_string)
-
-Notice in the above examples that output from one filter can be "piped" into
-the input of another.  This allows you to "chain" filters together to quickly
-and easily create complex data pipelines.
+   ).apply('{"birthday":"1879-03-14", "gender":"M", "utcOffset":"1"}')
 
 ============
 Requirements
@@ -72,3 +90,5 @@ Install the latest development version::
 
     pip install https://github.com/eflglobal/filters/archive/develop.zip
 
+
+.. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence
