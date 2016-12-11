@@ -116,7 +116,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
     def __or__(self, next_filter):
         # type: (FilterCompatible) -> FilterChain
         """Chains another filter with this one."""
-        normalized = self.normalize(next_filter)
+        normalized = self.resolve_filter(next_filter)
 
         if normalized:
             #
@@ -281,7 +281,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
             Appended to the ``key`` value in the error message context
             (used by complex filters).
         """
-        filter_chain = self.normalize(filter_chain, parent=self, key=sub_key)
+        filter_chain = self.resolve_filter(filter_chain, parent=self, key=sub_key)
 
         # In rare cases, `filter_chain` may be `None`.
         # :see: importer.core.filters.complex.FilterMapper#__init__
@@ -394,17 +394,17 @@ class BaseFilter(with_metaclass(FilterMeta)):
         return self.templates[key].format(**template_vars)
 
     @classmethod
-    def normalize(cls, the_filter, parent=None, key=None):
+    def resolve_filter(cls, the_filter, parent=None, key=None):
         # type: (FilterCompatible, Optional[BaseFilter], Optional[Text]) -> Optional[FilterChain]
         """
         Converts a filter-compatible value into a consistent type.
         """
         if the_filter is not None:
             if isinstance(the_filter, BaseFilter):
-                normalized = the_filter
+                resolved = the_filter
 
             elif callable(the_filter):
-                normalized = cls.normalize(the_filter())
+                resolved = cls.resolve_filter(the_filter())
 
             # Uhh... hm.
             else:
@@ -418,12 +418,12 @@ class BaseFilter(with_metaclass(FilterMeta)):
                 )
 
             if parent:
-                normalized.parent = parent
+                resolved.parent = parent
 
             if key:
-                normalized.key = key
+                resolved.key = key
 
-            return normalized
+            return resolved
 
     @staticmethod
     def _make_key(key_parts):
@@ -460,9 +460,9 @@ class FilterChain(BaseFilter):
         This method creates a new FilterChain object without modifying
         the current one.
         """
-        normalized = self.normalize(next_filter)
+        resolved = self.resolve_filter(next_filter)
 
-        if normalized:
+        if resolved:
             new_chain = copy(self) # type: FilterChain
             new_chain._add(next_filter)
             return new_chain
@@ -480,9 +480,9 @@ class FilterChain(BaseFilter):
     def _add(self, next_filter):
         # type: (FilterCompatible) -> FilterChain
         """Adds a Filter to the collection directly."""
-        normalized = self.normalize(next_filter, parent=self)
-        if normalized:
-            self._filters.append(normalized)
+        resolved = self.resolve_filter(next_filter, parent=self)
+        if resolved:
+            self._filters.append(resolved)
 
         return self
 
