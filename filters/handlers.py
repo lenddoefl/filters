@@ -3,78 +3,26 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import sys
-from abc import ABCMeta, abstractmethod as abstract_method
-from collections import OrderedDict
 from logging import Logger, LoggerAdapter, ERROR
 from traceback import format_exc
-from types import TracebackType
 from typing import Any, Dict, List, Text, Tuple, Union
 
+from collections import OrderedDict
 from six import (
     iteritems,
     python_2_unicode_compatible,
-    with_metaclass,
     text_type,
 )
+from types import TracebackType
 
-from filters import FilterCompatible
+from filters.base import BaseFilter, BaseInvalidValueHandler, FilterCompatible
 
 __all__ = [
-    'ExceptionHandler',
-    'FilterError',
+    'FilterMessage',
     'FilterRunner',
     'LogHandler',
     'MemoryHandler',
 ]
-
-
-class BaseInvalidValueHandler(with_metaclass(ABCMeta)):
-    """Base functionality for classes that handle invalid values."""
-    @abstract_method
-    def handle_invalid_value(self, message, exc_info, context):
-        # type: (Text, bool, dict) -> Any
-        """
-        Handles an invalid value.
-
-        :param message: Error message.
-        :param exc_info: Whether to use `sys.exc_info()`.
-        :param context: Additional context values about the error.
-        """
-        raise NotImplementedError(
-            'Not implemented in {cls}.'.format(cls=type(self).__name__),
-        )
-
-    def handle_exception(self, message, exc):
-        # type: (Text, Exception) -> Any
-        """Handles an uncaught exception."""
-        return self.handle_invalid_value(
-            message     = message,
-            exc_info    = True,
-            context     = getattr(exc, 'context', {}),
-        )
-
-
-class FilterError(ValueError):
-    """
-    Indicates that a parsed value could not be filtered because the
-        value was invalid.
-    """
-    def __init__(self, *args, **kwargs):
-        self.context = {}
-        """
-        Provides a container to include additional variables and other
-            information to help troubleshoot errors.
-        """
-
-        super(FilterError, self).__init__(*args, **kwargs)
-
-
-class ExceptionHandler(BaseInvalidValueHandler):
-    """Invalid value handler that raises an exception."""
-    def handle_invalid_value(self, message, exc_info, context):
-        error = FilterError(message)
-        error.context = context
-        raise error
 
 
 class LogHandler(BaseInvalidValueHandler):
@@ -218,7 +166,7 @@ class FilterRunner(object):
         """
         super(FilterRunner, self).__init__()
 
-        self.filter_chain       = starting_filter # type: FilterCompatible
+        self.filter_chain       = BaseFilter.normalize(starting_filter) # type: FilterCompatible
         self.data               = incoming_data
         self.capture_exc_info   = capture_exc_info
 

@@ -12,6 +12,7 @@ from unittest import TestCase
 import logging
 
 import filters as f
+import filters.base
 from filters.handlers import FilterMessage
 
 
@@ -19,7 +20,7 @@ class ExceptionHandlerTestCase(TestCase):
     def setUp(self):
         super(ExceptionHandlerTestCase, self).setUp()
 
-        self.handler = f.ExceptionHandler()
+        self.handler = filters.base.ExceptionHandler()
 
     def test_invalid_value(self):
         """Sends an invalid value to the handler."""
@@ -33,7 +34,7 @@ class ExceptionHandlerTestCase(TestCase):
         #   an exception.
         # The exception always has the same type (FilterError) so that
         #   the caller can capture it.
-        with self.assertRaises(f.FilterError) as exc:
+        with self.assertRaises(filters.base.FilterError) as exc:
             self.handler.handle_invalid_value(message, False, context)
 
         self.assertEqual(text_type(exc.exception), message)
@@ -73,7 +74,7 @@ class ExceptionHandlerTestCase(TestCase):
             exc.context = context
             raise exc
         except ValueError as e:
-            with self.assertRaises(f.FilterError) as ar_context:
+            with self.assertRaises(filters.base.FilterError) as ar_context:
                 self.handler.handle_exception(message, e)
 
             self.assertEqual(text_type(ar_context.exception), message)

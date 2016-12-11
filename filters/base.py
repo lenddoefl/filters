@@ -4,7 +4,12 @@ from __future__ import absolute_import, division, print_function, \
 
 from abc import ABCMeta, abstractmethod as abstract_method
 from copy import copy
-from functools import partial, WRAPPER_ASSIGNMENTS
+from six import (
+    binary_type,
+    python_2_unicode_compatible,
+    with_metaclass,
+    text_type,
+)
 from typing import (
     Any,
     Dict,
@@ -19,25 +24,13 @@ from typing import (
 )
 from weakref import ProxyTypes, proxy
 
-from six import (
-    binary_type,
-    python_2_unicode_compatible,
-    with_metaclass,
-    text_type,
-)
-
 from filters import FilterCompatible
-from filters.handlers import (
-    BaseInvalidValueHandler,
-    ExceptionHandler,
-    FilterError,
-)
 
 __all__ = [
     'BaseFilter',
     'FilterChain',
+    'FilterError',
     'Type',
-    'filter_macro',
 ]
 
 
@@ -126,7 +119,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
         """
         Chains a Filter with this one.
         """
-        normalized = self._normalize(next_filter)
+        normalized = self.normalize(next_filter)
 
         if normalized:
             #
@@ -300,7 +293,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
 
         :see: _invalid_value
         """
-        filter_chain = self._normalize(filter_chain, parent=self, key=sub_key)
+        filter_chain = self.normalize(filter_chain, parent=self, key=sub_key)
 
         # In rare cases, `filter_chain` may be `None`.
         # :see: importer.core.filters.complex.FilterMapper#__init__
@@ -412,7 +405,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
         return self.templates[key].format(**template_vars)
 
     @classmethod
-    def _normalize(cls, the_filter, parent=None, key=None):
+    def normalize(cls, the_filter, parent=None, key=None):
         # type: (FilterCompatible, Optional[BaseFilter], Optional[Text]) -> Optional[FilterChain]
         """
         Converts a Filter-compatible value into a consistent type.
@@ -422,7 +415,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
                 normalized = the_filter
 
             elif callable(the_filter):
-                normalized = cls._normalize(the_filter())
+                normalized = cls.normalize(the_filter())
 
             # Uhh... hm.
             else:
@@ -480,7 +473,7 @@ class FilterChain(BaseFilter):
 
         :see: importer.core.filters.FilterChain#add
         """
-        normalized = self._normalize(next_filter)
+        normalized = self.normalize(next_filter)
 
         if normalized:
             new_chain = copy(self) # type: FilterChain
@@ -508,7 +501,7 @@ class FilterChain(BaseFilter):
 
         :see: importer.core.filters.Filter#__or__
         """
-        normalized = self._normalize(next_filter, parent=self)
+        normalized = self.normalize(next_filter, parent=self)
         if normalized:
             self._filters.append(normalized)
 
@@ -531,52 +524,53 @@ class FilterChain(BaseFilter):
         return self._apply(None)
 
 
-def filter_macro(func, *args, **kwargs):
+class BaseInvalidValueHandler(with_metaclass(ABCMeta)):
+    """Base functionality for classes that handle invalid values."""
+    @abstract_method
+    def handle_invalid_value(self, message, exc_info, context):
+        # type: (Text, bool, dict) -> Any
+        """
+        Handles an invalid value.
+
+        :param message: Error message.
+        :param exc_info: Whether to use `sys.exc_info()`.
+        :param context: Additional context values about the error.
+        """
+        raise NotImplementedError(
+            'Not implemented in {cls}.'.format(cls=type(self).__name__),
+        )
+
+    def handle_exception(self, message, exc):
+        # type: (Text, Exception) -> Any
+        """Handles an uncaught exception."""
+        return self.handle_invalid_value(
+            message     = message,
+            exc_info    = True,
+            context     = getattr(exc, 'context', {}),
+        )
+
+
+class FilterError(ValueError):
     """
-    Promotes a function that returns a Filter into its own Filter type.
-
-    Example:
-
-        @filter_macro
-        def String():
-            return Unicode | Strip | NotEmpty
-
-        # You can now use `String` anywhere you would use a regular Filter:
-        (String | Split(':')).apply('...')
-
-    You can also use `filter_macro` to create partials, allowing you to
-        preset one or more initialization arguments:
-
-        Minor = filter_macro(Max, max_value=18, inclusive=False)
-        Minor.apply(42)
+    Indicates that a parsed value could not be filtered because the
+        value was invalid.
     """
-    filter_partial = partial(func, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        self.context = {}
+        """
+        Provides a container to include additional variables and other
+            information to help troubleshoot errors.
+        """
 
-    class FilterMacroMeta(FilterMeta):
-        @staticmethod
-        def __new__(mcs, name, bases, attrs):
-            # This is as close as we can get to running
-            #   `update_wrapper` on a type.
-            for attr in WRAPPER_ASSIGNMENTS:
-                if hasattr(func, attr):
-                    attrs[attr] = getattr(func, attr)
+        super(FilterError, self).__init__(*args, **kwargs)
 
-            # Note that we ignore the `name` argument, passing in
-            #   `func.__name__` instead.
-            return super(FilterMacroMeta, mcs)\
-                .__new__(mcs, func.__name__, bases, attrs)
 
-        def __call__(cls, *runtime_args, **runtime_kwargs):
-            return filter_partial(*runtime_args, **runtime_kwargs)
-
-    class FilterMacro(with_metaclass(FilterMacroMeta, BaseFilter)):
-        # This method will probably never get called due to overloaded
-        #   `__call__` in the metaclass, but just in case, we'll
-        #   include it because it is an abstract method in `BaseFilter`.
-        def _apply(self, value):
-            return self.__class__()._apply(value)
-
-    return FilterMacro
+class ExceptionHandler(BaseInvalidValueHandler):
+    """Invalid value handler that raises an exception."""
+    def handle_invalid_value(self, message, exc_info, context):
+        error = FilterError(message)
+        error.context = context
+        raise error
 
 
 # Used by Type to use JSON data types instead of Python type names in
@@ -598,7 +592,6 @@ JSON_ALIASES = {
     Mapping:        'Array',
     Sequence:       'Array',
 }
-
 
 # This filter is used extensively by other filters.
 # To avoid lots of needless "circular import" hacks, we'll put it in

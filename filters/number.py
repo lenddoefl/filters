@@ -2,18 +2,119 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-from decimal import Decimal as DecimalType, ROUND_HALF_UP
+from decimal import Decimal as DecimalType, InvalidOperation, ROUND_HALF_UP
 
-from six import python_2_unicode_compatible
+from six import python_2_unicode_compatible, text_type
 from typing import Any, Text, Union
 
-from filters import BaseFilter, Type
+from filters.base import BaseFilter, Type
 
 __all__ = [
+    'Decimal',
+    'Int',
     'Max',
     'Min',
     'Round',
 ]
+
+
+@python_2_unicode_compatible
+class Decimal(BaseFilter):
+    """Interprets the value as a Decimal object."""
+    CODE_INVALID    = 'not_numeric'
+    CODE_NON_FINITE = 'not_finite'
+
+    templates = {
+        CODE_INVALID:       'Numeric value expected.',
+        CODE_NON_FINITE:    'Numeric value expected.',
+    }
+
+    def __init__(self, max_precision=None, allow_tuples=True):
+        # type: (int, bool) -> None
+        """
+        :param max_precision: Max number of decimal places the
+            resulting value is allowed to have.  Values that are too
+            precise will be rounded to fit.
+
+        :param allow_tuples: Whether to allow tuple-like inputs.
+            Allowing tuple inputs might couple the implementation more
+            tightly to Python's Decimal type, so you have the option
+            to disallow it.
+        """
+        super(Decimal, self).__init__()
+
+        self.max_precision  = max_precision
+        self.allow_tuples   = allow_tuples
+
+    def __str__(self):
+        return '{type}(max_precision={max_precision!r})'.format(
+            type            = type(self).__name__,
+            max_precision   = self.max_precision,
+        )
+
+    def _apply(self, value):
+        allowed_types = (text_type, int, float, DecimalType,)
+        if self.allow_tuples:
+            # Python's Decimal type supports both tuples and lists.
+            # :see: decimal.Decimal.__init__
+            allowed_types += (list, tuple,)
+
+        value = self._filter(value, Type(allowed_types))
+
+        if self._has_errors:
+            return value
+
+        try:
+            d = DecimalType(value)
+        except (InvalidOperation, TypeError, ValueError):
+            return self._invalid_value(value, self.CODE_INVALID, exc_info=True)
+
+        # Decimal's constructor also accepts values such as 'NaN' or
+        #   '+Inf', which aren't valid in this context.
+        # :see: decimal.Decimal._parser
+        if not d.is_finite():
+            return self._invalid_value(
+                value       = value,
+                reason      = self.CODE_NON_FINITE,
+                exc_info    = True,
+            )
+
+        if self.max_precision is not None:
+            d = d.quantize(DecimalType('.1') ** self.max_precision)
+
+        return d
+
+
+class Int(BaseFilter):
+    """
+    Interprets the value as an int.
+
+    Strings and other compatible values will be converted, but floats
+        will be treated as INVALID.
+
+    Note that Python handles really, really big int values
+        transparently, so you don't need to worry about overflow.
+
+    :see: http://stackoverflow.com/a/538583
+    """
+    CODE_DECIMAL = 'not_int'
+
+    templates = {
+        CODE_DECIMAL: 'Integer value expected.',
+    }
+
+    def _apply(self, value):
+        decimal = self._filter(value, Decimal) # type: DecimalType
+
+        if self._has_errors:
+            return None
+
+        # Do not allow floats.
+        # :see: http://stackoverflow.com/a/19965088
+        if decimal % 1:
+            return self._invalid_value(value, self.CODE_DECIMAL)
+
+        return int(decimal)
 
 
 @python_2_unicode_compatible
@@ -201,7 +302,6 @@ class Round(BaseFilter):
         self.rounding       = rounding
 
     def _apply(self, value):
-        from filters import Decimal
         value = self._filter(value, Decimal) # type: DecimalType
 
         if self._has_errors:

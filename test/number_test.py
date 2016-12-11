@@ -5,8 +5,208 @@ from __future__ import absolute_import, division, print_function, \
 from decimal import Decimal, ROUND_CEILING
 
 import filters as f
+import filters.number
 from filters.test import BaseFilterTestCase
 
+
+class DecimalTestCase(BaseFilterTestCase):
+    filter_type = filters.number.Decimal
+
+    def test_pass_none(self):
+        """
+        `None` always passes this Filter.
+
+        Use `Required | Decimal` if you want to reject `None`.
+        """
+        self.assertFilterPasses(None)
+
+    def test_pass_valid_decimal(self):
+        """The incoming value can be interpreted as a Decimal."""
+        value = '3.1415926'
+
+        self.assertFilterPasses(value, Decimal(value))
+
+    def test_pass_max_precision(self):
+        """
+        You can limit the max precision of the resulting Decimal
+            object.
+
+        Note that a too-precise value is not considered invalid;
+            instead, it gets rounded to the expected precision.
+        """
+        self.assertFilterPasses(
+            self._filter('3.1415926', max_precision=3),
+            Decimal('3.142'),
+        )
+
+    def test_pass_zero(self):
+        """
+        0 is also considered a valid Decimal value.
+        """
+        value = '0'
+        self.assertFilterPasses(value, Decimal(value))
+
+    def test_pass_scientific_notation(self):
+        """
+        Scientific notation is considered valid, as in certain cases it
+            may be the only way to represent a really large or small
+            value.
+        """
+        value = '2.8E-12'
+        self.assertFilterPasses(value, Decimal(value))
+
+    def test_pass_boolean(self):
+        """
+        Booleans are technically ints, so they can be converted to
+            Decimals.
+        """
+        value = True
+        self.assertFilterPasses(value, Decimal(value))
+
+    def test_fail_invalid_value(self):
+        """
+        The incoming value cannot be converted to a Decimal.
+        """
+        self.assertFilterErrors(
+            'this is not a decimal',
+            [filters.number.Decimal.CODE_INVALID],
+        )
+
+    def test_fail_non_finite_value(self):
+        """
+        Non-finite values like 'NaN' and 'Inf' are considered invalid,
+            even though they are technically parseable.
+        """
+        self.assertFilterErrors( 'NaN', [
+          filters.number.Decimal.CODE_NON_FINITE])
+        self.assertFilterErrors('+Inf', [
+          filters.number.Decimal.CODE_NON_FINITE])
+        self.assertFilterErrors('-Inf', [
+          filters.number.Decimal.CODE_NON_FINITE])
+        # There are a few other possible non-finite values out there,
+        #   but you get the idea.
+
+    def test_pass_tuple(self):
+        """
+        You may pass a 3-tuple for more control over how the resulting
+            Decimal object is created.
+        """
+        value = (0, (4, 2), -1)
+        self.assertFilterPasses(value, Decimal(value))
+
+    def test_fail_tuple_invalid(self):
+        """
+        If you're going to use a tuple, you've got to make sure you get
+            it right!
+        """
+        self.assertFilterErrors(('1', '2', '3'), [
+          filters.number.Decimal.CODE_INVALID])
+
+    def test_fail_tuple_disallowed(self):
+        """
+        The filter is configured to disallow tuple values.
+        """
+        self.assertFilterErrors(
+            self._filter((0, (4, 2), -1), allow_tuples=False),
+            [f.Type.CODE_WRONG_TYPE],
+        )
+
+    def test_fail_bytes(self):
+        """
+        To ensure that the filter behaves the same in Python 2 and
+          Python 3, bytes are not allowed.
+        """
+        self.assertFilterErrors(b'-12', [f.Type.CODE_WRONG_TYPE])
+
+    def test_fail_unsupported_type(self):
+        """
+        The incoming value has an unsupported type.
+        """
+        self.assertFilterErrors(
+            {0, (4, 2), -1},
+            [f.Type.CODE_WRONG_TYPE],
+        )
+
+
+class IntTestCase(BaseFilterTestCase):
+    filter_type = filters.number.Int
+
+    def test_pass_none(self):
+        """
+        `None` always passes this Filter.
+
+        Use `Required | Int` if you want to reject `None`.
+        """
+        self.assertFilterPasses(None)
+
+    def test_pass_valid_int(self):
+        """The incoming value can be interpreted as an int."""
+        self.assertFilterPasses('42', 42)
+
+    def test_pass_zero(self):
+        """The incoming value is zero."""
+        self.assertFilterPasses('0', 0)
+
+    def test_pass_negative(self):
+        """The incoming value is a negative int."""
+        self.assertFilterPasses('-314', -314)
+
+    def test_pass_boolean(self):
+        """Booleans are technically ints."""
+        self.assertFilterPasses(True, 1)
+
+    def test_fail_invalid_value(self):
+        """
+        The incoming value cannot be interpreted as a number, let alone
+            an integer.
+        """
+        self.assertFilterErrors(
+            'this is not an int',
+            [filters.number.Decimal.CODE_INVALID],
+        )
+
+    def test_fail_bytes(self):
+        """
+        To ensure that the filter behaves the same in Python 2 and
+          Python 3, bytes are not allowed.
+        """
+        self.assertFilterErrors(b'-12', [f.Type.CODE_WRONG_TYPE])
+
+    def test_fail_float_value(self):
+        """
+        The incoming value contains significant digits after the
+            decimal point.
+        """
+        self.assertFilterErrors(
+            '42.01',
+            [filters.number.Int.CODE_DECIMAL],
+        )
+
+    def test_pass_int_point_zero(self):
+        """
+        The incoming value contains only insignificant digits after the
+            decimal point.
+        """
+        self.assertFilterPasses('42.0000000000000', 42)
+
+    def test_pass_scientific_notation(self):
+        """The incoming value is expressed in scientific notation."""
+        self.assertFilterPasses('2.6E4', 26000)
+
+    def test_fail_non_finite_value(self):
+        """The incoming value is a non-finite value."""
+        self.assertFilterErrors( 'NaN', [
+          filters.number.Decimal.CODE_NON_FINITE])
+        self.assertFilterErrors('+Inf', [
+          filters.number.Decimal.CODE_NON_FINITE])
+        self.assertFilterErrors('-Inf', [
+          filters.number.Decimal.CODE_NON_FINITE])
+        # There are a few other possible non-finite values out there,
+        #   but you get the idea.
+
+    def test_pass_int(self):
+        """The incoming value is already an int object."""
+        self.assertFilterPasses(777)
 
 class MaxTestCase(BaseFilterTestCase):
     filter_type = f.Max
@@ -326,4 +526,4 @@ class RoundTestCase(BaseFilterTestCase):
         """
         The incoming value is not numeric.
         """
-        self.assertFilterErrors('three', [f.Decimal.CODE_INVALID])
+        self.assertFilterErrors('three', [filters.number.Decimal.CODE_INVALID])

@@ -17,7 +17,8 @@ from typing import (
 
 from six import iteritems, iterkeys, python_2_unicode_compatible
 
-from filters import BaseFilter, FilterCompatible, FilterError, Type, Unicode
+from filters.base import BaseFilter, FilterCompatible, FilterError, Type
+from filters.string import Unicode
 
 __all__ = [
     'FilterMapper',
@@ -65,7 +66,7 @@ class FilterRepeater(BaseFilter):
         """
         super(FilterRepeater, self).__init__()
 
-        self._filter_chain = self._normalize(filter_chain, parent=self)
+        self._filter_chain = self.normalize(filter_chain, parent=self)
 
         self.restrict_keys = (
             None
@@ -255,7 +256,7 @@ class FilterMapper(BaseFilter):
                 #   applying any Filters to the value.
                 #
                 self._filters[key] =\
-                    self._normalize(filter_chain, parent=self, key=key)
+                    self.normalize(filter_chain, parent=self, key=key)
 
 
     def __str__(self):

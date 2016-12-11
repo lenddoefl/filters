@@ -2,7 +2,9 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
+from decimal import Decimal
 from uuid import UUID
+from xml.etree.ElementTree import Element
 
 import re
 # noinspection PyCompatibility
@@ -10,10 +12,12 @@ import regex
 from collections import OrderedDict
 
 import filters as f
+import filters.string
 from filters.test import BaseFilterTestCase
 
+from test.simple_test import Unicody, Bytesy
 
-# noinspection SpellCheckingInspection
+
 class Base64DecodeTestCase(BaseFilterTestCase):
     filter_type = f.Base64Decode
 
@@ -114,6 +118,200 @@ class Base64DecodeTestCase(BaseFilterTestCase):
         self.assertFilterErrors(
             [b'kB1ReXKFSE5xgu0sODTVrJWg4eYDz32iRLm+fATfsBQ='],
             [f.Type.CODE_WRONG_TYPE],
+        )
+
+
+class ByteStringTestCase(BaseFilterTestCase):
+    filter_type = filters.string.ByteString
+
+    def test_pass_none(self):
+        """
+        `None` always passes this Filter.
+
+        Use `Required | ByteString` if you want to reject `None`.
+        """
+        self.assertFilterPasses(None)
+
+    def test_pass_unicode(self):
+        """
+        The incoming value is a unicode.
+        """
+        self.assertFilterPasses(
+            'Iñtërnâtiônàlizætiøn',
+
+            # 'Iñtërnâtiônàlizætiøn' encoded as bytes using utf-8:
+            b'I\xc3\xb1t\xc3\xabrn\xc3\xa2ti\xc3'
+            b'\xb4n\xc3\xa0liz\xc3\xa6ti\xc3\xb8n',
+        )
+
+    def test_pass_bytes_utf8(self):
+        """
+        The incoming value is a byte string, already encoded as UTF-8.
+        """
+        self.assertFilterPasses(
+            b'I\xc3\xb1t\xc3\xabrn\xc3\xa2ti\xc3'
+            b'\xb4n\xc3\xa0liz\xc3\xa6ti\xc3\xb8n'
+        )
+
+    def test_fail_bytes_non_utf8(self):
+        """
+        The incoming value is a byte string, but encoded using a
+            different codec.
+        """
+        # 'Iñtërnâtiônàlizætiøn' encoded as bytes using ISO-8859-1:
+        incoming = b'I\xf1t\xebrn\xe2ti\xf4n\xe0liz\xe6ti\xf8n'
+
+        self.assertFilterErrors(
+            incoming,
+            [filters.string.ByteString.CODE_DECODE_ERROR],
+        )
+
+        # In order for this to work, we have to tell the Filter what
+        #   encoding to use:
+        self.assertFilterPasses(
+            self._filter(incoming, encoding='iso-8859-1'),
+
+            # The result is re-encoded using UTF-8.
+            b'I\xc3\xb1t\xc3\xabrn\xc3\xa2ti\xc3'
+            b'\xb4n\xc3\xa0liz\xc3\xa6ti\xc3\xb8n',
+        )
+
+    def test_pass_string_like_object(self):
+        """
+        The incoming value is an object that can be cast as a unicode.
+        """
+        self.assertFilterPasses(
+            Unicody('༼ つ ◕_◕ ༽つ'),
+
+            # Stoned Kirby?  Jigglypuff in dance mode?
+            # I have no idea what this is.
+            b'\xe0\xbc\xbc \xe3\x81\xa4 \xe2\x97\x95_'
+            b'\xe2\x97\x95 \xe0\xbc\xbd\xe3\x81\xa4',
+        )
+
+    def test_pass_bytes_like_object(self):
+        """
+        The incoming value is an object that can be cast as a byte
+            string.
+        """
+        value = (
+            # Person
+            b'(\xe2\x95\xaf\xc2\xb0\xe2\x96\xa1\xc2\xb0)'
+            # Particle Effects
+            b'\xe2\x95\xaf\xef\xb8\xb5 '
+            # Table
+            b'\xe2\x94\xbb\xe2\x94\x81\xe2\x94\xbb'
+        )
+
+        self.assertFilterPasses(Bytesy(value), value)
+
+    def test_pass_boolean(self):
+        """
+        The incoming value is a boolean (treated as an int).
+        """
+        self.assertFilterPasses(True, b'1')
+
+    def test_pass_decimal_with_scientific_notation(self):
+        """
+        The incoming value is a Decimal that was parsed from scientific
+            notation.
+        """
+        # Note that `str(Decimal('2.8E6')` yields b'2.8E+6', which is
+        #   not what we want!
+        self.assertFilterPasses(
+            Decimal('2.8E6'),
+            b'2800000',
+        )
+
+    def test_pass_xml_element(self):
+        """The incoming value is an ElementTree XML Element."""
+        self.assertFilterPasses(
+            Element('foobar'),
+            b'<foobar />',
+        )
+
+    def test_unicode_normalization_off_by_default(self):
+        """
+        By default, the Filter does not apply normalization before
+            encoding.
+
+        :see: https://en.wikipedia.org/wiki/Unicode_equivalence
+        :see: http://stackoverflow.com/q/16467479
+        """
+        self.assertFilterPasses(
+            #   U+0065 LATIN SMALL LETTER E
+            # + U+0301 COMBINING ACUTE ACCENT
+            # (2 code points)
+            'Ame\u0301lie',
+
+            # Result is the same string, encoded using UTF-8.
+            b'Ame\xcc\x81lie',
+        )
+
+    def test_unicode_normalization_forced(self):
+        """
+        You can force the Filter to apply normalization before encoding.
+
+        :see: https://en.wikipedia.org/wiki/Unicode_equivalence
+        :see: http://stackoverflow.com/q/16467479
+        """
+        self.assertFilterPasses(
+            self._filter(
+                # Same decomposed sequence from previous test...
+                'Ame\u0301lie',
+
+                # ... but this time we tell the Filter to normalize the
+                #   value before encoding it.
+                normalize = True,
+            ),
+
+            # U+00E9 LATIN SMALL LETTER E WITH ACUTE
+            # (1 code point, encoded as bytes)
+            b'Am\xc3\xa9lie',
+        )
+
+    def test_remove_non_printables_off_by_default(self):
+        """
+        By default, the Filter does not remove non-printable
+            characters.
+        """
+        self.assertFilterPasses(
+            # \u0000-\u001f are ASCII control characters.
+            # \uffff is a Unicode control character.
+            '\u0010Hell\u0000o,\u001f wor\uffffld!',
+
+            b'\x10Hell\x00o,\x1f wor\xef\xbf\xbfld!',
+        )
+
+    def test_remove_non_printables_forced(self):
+        """
+        You can force the Filter to remove non-printable characters
+            before encoding.
+        """
+        self.assertFilterPasses(
+            self._filter(
+                '\u0010Hell\u0000o,\u001f wor\uffffld!',
+                normalize = True,
+            ),
+            b'Hello, world!',
+        )
+
+    def test_newline_normalization_off_by_default(self):
+        """
+        By default, the Filter does not normalize line endings.
+        """
+        self.assertFilterPasses(
+            'unix\n - windows\r\n - weird\r\r\n',
+            b'unix\n - windows\r\n - weird\r\r\n',
+        )
+
+    def test_newline_normalization_forced(self):
+        """
+        You can force the Filter to normalize line endings.
+        """
+        self.assertFilterPasses(
+            self._filter('unix\n - windows\r\n - weird\r\r\n', normalize=True),
+            b'unix\n - windows\n - weird\n\n',
         )
 
 
@@ -1081,4 +1279,185 @@ class UuidTestCase(BaseFilterTestCase):
             # Incoming value is a v5 UUID, but we're expecting a v4.
             self._filter(UUID('54d6ebf8a3f55ed59becdedfb3b0773f'), version=4),
             [f.Uuid.CODE_WRONG_VERSION],
+        )
+
+
+class UnicodeTestCase(BaseFilterTestCase):
+    filter_type = filters.string.Unicode
+
+    def test_pass_none(self):
+        """
+        `None` always passes this Filter.
+
+        Use `Required | Unicode` if you want to reject `None`.
+        """
+        self.assertFilterPasses(None)
+
+    def test_pass_unicode(self):
+        """The incoming value is a unicode."""
+        self.assertFilterPasses('┻━┻︵ \(°□°)/ ︵ ┻━┻ ') # RAWR!
+
+    def test_pass_bytes_utf8(self):
+        """
+        The incoming value is a byte string that is encoded as UTF-8.
+        """
+        self.assertFilterPasses(
+            # You get used to it.
+            # I don't even see the code.
+            # All I see is, "blond"... "brunette"... "redhead"...
+            # Hey, you uh... want a drink?
+            b'\xe2\x99\xaa '
+            b'\xe2\x94\x8f(\xc2\xb0.\xc2\xb0)\xe2\x94\x9b '
+            b'\xe2\x94\x97(\xc2\xb0.\xc2\xb0)\xe2\x94\x93 '
+            b'\xe2\x99\xaa',
+
+            '♪ ┏(°.°)┛ ┗(°.°)┓ ♪',
+        )
+
+    def test_fail_bytes_non_utf8(self):
+        """
+        The incoming value is a byte string that is encoded using a
+            codec other than UTF-8.
+
+        Note that there is no such thing as a unicode object with
+            the "wrong encoding".
+
+        :see: https://docs.python.org/2/howto/unicode.html
+        """
+        # How about something a bit more realistic for this test?
+        #   Like the Swedish word for 'Apple'.
+        # noinspection SpellCheckingInspection
+        incoming = b'\xc4pple'
+
+        self.assertFilterErrors(
+            incoming,
+            [filters.string.Unicode.CODE_DECODE_ERROR],
+        )
+
+        # In order for this to work, we have to tell the Filter what
+        #   encoding to use:
+        self.assertFilterPasses(
+            self._filter(incoming, encoding='iso-8859-1'),
+            'Äpple',
+        )
+
+    def test_pass_string_like_object(self):
+        """
+        The incoming value is an object that can be cast as a string.
+        """
+        value = '／人 ⌒ ‿‿ ⌒ 人＼' # Squee!
+
+        self.assertFilterPasses(
+            Unicody(value),
+            value,
+        )
+
+    def test_pass_bytes_like_object(self):
+        """
+        The incoming value is an object that can be cast as a byte
+            string.
+        """
+        self.assertFilterPasses(
+            Bytesy(b'(\xe2\x99\xa5\xe2\x80\xbf\xe2\x99\xa5)'),
+
+            # I can almost hear the sappy music now.
+            '(♥‿♥)',
+        )
+
+    def test_pass_boolean(self):
+        """The incoming value is a boolean (treated as an int)."""
+        self.assertFilterPasses(True, '1')
+
+    def test_pass_decimal_with_scientific_notation(self):
+        """
+        The incoming value is a Decimal that was parsed from scientific
+            notation.
+        """
+        # Note that `text_type(Decimal('2.8E6')` yields '2.8E+6', which
+        #   is not what we want!
+        self.assertFilterPasses(
+            Decimal('2.8E6'),
+            '2800000',
+        )
+
+    def test_pass_xml_element(self):
+        """The incoming value is an ElementTree XML Element."""
+        self.assertFilterPasses(
+            Element('foobar'),
+            '<foobar />',
+        )
+
+    def test_unicode_normalization(self):
+        """
+        The Filter always returns the NFC form of the unicode string.
+
+        :see: https://en.wikipedia.org/wiki/Unicode_equivalence
+        :see: http://stackoverflow.com/q/16467479
+        """
+        #   U+0065 LATIN SMALL LETTER E
+        # + U+0301 COMBINING ACUTE ACCENT
+        # (2 code points)
+        decomposed  = 'Ame\u0301lie'
+
+        # U+00E9 LATIN SMALL LETTER E WITH ACUTE
+        # (1 code point)
+        composed    = 'Am\xe9lie'
+
+        self.assertFilterPasses(decomposed, composed)
+
+    def test_unicode_normalization_disabled(self):
+        """You can force the Filter not to perform normalization."""
+        decomposed  = 'Ame\u0301lie'
+
+        self.assertFilterPasses(
+            self._filter(decomposed, normalize=False),
+            decomposed,
+        )
+
+    def test_remove_non_printables(self):
+        """
+        By default, this Filter also removes non-printable characters
+            (both ASCII and Unicode varieties).
+        """
+        self.assertFilterPasses(
+            # \x00-\x1f are ASCII control characters.
+            # \xef\xbf\xbf is the Unicode control character \uffff,
+            #   encoded as UTF-8.
+            b'\x10Hell\x00o,\x1f wor\xef\xbf\xbfld!',
+
+            'Hello, world!',
+        )
+
+    def test_remove_non_printables_disabled(self):
+        """
+        You can force the Filter not to remove non-printable characters.
+        """
+        self.assertFilterPasses(
+            self._filter(
+                b'\x10Hell\x00o,\x1f wor\xef\xbf\xbfld!',
+                normalize = False,
+            ),
+
+            '\u0010Hell\u0000o,\u001f wor\uffffld!',
+        )
+
+    def test_newline_normalization(self):
+        """
+        By default, any newlines in the string are automatically
+            converted to unix-style ('\n').
+        """
+        self.assertFilterPasses(
+            b'unix\n - windows\r\n - weird\r\r\n',
+            'unix\n - windows\n - weird\n\n',
+        )
+
+    def test_newline_normalization_disabled(self):
+        """You can force the Filter not to normalize line endings."""
+        self.assertFilterPasses(
+            self._filter(
+                b'unix\n - windows\r\n - weird\r\r\n',
+                normalize = False,
+            ),
+
+            'unix\n - windows\r\n - weird\r\r\n',
         )

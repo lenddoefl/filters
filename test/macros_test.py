@@ -8,6 +8,9 @@ from unittest import TestCase
 from pytz import utc
 
 import filters as f
+import filters.base
+import filters.macros
+import filters.string
 
 
 class FilterMacroTestCase(TestCase):
@@ -17,9 +20,9 @@ class FilterMacroTestCase(TestCase):
         A common use case for Filter macros is to use them as
             decorators for functions.
         """
-        @f.filter_macro
+        @filters.macros.filter_macro
         def MyFilter():
-            return f.Unicode | f.Strip | f.MinLength(12)
+            return filters.string.Unicode | f.Strip | f.MinLength(12)
 
         # As you would expect, invoking the macro returns a
         #   FilterChain.
@@ -30,7 +33,7 @@ class FilterMacroTestCase(TestCase):
             'Hello, world!',
         )
 
-        with self.assertRaises(f.FilterError):
+        with self.assertRaises(filters.base.FilterError):
             the_filter.apply('Hi there!')
 
     def test_chain(self):
@@ -38,9 +41,9 @@ class FilterMacroTestCase(TestCase):
         You can chain Filter macros with other Filters, the same as you
             would with any other Filter.
         """
-        @f.filter_macro
+        @filters.macros.filter_macro
         def MyFilter():
-            return f.Unicode | f.Strip | f.MinLength(12)
+            return filters.string.Unicode | f.Strip | f.MinLength(12)
 
         # Note that you don't have to invoke the macro to include it in
         #   a chain.
@@ -53,18 +56,18 @@ class FilterMacroTestCase(TestCase):
             ['Hello,', 'world!'],
         )
 
-        with self.assertRaises(f.FilterError):
+        with self.assertRaises(filters.base.FilterError):
             filter_chain.apply('Hi there!')
 
     def test_chain_macros(self):
         """
         Yup, you can chain Filter macros together, too.
         """
-        @f.filter_macro
+        @filters.macros.filter_macro
         def Filter1():
-            return f.Unicode | f.Strip
+            return filters.string.Unicode | f.Strip
 
-        @f.filter_macro
+        @filters.macros.filter_macro
         def Filter2():
             return f.Split(r'\s+') | f.MinLength(2)
 
@@ -75,7 +78,7 @@ class FilterMacroTestCase(TestCase):
             ['Hello,', 'world!'],
         )
 
-        with self.assertRaises(f.FilterError):
+        with self.assertRaises(filters.base.FilterError):
             filter_chain.apply('whazzup!')
 
     def test_partial(self):
@@ -83,7 +86,7 @@ class FilterMacroTestCase(TestCase):
         You can use Filter macros to create partials from other Filter
             types.
         """
-        MyDatetime = f.filter_macro(f.Datetime, timezone=12)
+        MyDatetime = filters.macros.filter_macro(f.Datetime, timezone=12)
 
         self.assertEqual(
             MyDatetime().apply('2015-10-13 15:22:18'),

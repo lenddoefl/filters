@@ -3,13 +3,14 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import filters as f
+import filters.number
 from filters.test import BaseFilterTestCase
 
 
 class FilterChainTestCase(BaseFilterTestCase):
     def test_implicit_chain(self):
         """Chaining two Filters together creates a FilterChain."""
-        self.filter_type = lambda: f.Int | f.Max(3)
+        self.filter_type = lambda: filters.number.Int | f.Max(3)
 
         self.assertFilterPasses('1', 1)
         self.assertFilterErrors('4', [f.Max.CODE_TOO_BIG])
@@ -49,7 +50,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             considered a valid value to pass to a FilterRepeater, even
             though it is not iterable.
         """
-        self.filter_type = lambda: f.FilterRepeater(f.Int)
+        self.filter_type = lambda: f.FilterRepeater(filters.number.Int)
 
         self.assertFilterPasses(None)
 
@@ -57,7 +58,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         """
         A FilterRepeater is applied to a list of valid values.
         """
-        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | f.Int)
+        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | filters.number.Int)
 
         self.assertFilterPasses(
             ['1', 2, 0, None, '-12'],
@@ -69,7 +70,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         A FilterRepeater is applied to a list that contains invalid
             values.
         """
-        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | f.Int)
+        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | filters.number.Int)
 
         self.assertFilterErrors(
             # First element is valid (control group).
@@ -77,9 +78,9 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             [4, 'NaN', 3.14, 'FOO', ''],
 
             {
-                '1':    [f.Decimal.CODE_NON_FINITE],
-                '2':    [f.Int.CODE_DECIMAL],
-                '3':    [f.Decimal.CODE_INVALID],
+                '1':    [filters.number.Decimal.CODE_NON_FINITE],
+                '2':    [filters.number.Int.CODE_DECIMAL],
+                '3':    [filters.number.Decimal.CODE_INVALID],
                 '4':    [f.NotEmpty.CODE_EMPTY],
             },
 
@@ -90,7 +91,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         """
         A FilterRepeater is applied to a dict of valid values.
         """
-        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | f.Int)
+        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | filters.number.Int)
 
         self.assertFilterPasses(
             {
@@ -115,7 +116,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         A FilterRepeater is applied to a dict that contains invalid
             values.
         """
-        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | f.Int)
+        self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | filters.number.Int)
 
         self.assertFilterErrors(
             {
@@ -128,9 +129,9 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             },
 
             {
-                'bar':      [f.Decimal.CODE_NON_FINITE],
-                'baz':      [f.Int.CODE_DECIMAL],
-                'luhrmann': [f.Decimal.CODE_INVALID],
+                'bar':      [filters.number.Decimal.CODE_NON_FINITE],
+                'baz':      [filters.number.Int.CODE_DECIMAL],
+                'luhrmann': [filters.number.Decimal.CODE_INVALID],
             },
 
             # Just as with collections, the invalid values in the
@@ -149,7 +150,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             mapping.
         """
         self.filter_type = lambda: f.FilterRepeater(
-            filter_chain    = f.Int,
+            filter_chain    =filters.number.Int,
             restrict_keys   = {'ducks', 'sea otters'},
         )
 
@@ -195,7 +196,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         #
         # noinspection PyTypeChecker
         self.filter_type = lambda: f.FilterRepeater(
-            filter_chain    = f.Int,
+            filter_chain    =filters.number.Int,
             restrict_keys   = {0, 1, 3, 4},
         )
 
@@ -226,7 +227,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         A FilterRepeater will reject any non-iterable value it comes
             across (except for `None`).
         """
-        self.filter_type = lambda: f.FilterRepeater(f.Int)
+        self.filter_type = lambda: f.FilterRepeater(filters.number.Int)
 
         self.assertFilterErrors(42, [f.Type.CODE_WRONG_TYPE])
 
@@ -246,7 +247,8 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             apply two FilterRepeaters in sequence, you can do so.
         """
         self.filter_type =\
-            lambda: f.FilterRepeater(f.NotEmpty) | f.FilterRepeater(f.Int)
+            lambda: f.FilterRepeater(f.NotEmpty) | f.FilterRepeater(
+              filters.number.Int)
 
         # The values in this list pass through both FilterRepeaters
         #   successfully.
@@ -284,8 +286,8 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             ['1', 'NaN', 0, None, 'FOO'],
 
             {
-                '1': [f.Decimal.CODE_NON_FINITE],
-                '4': [f.Decimal.CODE_INVALID],
+                '1': [filters.number.Decimal.CODE_NON_FINITE],
+                '4': [filters.number.Decimal.CODE_INVALID],
             },
 
             expected_value = [1, None, 0, None, None],
@@ -327,7 +329,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
                     f.Type(list)
 
                     # 2. Apply the Int filter to each of its items.
-                |   f.FilterRepeater(f.Int)
+                |   f.FilterRepeater(filters.number.Int)
 
                     # 3. It must have a length <= 3.
                 |   f.MaxLength(3)
@@ -387,9 +389,9 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
                 # This way, we don't have to deal with nested dicts
                 #   when processing error codes.
                 #
-                '1.0':  [f.Decimal.CODE_NON_FINITE],
-                '1.1':  [f.Int.CODE_DECIMAL],
-                '1.2':  [f.Decimal.CODE_INVALID],
+                '1.0':  [filters.number.Decimal.CODE_NON_FINITE],
+                '1.1':  [filters.number.Int.CODE_DECIMAL],
+                '1.2':  [filters.number.Decimal.CODE_INVALID],
             },
 
             expected_value = [[42], [None, None, None]],
@@ -417,7 +419,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             considered a valid value to pass to a FilterMapper, even
             though it is not iterable.
         """
-        self.filter_type = lambda: f.FilterMapper({'id': f.Int})
+        self.filter_type = lambda: f.FilterMapper({'id': filters.number.Int})
 
         self.assertFilterPasses(None)
 
@@ -426,7 +428,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         A FilterRepeater is applied to a dict containing valid values.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
+            'id':       f.Required | filters.number.Int | f.Min(1),
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
@@ -448,7 +450,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             values.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
+            'id':       f.Required | filters.number.Int | f.Min(1),
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
@@ -474,7 +476,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         By default, FilterMappers passthru extra keys.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
+            'id':       f.Required | filters.number.Int | f.Min(1),
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
@@ -499,7 +501,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
+                'id':       f.Required | filters.number.Int | f.Min(1),
                 'subject':  f.NotEmpty | f.MaxLength(16),
             },
 
@@ -533,7 +535,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
+                'id':       f.Required | filters.number.Int | f.Min(1),
                 'subject':  f.NotEmpty | f.MaxLength(16),
             },
 
@@ -583,7 +585,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         By default, FilterMappers treat missing keys as `None`.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
+            'id':       f.Required | filters.number.Int | f.Min(1),
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
@@ -623,7 +625,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
+                'id':       f.Required | filters.number.Int | f.Min(1),
                 'subject':  f.NotEmpty | f.MaxLength(16),
             },
 
@@ -652,7 +654,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
+                'id':       f.Required | filters.number.Int | f.Min(1),
                 'subject':  f.NotEmpty | f.MaxLength(16),
             },
 
@@ -695,7 +697,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
+                'id':       f.Required | filters.number.Int | f.Min(1),
                 'subject':  None,
             },
 
@@ -748,7 +750,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         The incoming value is not a mapping.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
+            'id':       f.Required | filters.number.Int | f.Min(1),
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
@@ -771,7 +773,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         fm1 = f.FilterMapper(
             {
-                'id':   f.Int | f.Min(1),
+                'id': filters.number.Int | f.Min(1),
             },
 
             allow_missing_keys  = True,
@@ -828,7 +830,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             to operate on the entire mapping.
         """
         fm = f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
+            'id':       f.Required | filters.number.Int | f.Min(1),
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
@@ -869,7 +871,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':           f.Required | f.Int | f.Min(1),
+                'id':           f.Required | filters.number.Int | f.Min(1),
                 'subject':      f.NotEmpty | f.MaxLength(16),
                 'attachment':   f.FilterMapper(
                     {
@@ -939,7 +941,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 #   values.
                 # This way, we don't have to deal with nested dicts
                 #   when processing error codes.
-                'id':               [f.Decimal.CODE_NON_FINITE],
+                'id':               [filters.number.Decimal.CODE_NON_FINITE],
                 'subject':          [f.FilterMapper.CODE_MISSING_KEY],
                 'attachment.type':  [f.Choice.CODE_INVALID],
                 'attachment.data':  [f.Type.CODE_WRONG_TYPE],

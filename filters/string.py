@@ -3,6 +3,10 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import json
+import unicodedata
+from decimal import Decimal as DecimalType
+from xml.etree.ElementTree import Element, tostring
+
 import re
 import socket
 from base64 import standard_b64decode, urlsafe_b64decode
@@ -18,12 +22,14 @@ from six import (
     moves as compat,
     python_2_unicode_compatible,
     text_type,
-)
+    PY2)
 
-from filters import BaseFilter, Type, Unicode, MaxLength
+from filters.base import BaseFilter, Type
+from filters.simple import MaxLength
 
 __all__ = [
     'Base64Decode',
+    'ByteString',
     'CaseFold',
     'IpAddress',
     'JsonDecode',
@@ -31,6 +37,7 @@ __all__ = [
     'Regex',
     'Split',
     'Strip',
+    'Unicode',
     'Uuid',
 ]
 
@@ -614,6 +621,172 @@ class Strip(BaseFilter):
             value = self.trailing.sub('', value)
 
         return value
+
+
+@python_2_unicode_compatible
+class Unicode(BaseFilter):
+    """
+    Converts a value into a unicode string.
+
+    Note:  By default, additional normalization is applied to the
+        resulting value.  See the initializer docstring for more info.
+
+    :see: https://docs.python.org/2/howto/unicode.html
+    :see: https://en.wikipedia.org/wiki/Unicode_equivalence
+    """
+    CODE_DECODE_ERROR = 'wrong_encoding'
+
+    templates = {
+        CODE_DECODE_ERROR: 'This value cannot be decoded using {encoding}.',
+    }
+
+    def __init__(self, encoding='utf-8', normalize=True):
+        # type: (Text, bool) -> None
+        """
+        :param encoding: Used to decode non-unicode values.
+
+        :param normalize: Whether to normalize the resulting value:
+            - Convert to NFC form.
+            - Remove non-printable characters.
+            - Convert all line endings to unix-style ('\n').
+        """
+        super(Unicode, self).__init__()
+
+        self.encoding   = encoding
+        self.normalize  = normalize
+
+        if self.normalize:
+            #
+            # Compile the regex that we will use to remove non-
+            #   printables from the resulting unicode.
+            # :see: http://www.regular-expressions.info/unicode.html#category
+            #
+            # Note: using a double negative so that we can exclude
+            #   newlines, which are technically considered control
+            #   chars.
+            # :see: http://stackoverflow.com/a/3469155
+            #
+            self.npr = regex.compile(r'[^\P{C}\s]+', regex.UNICODE)
+
+    def __str__(self):
+        return '{type}(encoding={encoding!r})'.format(
+            type        = type(self).__name__,
+            encoding    = self.encoding,
+        )
+
+    def _apply(self, value):
+        try:
+            if isinstance(value, text_type):
+                decoded = value
+
+            elif isinstance(value, binary_type):
+                decoded = value.decode(self.encoding)
+
+            elif isinstance(value, bool):
+                decoded = text_type(int(value))
+
+            # :kludge: In Python 3, bytes(<int>) does weird things.
+            # :see: https://www.python.org/dev/peps/pep-0467/
+            elif isinstance(value, (int, float)):
+                decoded = text_type(value)
+
+            elif isinstance(value, DecimalType):
+                decoded = format(value, 'f')
+
+            elif isinstance(value, Element):
+                # :kludge: There's no way (that I know of) to get
+                #   `ElementTree.tostring` to return a unicode.
+                decoded = tostring(value, 'utf-8').decode('utf-8')
+
+            elif (
+                    PY2 and hasattr(value, '__str__')
+                or  PY3 and hasattr(value, '__bytes__')
+            ):
+                decoded = binary_type(value).decode(self.encoding)
+
+            else:
+                decoded = text_type(value)
+        except UnicodeDecodeError:
+            return self._invalid_value(
+                value           = value,
+                reason          = self.CODE_DECODE_ERROR,
+                exc_info        = True,
+
+                template_vars = {
+                    'encoding': self.encoding,
+                },
+            )
+
+        if self.normalize:
+            return (
+                # Return the final string in composed form.
+                # :see: :see: https://en.wikipedia.org/wiki/Unicode_equivalence
+                unicodedata.normalize('NFC',
+                    # Remove non-printables.
+                    self.npr.sub('', decoded)
+                )
+                    # Normalize line endings.
+                    # :see: http://stackoverflow.com/a/1749887
+                    .replace('\r\n', '\n')
+                    .replace('\r', '\n')
+            )
+        else:
+            return decoded
+
+
+class ByteString(Unicode):
+    """
+    Converts a value into a byte string, encoded as UTF-8.
+
+    IMPORTANT:  This Filter returns string objects, not bytearrays!
+    """
+    def __init__(self, encoding='utf-8', normalize=False):
+        # type: (Text, bool) -> None
+        """
+        :param encoding: Used to decode non-unicode values.
+
+        :param normalize: Whether to normalize the unicode value before
+            converting back into bytes:
+            - Convert to NFC form.
+            - Remove non-printable characters.
+            - Convert all line endings to unix-style ('\n').
+
+        Note that `normalize` is `False` by default for Bytes, but
+        `True` by default for Unicode.
+        """
+        super(ByteString, self).__init__(encoding, normalize)
+
+    # noinspection SpellCheckingInspection
+    def _apply(self, value):
+        decoded = super(ByteString, self)._apply(value) # type: Text
+
+        #
+        # No need to catch UnicodeEncodeErrors here; UTF-8 can handle
+        #   any unicode value.
+        #
+        # Technically, we could get this error if we encounter a code
+        #   point beyond U+10FFFF (the highest valid code point in the
+        #   Unicode standard).
+        #
+        # However, it's not possible to create a `unicode` object with
+        #   an invalid code point, so we wouldn't even be able to get
+        #   this far if the incoming value contained a character that
+        #   can't be represented using UTF-8.
+        #
+        # Note that in some versions of Python, it is possible (albeit
+        #   really difficult) to trick Python into creating unicode
+        #   objects with invalid code points, but it generally requires
+        #   using specific codecs that aren't UTF-8.
+        #
+        # Example of exploit and release notes from the Python release
+        #   (2.7.6) that fixes the issue:
+        # :see: https://gist.github.com/rspeer/7559750
+        # :see: https://hg.python.org/cpython/raw-file/99d03261c1ba/Misc/NEWS
+        #
+
+        # Normally we return `None` if we get any errors, but in this
+        #   case, we'll let the superclass method decide.
+        return decoded if self._has_errors else decoded.encode('utf-8')
 
 
 @python_2_unicode_compatible
