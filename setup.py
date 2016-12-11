@@ -13,10 +13,10 @@ with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
 setup(
     name        = 'filters',
     description = 'Validation and data pipelines made easy!',
-    url         = 'https://github.com/eflglobal/filters/',
+    url         = 'http://filters.readthedocs.io/',
 
     # Don't forget to update version number in `filters/__init__.py`!
-    version = '1.1.0',
+    version = '1.1.1',
 
     packages = ['filters'],
 
