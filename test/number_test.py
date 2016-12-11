@@ -5,12 +5,11 @@ from __future__ import absolute_import, division, print_function, \
 from decimal import Decimal, ROUND_CEILING
 
 import filters as f
-import filters.number
 from filters.test import BaseFilterTestCase
 
 
 class DecimalTestCase(BaseFilterTestCase):
-    filter_type = filters.number.Decimal
+    filter_type = f.Decimal
 
     def test_pass_none(self):
         """
@@ -40,7 +39,9 @@ class DecimalTestCase(BaseFilterTestCase):
         )
 
     def test_max_precision_quantized(self):
-        """``max_precision`` can also be specified as a Decimal object."""
+        """
+        ``max_precision`` can also be specified as a Decimal object.
+        """
         self.assertFilterPasses(
             self._filter('3.1415926', max_precision=Decimal('0.001')),
             Decimal('3.142'),
@@ -76,7 +77,7 @@ class DecimalTestCase(BaseFilterTestCase):
         """
         self.assertFilterErrors(
             'this is not a decimal',
-            [filters.number.Decimal.CODE_INVALID],
+            [f.Decimal.CODE_INVALID],
         )
 
     def test_fail_non_finite_value(self):
@@ -85,11 +86,11 @@ class DecimalTestCase(BaseFilterTestCase):
         even though they are technically parseable.
         """
         self.assertFilterErrors( 'NaN', [
-          filters.number.Decimal.CODE_NON_FINITE])
+          f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('+Inf', [
-          filters.number.Decimal.CODE_NON_FINITE])
+          f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('-Inf', [
-          filters.number.Decimal.CODE_NON_FINITE])
+          f.Decimal.CODE_NON_FINITE])
         # There are a few other possible non-finite values out there,
         #   but you get the idea.
 
@@ -107,7 +108,7 @@ class DecimalTestCase(BaseFilterTestCase):
         it right!
         """
         self.assertFilterErrors(('1', '2', '3'), [
-          filters.number.Decimal.CODE_INVALID])
+          f.Decimal.CODE_INVALID])
 
     def test_fail_tuple_disallowed(self):
         """
@@ -136,7 +137,7 @@ class DecimalTestCase(BaseFilterTestCase):
 
 
 class IntTestCase(BaseFilterTestCase):
-    filter_type = filters.number.Int
+    filter_type = f.Int
 
     def test_pass_none(self):
         """
@@ -169,7 +170,7 @@ class IntTestCase(BaseFilterTestCase):
         """
         self.assertFilterErrors(
             'this is not an int',
-            [filters.number.Decimal.CODE_INVALID],
+            [f.Decimal.CODE_INVALID],
         )
 
     def test_fail_bytes(self):
@@ -186,7 +187,7 @@ class IntTestCase(BaseFilterTestCase):
         """
         self.assertFilterErrors(
             '42.01',
-            [filters.number.Int.CODE_DECIMAL],
+            [f.Int.CODE_DECIMAL],
         )
 
     def test_pass_int_point_zero(self):
@@ -203,11 +204,11 @@ class IntTestCase(BaseFilterTestCase):
     def test_fail_non_finite_value(self):
         """The incoming value is a non-finite value."""
         self.assertFilterErrors( 'NaN', [
-          filters.number.Decimal.CODE_NON_FINITE])
+          f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('+Inf', [
-          filters.number.Decimal.CODE_NON_FINITE])
+          f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('-Inf', [
-          filters.number.Decimal.CODE_NON_FINITE])
+          f.Decimal.CODE_NON_FINITE])
         # There are a few other possible non-finite values out there,
         #   but you get the idea.
 
@@ -507,4 +508,4 @@ class RoundTestCase(BaseFilterTestCase):
 
     def test_fail_wrong_type(self):
         """The incoming value is not numeric."""
-        self.assertFilterErrors('three', [filters.number.Decimal.CODE_INVALID])
+        self.assertFilterErrors('three', [f.Decimal.CODE_INVALID])

@@ -77,6 +77,23 @@ class FilterMacroTestCase(TestCase):
         with self.assertRaises(f.FilterError):
             filter_chain.apply('whazzup!')
 
+    def test_decorator_optional_parameters(self):
+        """A filter macro may accept optional parameters."""
+        @filter_macro
+        def MyFilter(min_length=12):
+            return f.Unicode | f.MinLength(min_length)
+
+        # `MyFilter` is configured to require 12 chars by default.
+        filter_chain = f.Required | MyFilter
+
+        self.assertEqual(
+            filter_chain.apply('Hello, world!'),
+            'Hello, world!',
+        )
+
+        with self.assertRaises(f.FilterError):
+            filter_chain.apply('Hi there!')
+
     def test_partial(self):
         """
         You can use Filter macros to create partials from other Filter

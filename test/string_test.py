@@ -12,7 +12,6 @@ import regex
 from collections import OrderedDict
 
 import filters as f
-import filters.string
 from filters.test import BaseFilterTestCase
 
 from test.simple_test import Unicody, Bytesy
@@ -128,7 +127,7 @@ class Base64DecodeTestCase(BaseFilterTestCase):
 
 
 class ByteStringTestCase(BaseFilterTestCase):
-    filter_type = filters.string.ByteString
+    filter_type = f.ByteString
 
     def test_pass_none(self):
         """
@@ -167,7 +166,7 @@ class ByteStringTestCase(BaseFilterTestCase):
 
         self.assertFilterErrors(
             incoming,
-            [filters.string.ByteString.CODE_DECODE_ERROR],
+            [f.ByteString.CODE_DECODE_ERROR],
         )
 
         # In order for this to work, we have to tell the Filter what
@@ -1281,7 +1280,7 @@ class UuidTestCase(BaseFilterTestCase):
 
 
 class UnicodeTestCase(BaseFilterTestCase):
-    filter_type = filters.string.Unicode
+    filter_type = f.Unicode
 
     def test_pass_none(self):
         """
@@ -1331,7 +1330,7 @@ class UnicodeTestCase(BaseFilterTestCase):
 
         self.assertFilterErrors(
             incoming,
-            [filters.string.Unicode.CODE_DECODE_ERROR],
+            [f.Unicode.CODE_DECODE_ERROR],
         )
 
         # In order for this to work, we have to tell the Filter what

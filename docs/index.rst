@@ -21,7 +21,7 @@ Examples
 
 Validate a latitude position and round to manageable precision:
 
-.. code:: python
+.. highlight:: python
 
    (
        f.Required
@@ -33,7 +33,7 @@ Validate a latitude position and round to manageable precision:
 
 Parse an incoming value as a datetime, convert to UTC and strip tzinfo:
 
-.. code:: python
+.. highlight:: python
 
    f.Datetime(naive=True).apply('2015-04-08T15:11:22-05:00')
 
@@ -42,7 +42,7 @@ leading/trailing whitespace.
 This also applies `Unicode normalization`_, strips unprintable characters and
 normalizes line endings automatically.
 
-.. code:: python
+.. highlight:: python
 
    f.FilterRepeater(f.Unicode | f.Strip).apply([
      b'\xe2\x99\xaa ',
@@ -53,7 +53,7 @@ normalizes line endings automatically.
 
 Parse a JSON string and check that it has correct structure:
 
-.. code:: python
+.. highlight:: python
 
    (
        f.JsonDecode
@@ -95,8 +95,11 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   filters_list
+   getting_started
+   complex_filters
+   List of Filters <filters_list>
+   writing_filters
 
 .. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence
