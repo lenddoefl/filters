@@ -3,7 +3,14 @@ Filters
 *Validation and data pipelining made easy!*
 
 The Filters library provides an easy and readable way to create complex
-data validation and processing pipelines.
+data validation and processing pipelines, including:
+
+- Validating complex JSON structures in API requests or config files.
+- Parsing timestamps and converting to UTC.
+- Converting Unicode strings to NFC, normalizing line endings and removing
+  unprintable characters.
+
+And much more!
 
 Here are a few simple examples:
 

@@ -1,52 +1,60 @@
 =======
 Filters
 =======
-
 The Filters library provides an easy and readable way to create complex
-data validation and processing pipelines.
+data validation and processing pipelines, including:
 
-Here's an example of using Filters to validate and process some JSON::
+- Validating complex JSON structures in API requests or config files.
+- Parsing timestamps and converting to UTC.
+- Converting Unicode strings to NFC, normalizing line endings and removing
+  unprintable characters.
 
-    import datetime
-    import decimal
-    import filters as f
+And much more!
 
-    data = u'{"birthday": "2006-11-23", "gender": "M", "utcOffset": "-5"}'
+Here are a few simple examples:
 
-    filter_ = f.FilterRunner(
-        f.JsonDecode
-      | f.FilterMapper(
-          {
-            'birthday': f.Date,
-            'gender':   f.CaseFold | f.Choice(choices={'m', 'f', 'x'}),
+.. code:: python
 
-            # :see: https://en.wikipedia.org/wiki/List_of_UTC_time_offsets
-            'utcOffset':
-                f.Decimal
-              | f.Min(decimal.Decimal('-15'))
-              | f.Max(decimal.Decimal('+15'))
-              | f.Round(to_nearest='0.25'),
-          },
-          allow_extra_keys   = False,
-          allow_missing_keys = True,
-        ),
+   # Validate a latitude position and round to manageable precision.
+   (
+       f.Required
+     | f.Decimal
+     | f.Min(Decimal(-90))
+     | f.Max(Decimal(90)
+     | f.Round(to_nearest='0.000001')
+   ).apply(int_or_string_value)
 
-      data,
-    )
+   # Convert an incoming value into a naive datetime.
+   f.Datetime(naive=True).apply(string_or_datetime_value)
 
-    if filter_.is_valid():
-      cleaned_data = filter_.cleaned_data
+   # Convert every value in an iterable (e.g., list) to unicode.
+   # This also applies Unicode normalization, strips unprintable
+   #  characters and normalizes line endings automatically.
+   f.FilterRepeater(f.Unicode).apply(iterable_value)
 
-      assert cleaned_data == {
-        'birthday':   datetime.date(2006, 11, 23),
-        'gender':     'm',
-        'utcOffset':  decimal.Decimal('-5.0'),
-      }
-    else:
-      for key, errors in filter_.errors.items():
-        print('{key}:'.format(key=key))
-        for error in errors:
-          print('  - ({error[code]}) {error[message]}'.format(error=error))
+   # Parse a JSON string and check that it has correct structure.
+   (
+       f.JsonDecode
+     | f.FilterMapper(
+         {
+           'birthday':  f.Date,
+           'gender':    f.CaseFold | f.Choice(choices={'m', 'f', 'x'}),
+
+           'utcOffset':
+               f.Decimal
+             | f.Min(Decimal('-15'))
+             | f.Max(Decimal('+15'))
+             | f.Round(to_nearest='0.25'),
+         },
+
+         allow_extra_keys   = False,
+         allow_missing_keys = False,
+       )
+   ).apply(json_string)
+
+Notice in the above examples that output from one filter can be "piped" into
+the input of another.  This allows you to "chain" filters together to quickly
+and easily create complex data pipelines.
 
 ============
 Requirements
@@ -63,3 +71,4 @@ Install the latest stable version via pip::
 Install the latest development version::
 
     pip install https://github.com/eflglobal/filters/archive/develop.zip
+
