@@ -107,14 +107,15 @@ class ByteArray(BaseFilter):
                 return bytearray(value, encoding=self.encoding)
             except UnicodeEncodeError:
                 return self._invalid_value(
-                    value           = value,
-                    reason          = self.CODE_BAD_ENCODING,
-                    template_vars   = {
-                        'encoding':     self.encoding,
+                    value   = value,
+                    reason  = self.CODE_BAD_ENCODING,
+
+                    template_vars = {
+                        'encoding': self.encoding,
                     },
                 )
 
-        from filters import FilterRepeater
+        from filters.complex import FilterRepeater
         filtered = self._filter(value, FilterRepeater(
                 # Only allow ints and booleans.
                 Type(int)
@@ -139,8 +140,8 @@ class Choice(BaseFilter):
     Expects the value to match one of the items in a set.
 
     Note:  When matching string values, the comparison is case-
-        sensitive!  Use the `CaseFold` Filter if you want to perform a
-        case-insensitive comparison.
+    sensitive!  Use the `CaseFold` Filter if you want to perform a
+    case-insensitive comparison.
     """
     CODE_INVALID = 'not_valid_choice'
 
@@ -159,7 +160,7 @@ class Choice(BaseFilter):
             type = type(self).__name__,
 
             # Use JSON to mask Python syntax (e.g., remove "u" prefix
-            #   on unicode strings in Python 2).
+            # on unicode strings in Python 2).
             # :see: Type.__init__
             choices = json.dumps(sorted(self.choices)),
         )
@@ -167,11 +168,11 @@ class Choice(BaseFilter):
     def _apply(self, value):
         if value not in self.choices:
             return self._invalid_value(
-                value           = value,
-                reason          = self.CODE_INVALID,
-                exc_info        = True,
+                value       = value,
+                reason      = self.CODE_INVALID,
+                exc_info    = True,
 
-                template_vars   = {
+                template_vars = {
                     'choices': sorted(self.choices),
                 },
             )
@@ -181,9 +182,7 @@ class Choice(BaseFilter):
 
 @python_2_unicode_compatible
 class Datetime(BaseFilter):
-    """
-    Interprets the value as a UTC datetime.
-    """
+    """Interprets the value as a UTC datetime."""
     CODE_INVALID = 'not_datetime'
 
     templates = {
@@ -194,9 +193,10 @@ class Datetime(BaseFilter):
     def __init__(self, timezone=None, naive=False):
         # type: (Union[tzinfo, int, float], bool) -> None
         """
-        :param timezone: Specifies the timezone to use when the
-            INCOMING value is a naive timestamp.  Has no effect on
-            timezone-aware timestamps.
+        :param timezone:
+            Specifies the timezone to use when the *incoming* value is
+            a naive timestamp.  Has no effect on timezone-aware
+            timestamps.
 
             Note that the result is always converted to UTC, regardless
             of the value of the `timezone` param!
@@ -204,9 +204,11 @@ class Datetime(BaseFilter):
             You can provide an int/float, which is the offset from UTC
             in hours (e.g., 5 = UTC+5).
 
-        :param naive: If True, the filter will RETURN naive datetime
-            objects (sans tzinfo).  This is useful e.g., for datetimes
-            that will be stored in a database.
+        :param naive:
+            If True, the filter will *return* naive datetime objects
+            (sans tzinfo).  This is useful e.g., for datetimes that
+            will be stored in a database that doesn't understand aware
+            timestamps.
 
             Note that the result is still converted to UTC before
             removing its tzinfo!
@@ -243,14 +245,11 @@ class Datetime(BaseFilter):
             try:
                 #
                 # It's a shame we can't pass `tzinfos` to
-                #   `dateutil.parser.parse`; `tzinfos` only has effect
-                #   if we also specify `ignoretz = True`, which we
-                #   don't want to do here.
+                # `dateutil.parser.parse`; `tzinfos` only has effect
+                # if we also specify `ignoretz = True`, which we
+                # don't want to do here.
                 #
                 # :see: https://dateutil.readthedocs.org/en/latest/parser.html#dateutil.parser.parse
-                #
-                # Note that this method will raise a ValueError if the
-                #   value cannot be parsed.
                 #
                 parsed = dateutil_parse(value)
             except ValueError:
@@ -278,9 +277,9 @@ class Date(Datetime):
     Interprets the value as a UTC date.
 
     Note that the value is first converted to a datetime with UTC
-        timezone, which may cause the resulting date to appear to be
-        off by +/- 1 day (does not apply if the value is already a date
-        object).
+    timezone, which may cause the resulting date to appear to be
+    off by +/- 1 day (does not apply if the value is already a date
+    object).
     """
     CODE_INVALID = 'not_date'
 
@@ -304,9 +303,9 @@ class Empty(BaseFilter):
     Expects the value to be empty.
 
     In this context, "empty" is defined as having zero length.  Note
-        that this Filter considers values that do not have length to be
-        not empty (in particular, False and 0 are not considered empty
-        here).
+    that this Filter considers values that do not have length to be
+    not empty (in particular, False and 0 are not considered empty
+    here).
     """
     CODE_NOT_EMPTY = 'not_empty'
 
@@ -360,8 +359,8 @@ class Length(BaseFilter):
 
         if len(value) > self.length:
             return self._invalid_value(
-                value           = value,
-                reason          = self.CODE_TOO_LONG,
+                value   = value,
+                reason  = self.CODE_TOO_LONG,
 
                 template_vars = {
                     'expected': self.length,
@@ -369,8 +368,8 @@ class Length(BaseFilter):
             )
         elif len(value) < self.length:
             return self._invalid_value(
-                value           = value,
-                reason          = self.CODE_TOO_SHORT,
+                value   = value,
+                reason  = self.CODE_TOO_SHORT,
 
                 template_vars = {
                     'expected': self.length,
@@ -405,18 +404,19 @@ class MaxLength(BaseFilter):
         if len(value) > self.max_length:
             #
             # Note that we do not truncate the value:
+            #
             #   - It's not always clear which end we should truncate
-            #       from.
+            #     from.
             #   - We should keep this Filter's behavior consistent with
-            #       that of MinLength.
+            #     that of MinLength.
             #
             return self._invalid_value(
-                value           = value,
-                reason          = self.CODE_TOO_LONG,
+                value   = value,
+                reason  = self.CODE_TOO_LONG,
 
                 template_vars = {
-                    'length':       len(value),
-                    'max':          self.max_length,
+                    'length':   len(value),
+                    'max':      self.max_length,
                 },
             )
 
@@ -447,15 +447,16 @@ class MinLength(BaseFilter):
         if len(value) < self.min_length:
             #
             # Note that we do not pad the value:
+            #
             #   - It is not clear to which end(s) we should add the
-            #       padding.
+            #     padding.
             #   - It is not clear what the padding value(s) should be.
             #   - We should keep this Filter's behavior consistent with
-            #       that of MaxLength.
+            #     that of MaxLength.
             #
             return self._invalid_value(
-                value           = value,
-                reason          = self.CODE_TOO_SHORT,
+                value   = value,
+                reason  = self.CODE_TOO_SHORT,
 
                 template_vars = {
                     'length':       len(value),
@@ -469,7 +470,7 @@ class MinLength(BaseFilter):
 class NoOp(BaseFilter):
     """
     Filter that does nothing, used when you need a placeholder Filter
-        in a FilterChain.
+    in a FilterChain.
     """
     def _apply(self, value):
         return value
@@ -481,13 +482,13 @@ class NotEmpty(BaseFilter):
     Expects the value not to be empty.
 
     In this context, "empty" is defined as having zero length.  Note
-        that this Filter considers values that do not have length to be
-        not empty (in particular, False and 0 are not considered empty
-        here).
+    that this Filter considers values that do not have length to be
+    not empty (in particular, False and 0 are not considered empty
+    here).
 
     By default, this Filter treats `None` as valid, just like every
-        other Filter.  However, you can configure the Filter to reject
-        `None` in its initializer method.
+    other Filter.  However, you can configure the Filter to reject
+    `None` in its initializer method.
     """
     CODE_EMPTY = 'empty'
 
@@ -530,7 +531,7 @@ class Required(NotEmpty):
     Same as NotEmpty, but with `allow_none` hard-wired to `False`.
 
     This Filter is the only exception to the "`None` passes by default"
-        rule.
+    rule.
     """
     templates = {
         NotEmpty.CODE_EMPTY: 'This value is required.',
@@ -546,9 +547,9 @@ class Optional(BaseFilter):
     Changes empty and null values into a default value.
 
     In this context, "empty" is defined as having zero length.  Note
-        that this Filter considers values that do not have length to be
-        not empty (in particular, False and 0 are not considered empty
-        here).
+    that this Filter considers values that do not have length to be
+    not empty (in particular, False and 0 are not considered empty
+    here).
     """
     def __init__(self, default=None):
         """

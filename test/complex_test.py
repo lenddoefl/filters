@@ -30,7 +30,7 @@ class FilterChainTestCase(BaseFilterTestCase):
     def test_stop_after_invalid_value(self):
         """
         A FilterChain stops processing the incoming value after any
-            filter fails.
+        filter fails.
         """
         # This FilterChain will pretty much reject anything that you
         #   throw at it.
@@ -47,8 +47,8 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
     def test_pass_none(self):
         """
         For consistency with all the other Filter classes, `None` is
-            considered a valid value to pass to a FilterRepeater, even
-            though it is not iterable.
+        considered a valid value to pass to a FilterRepeater, even
+        though it is not iterable.
         """
         self.filter_type = lambda: f.FilterRepeater(filters.number.Int)
 
@@ -68,13 +68,13 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
     def test_fail_iterable(self):
         """
         A FilterRepeater is applied to a list that contains invalid
-            values.
+        values.
         """
         self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | filters.number.Int)
 
         self.assertFilterErrors(
             # First element is valid (control group).
-            #   The rest fail miserably.
+            # The rest fail miserably.
             [4, 'NaN', 3.14, 'FOO', ''],
 
             {
@@ -102,7 +102,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             },
 
             # The FilterRepeater applies the filter chain to the dict's
-            #   values.  Note that it completely ignores the keys.
+            # values.  Note that it completely ignores the keys.
             {
                 'foo':      1,
                 'bar':      2,
@@ -114,14 +114,14 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
     def test_fail_mapping(self):
         """
         A FilterRepeater is applied to a dict that contains invalid
-            values.
+        values.
         """
         self.filter_type = lambda: f.FilterRepeater(f.NotEmpty | filters.number.Int)
 
         self.assertFilterErrors(
             {
                 # First element is valid (control group).
-                #   The rest fail miserably.
+                # The rest fail miserably.
                 'foo':      4,
                 'bar':      'NaN',
                 'baz':      3.14,
@@ -135,7 +135,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             },
 
             # Just as with collections, the invalid values in the
-            #   filtered value are replaced with `None`.
+            # filtered value are replaced with `None`.
             expected_value = {
                 'foo':      4,
                 'bar':      None,
@@ -147,7 +147,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
     def test_restrict_keys(self):
         """
         A FilterRepeated is configured to restrict allowed keys in a
-            mapping.
+        mapping.
         """
         self.filter_type = lambda: f.FilterRepeater(
             filter_chain    =filters.number.Int,
@@ -155,14 +155,14 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         )
 
         # As long as you stick to the expected keys, everything's
-        #   hunky-dory.
+        # hunky-dory.
         self.assertFilterPasses(
             {'ducks': '3', 'sea otters': '4'},
             {'ducks': 3, 'sea otters': 4},
         )
 
         # However, should you deviate from the marked path, we cannot
-        #   be held responsible for the consequences.
+        # be held responsible for the consequences.
         self.assertFilterErrors(
             # Charlie shot first!
             {'ducks': '3', 'hawks': '4'},
@@ -181,18 +181,18 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
     def test_restrict_indexes(self):
         """
         A FilterRepeater CAN be configured to restrict keys for
-            incoming Iterables, although it is probably the wrong tool
-            for the job (MaxLength is probably a better fit).
+        incoming Iterables, although it is probably the wrong tool
+        for the job (MaxLength is probably a better fit).
         """
         #
         # Note that if `restrict_keys` contains non-integers and/or
-        #   starts with a value other than 0, the FilterRepeater will
-        #   reject EVERY Iterable it comes across!
+        # starts with a value other than 0, the FilterRepeater will
+        # reject EVERY Iterable it comes across!
         #
         # Really, you should just stick a MaxLength(2) in front of the
-        #   FilterRepeater and call it a day.  It's less likely to
-        #   introduce a logic bug and way easier for other devs to
-        #   interpret.
+        # FilterRepeater and call it a day.  It's less likely to
+        # introduce a logic bug and way easier for other devs to
+        # interpret.
         #
         # noinspection PyTypeChecker
         self.filter_type = lambda: f.FilterRepeater(
@@ -207,25 +207,25 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
 
             {
                 # Index 2 was unexpected (the Filter is configured
-                #   only to allow indexes 0, 1, 3 and 4).
+                # only to allow indexes 0, 1, 3 and 4).
                 '2': [f.FilterRepeater.CODE_EXTRA_KEY],
             },
 
             # To make things even more confusing, the invalid "keys"
-            #   (indexes) ARE included in the filtered value.  This is
-            #   because, unlike in mappings, it is not possible to
-            #   identify "missing" indexes.
+            # (indexes) ARE included in the filtered value.  This is
+            # because, unlike in mappings, it is not possible to
+            # identify "missing" indexes.
             expected_value = [50, 40, None, 20, 10]
         )
 
         # The moral of the story is, don't use `restrict_keys` when
-        #   configuring a FilterRepeater that will operate on
-        #   collections.
+        # configuring a FilterRepeater that will operate on
+        # collections.
 
     def test_fail_non_iterable_value(self):
         """
         A FilterRepeater will reject any non-iterable value it comes
-            across (except for `None`).
+        across (except for `None`).
         """
         self.filter_type = lambda: f.FilterRepeater(filters.number.Int)
 
@@ -234,31 +234,31 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
     def test_repeater_chained_with_repeater(self):
         """
         Chaining two FilterRepeaters together has basically the same
-            effect as combining their Filters, except for one very
-            important difference:  The two sets of Filters are applied
-            in sequence.
+        effect as combining their Filters, except for one very
+        important difference:  The two sets of Filters are applied
+        in sequence.
 
-            That is, the second set of Filters only get applied if ALL
-            of the Filters in the first set pass!
+        That is, the second set of Filters only get applied if ALL
+        of the Filters in the first set pass!
 
         Generally, combining two FilterRepeaters into a single instance
-            is much easier to read/maintain than chaining them, but
-            should you ever come across a situation where you need to
-            apply two FilterRepeaters in sequence, you can do so.
+        is much easier to read/maintain than chaining them, but
+        should you ever come across a situation where you need to
+        apply two FilterRepeaters in sequence, you can do so.
         """
         self.filter_type =\
             lambda: f.FilterRepeater(f.NotEmpty) | f.FilterRepeater(
               filters.number.Int)
 
         # The values in this list pass through both FilterRepeaters
-        #   successfully.
+        # successfully.
         self.assertFilterPasses(
             ['1', 2, 0, None, '-12'],
             [1, 2, 0, None, -12],
         )
 
         # The values in this list fail one or more Filters in each
-        #   FilterRepeater.
+        # FilterRepeater.
         self.assertFilterErrors(
             ['', 'NaN', 0, None, 'FOO'],
 
@@ -267,21 +267,21 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
                 '0': [f.NotEmpty.CODE_EMPTY],
 
                 # IMPORTANT:  Because the first FilterRepeater had one
-                #   or more errors, the outer FilterChain stopped.
+                # or more errors, the outer FilterChain stopped.
                 # # Fails the Int filter in the second FilterRepeater.
                 # '1': [f.Decimal.CODE_NON_FINITE],
                 # '4': [f.Int.CODE_INVALID],
             },
 
             # The result is the same as if we only ran the value
-            #   through the first FilterRepeater.
+            # through the first FilterRepeater.
             expected_value = [
                 None, 'NaN', 0, None, 'FOO'
             ]
         )
 
         # The values in this list pass the first FilterRepeater but
-        #   fail the second one.
+        # fail the second one.
         self.assertFilterErrors(
             ['1', 'NaN', 0, None, 'FOO'],
 
@@ -296,16 +296,16 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
     def test_repeater_chained_with_filter(self):
         """
         Chaining a Filter with a FilterRepeater causes the chained
-            Filter to operate on the entire collection.
+        Filter to operate on the entire collection.
         """
         # This chain will apply NotEmpty to every item in the
-        #   collection, and then apply MaxLength to the collection as a
-        #   whole.
+        # collection, and then apply MaxLength to the collection as a
+        # whole.
         self.filter_type =\
             lambda: f.FilterRepeater(f.NotEmpty) | f.MaxLength(2)
 
         # The collection has a length of 2, so it passes the MaxLength
-        #   filter.
+        # filter.
         self.assertFilterPasses(['foo', 'bar'])
 
         # The collection has a length of 3, so it fails the MaxLength
@@ -322,7 +322,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: (
             # Apply the following filters to each item in the incoming
-            #   value:
+            # value:
             f.FilterRepeater(
 
                     # 1. It must be a list.
@@ -339,10 +339,10 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             #
             # Note that the INCOMING VALUE ITSELF does not have to be a
-            #   list, nor does it have to have a max length <= 3.
+            # list, nor does it have to have a max length <= 3.
             #
             # These Filters are applied to the items INSIDE THE
-            #   INCOMING VALUE (because of the outer FilterRepeater).
+            # INCOMING VALUE (because of the outer FilterRepeater).
             #
             {
                 'foo':      ['1', '2', '3'],
@@ -383,11 +383,11 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             {
                 #
                 # The error keys are the dotted paths to the invalid
-                #   values (in this case, they are numeric because we
-                #   are working with lists).
+                # values (in this case, they are numeric because we
+                # are working with lists).
                 #
                 # This way, we don't have to deal with nested dicts
-                #   when processing error codes.
+                # when processing error codes.
                 #
                 '1.0':  [filters.number.Decimal.CODE_NON_FINITE],
                 '1.1':  [filters.number.Int.CODE_DECIMAL],
@@ -416,8 +416,8 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_pass_none(self):
         """
         For consistency with all the other Filter classes, `None` is
-            considered a valid value to pass to a FilterMapper, even
-            though it is not iterable.
+        considered a valid value to pass to a FilterMapper, even
+        though it is not iterable.
         """
         self.filter_type = lambda: f.FilterMapper({'id': filters.number.Int})
 
@@ -447,7 +447,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_fail_mapping(self):
         """
         A FilterRepeater is applied to a dict containing invalid
-            values.
+        values.
         """
         self.filter_type = lambda: f.FilterMapper({
             'id':       f.Required | filters.number.Int | f.Min(1),
@@ -497,7 +497,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_extra_keys_disallowed(self):
         """
         FilterMappers can be configured to treat any extra key as an
-            invalid value.
+        invalid value.
         """
         self.filter_type = lambda: f.FilterMapper(
             {
@@ -531,7 +531,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_extra_keys_specified(self):
         """
         FilterMappers can be configured only to allow certain extra
-            keys.
+        keys.
         """
         self.filter_type = lambda: f.FilterMapper(
             {
@@ -621,7 +621,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_missing_keys_disallowed(self):
         """
         FilterMappers can be configured to treat missing keys as
-            invalid values.
+        invalid values.
         """
         self.filter_type = lambda: f.FilterMapper(
             {
@@ -650,7 +650,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_missing_keys_specified(self):
         """
         FilterMappers can be configured to allow some missing keys but
-            not others.
+        not others.
         """
         self.filter_type = lambda: f.FilterMapper(
             {
@@ -662,7 +662,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )
 
         # The FilterMapper is configured to treat missing 'subject' as
-        #   if it were set to `None`.
+        # if it were set to `None`.
         self.assertFilterPasses(
             {
                 'id': '42'
@@ -693,7 +693,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_passthru_key(self):
         """
         If you want to make a key required but do not want to run any
-            Filters on it, set its FilterChain to `None`.
+        Filters on it, set its FilterChain to `None`.
         """
         self.filter_type = lambda: f.FilterMapper(
             {
@@ -702,7 +702,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
 
             # If you configure a FilterMapper with passthru keys(s),
-            #   you generally also want to disallow missing keys.
+            # you generally also want to disallow missing keys.
             allow_missing_keys = False,
         )
 
@@ -746,9 +746,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )
 
     def test_fail_non_mapping(self):
-        """
-        The incoming value is not a mapping.
-        """
+        """The incoming value is not a mapping."""
         self.filter_type = lambda: f.FilterMapper({
             'id':       f.Required | filters.number.Int | f.Min(1),
             'subject':  f.NotEmpty | f.MaxLength(16),
@@ -763,13 +761,13 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_mapper_chained_with_mapper(self):
         """
         Chaining two FilterMappers together has basically the same
-            effect as combining their Filters.
+        effect as combining their Filters.
 
         Generally, combining two FilterMappers into a single instance
-            is much easier to read/maintain than chaining them, but in
-            a few cases it may be unavoidable (for example, if you need
-            each FilterMapper to handle extra and/or missing keys
-            differently).
+        is much easier to read/maintain than chaining them, but in
+        a few cases it may be unavoidable (for example, if you need
+        each FilterMapper to handle extra and/or missing keys
+        differently).
         """
         fm1 = f.FilterMapper(
             {
@@ -810,11 +808,11 @@ class FilterMapperTestCase(BaseFilterTestCase):
             {
                 # `fm1` allows missing keys, so it sets 'id' to `None`.
                 # However, `fm2` does not allow `None` for 'id'
-                #   (because of the `Required` filter).
+                # (because of the `Required` filter).
                 'id':       [f.Required.CODE_EMPTY],
 
                 # `fm1` does not care about `subject`, but `fm2`
-                #   expects it to be there.
+                # expects it to be there.
                 'subject':  [f.FilterMapper.CODE_MISSING_KEY],
             },
 
@@ -827,7 +825,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_filter_mapper_chained_with_filter(self):
         """
         Chaining a Filter with a FilterMapper causes the chained Filter
-            to operate on the entire mapping.
+        to operate on the entire mapping.
         """
         fm = f.FilterMapper({
             'id':       f.Required | filters.number.Int | f.Min(1),
@@ -859,7 +857,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
 
             # The incoming value has 4 items, which fails the MaxLength
-            #   filter.
+            # filter.
             [f.MaxLength.CODE_TOO_LONG],
         )
 
@@ -867,7 +865,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
     def test_mapperception(self):
         """
         Want to filter dicts that contain other dicts?
-            We need to go deeper.
+        We need to go deeper.
         """
         self.filter_type = lambda: f.FilterMapper(
             {
@@ -938,9 +936,9 @@ class FilterMapperTestCase(BaseFilterTestCase):
 
             {
                 # The error keys are the dotted paths to the invalid
-                #   values.
+                # values.
                 # This way, we don't have to deal with nested dicts
-                #   when processing error codes.
+                # when processing error codes.
                 'id':               [filters.number.Decimal.CODE_NON_FINITE],
                 'subject':          [f.FilterMapper.CODE_MISSING_KEY],
                 'attachment.type':  [f.Choice.CODE_INVALID],
@@ -948,7 +946,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
 
             # The resulting value has the expected structure, but it's
-            #   a ghost town.
+            # a ghost town.
             expected_value = {
                 'id':       None,
                 'subject':  None,

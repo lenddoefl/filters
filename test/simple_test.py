@@ -16,7 +16,7 @@ from filters.test import BaseFilterTestCase
 class Lengthy(object):
     """
     A class that defines `__len__`, used to test Filters that check for
-        object length.
+    object length.
     """
     def __init__(self, length):
         super(Lengthy, self).__init__()
@@ -30,7 +30,7 @@ class Lengthy(object):
 class Bytesy(object):
     """
     A class that defines `__bytes__`, used to test Filters that convert
-        values into byte strings.
+    values into byte strings.
     """
     def __init__(self, value):
         super(Bytesy, self).__init__()
@@ -48,7 +48,7 @@ class Bytesy(object):
 class Unicody(object):
     """
     A class that defines `__str__`, used to test Filters that convert
-        values into unicodes.
+    values into unicodes.
     """
     def __init__(self, value):
         super(Unicody, self).__init__()
@@ -108,10 +108,10 @@ class ArrayTestCase(BaseFilterTestCase):
         self.assertFilterErrors(CustomSequence(), [f.Array.CODE_WRONG_TYPE])
 
         # If you can't (or don't want) to modify the base class for
-        #   your custom sequence, you can register it.
+        # your custom sequence, you can register it.
         # Note: Code included here for documentation purposes, but it's
-        #   commented out to avoid side effects; registering a subclass
-        #   this way is basically irreversible.
+        # commented out to avoid side effects; registering a subclass
+        # this way is basically irreversible.
         # Sequence.register(CustomSequence)
         # self.assertFilterPasses(CustomSequence())
 
@@ -133,9 +133,9 @@ class ByteArrayTestCase(BaseFilterTestCase):
             b'|\xa8\xc1.8\xbd4\xd5s\x1e\xa6%+\xea!6',
 
             # Note that "numeric" characters like "8" and "6" are NOT
-            #   interpreted literally.
+            # interpreted literally.
             # This matches the behavior of Python's built-in bytearray
-            #   class.
+            # class.
             bytearray([
                 124, 168, 193, 46, 56, 189, 52, 213,
                 115, 30, 166, 37, 43, 234, 33, 54,
@@ -147,7 +147,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
         The incoming value is a string.
 
         This is generally not a recommended use for ByteArray, but
-            sometimes it's unavoidable.
+        sometimes it's unavoidable.
         """
         self.assertFilterPasses(
             u'\xccK\xdf\xb1\x8bM\xc7\x01\xf0B\xac":\xeb>\x85',
@@ -160,7 +160,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
     def test_pass_string_alternate_encoding(self):
         """
         If you want to filter unicodes, you can specify the encoding to
-            use.
+        use.
         """
         self.assertFilterPasses(
             self._filter(
@@ -185,7 +185,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
     def test_pass_iterable(self):
         """
         The incoming value is an iterable containing integers between
-            0 and 255, inclusive.
+        0 and 255, inclusive.
         """
         self.assertFilterPasses(
             [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233],
@@ -195,45 +195,45 @@ class ByteArrayTestCase(BaseFilterTestCase):
     def test_fail_iterable_wrong_types(self):
         """
         The incoming value is an iterable, but the values are not
-            integers.
+        integers.
         """
         self.assertFilterErrors(
             # The first 2 values are valid.  None of the others
-            #   are.
+            # are.
             # It's arguable whether booleans should be valid, but
-            #   they are technically ints, and Python's bytearray
-            #   allows them, so the Filter does, too.
+            # they are technically ints, and Python's bytearray
+            # allows them, so the Filter does, too.
             [1, True, '1', b'1', 1.1, bytearray([1])],
 
             {
                 #
                 # String values inside of an iterable are not
-                #   considered valid.
+                # considered valid.
                 #
                 # It's true that we do have a precedent for how to
-                #   treat string values (convert each character to
-                #   its ordinal value), but that only works for
-                #   strings that can fit into a single byte.
+                # treat string values (convert each character to
+                # its ordinal value), but that only works for
+                # strings that can fit into a single byte.
                 #
                 # How would we convert `['11', 'foo']` into a
-                #   bytearray?
+                # bytearray?
                 #
                 # To keep things as consistent as possible, the
-                #   Filter will treat strings inside of iterables
-                #   the same way it treats anything else that isn't
-                #   an int.
+                # Filter will treat strings inside of iterables
+                # the same way it treats anything else that isn't
+                # an int.
                 #
                 '2': [f.Type.CODE_WRONG_TYPE],
                 '3': [f.Type.CODE_WRONG_TYPE],
 
                 # Floats are not allowed in bytearrays.  How would
-                #   that even work?
+                # that even work?
                 '4': [f.Type.CODE_WRONG_TYPE],
 
                 # Anything else that isn't an int is invalid, even
-                #   if it contains ints.
+                # if it contains ints.
                 # After all, you can't squeeze multiple bytes into
-                #   a single byte!
+                # a single byte!
                 '5': [f.Type.CODE_WRONG_TYPE],
             },
         )
@@ -241,10 +241,10 @@ class ByteArrayTestCase(BaseFilterTestCase):
     def test_fail_iterable_out_of_bounds(self):
         """
         The incoming value is an iterable with integers, but it
-            contains values outside the acceptable range.
+        contains values outside the acceptable range.
 
         Each value inside a bytearray must fit within 1 byte, so its
-            value must satisfy `0 <= x < 2^8`.
+        value must satisfy `0 <= x < 2^8`.
         """
         self.assertFilterErrors(
             [-1, 0, 1, 255, 256, 9001],
@@ -259,7 +259,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
     def test_fail_unencodable_unicode(self):
         """
         The incoming value is a unicode that cannot be encoded using
-            the specified encoding.
+        the specified encoding.
         """
         value = '\u043b\u0435\u0431\u044b\u0440'
 
@@ -270,7 +270,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
         )
 
         # However, if we switch to a single-byte encoding, we run into
-        #   serious problems.
+        # serious problems.
         self.assertFilterErrors(
             self._filter(value, encoding='latin-1'),
             [f.ByteArray.CODE_BAD_ENCODING],
@@ -333,27 +333,27 @@ class DateTestCase(BaseFilterTestCase):
             '2015-05-11T19:56:58-05:00',
 
             # The resulting date appears to occur 1 day later because
-            #   that's the date according to UTC.
+            # that's the date according to UTC.
             date(2015, 5, 12)
         )
 
     def test_pass_naive_timestamp_default_timezone(self):
         """
         The incoming value is a naive timestamp, but the Filter is
-            configured not to treat naive timestamps as UTC.
+        configured not to treat naive timestamps as UTC.
         """
         self.assertFilterPasses(
             self._filter(
                 '2015-05-12 03:20:03',
 
                 # The Filter is configured to parse naive timestamps as
-                #   if they are UTC+8.
+                # if they are UTC+8.
                 timezone = tzoffset('UTC+8', 8*3600)
             ),
 
             # The resulting date appears to occur 1 day earlier because
-            #   the Filter subtracted 8 hours to convert the value to
-            #   UTC.
+            # the Filter subtracted 8 hours to convert the value to
+            # UTC.
             date(2015, 5, 11),
         )
 
@@ -364,28 +364,28 @@ class DateTestCase(BaseFilterTestCase):
         """
         self.assertFilterPasses(
             # The incoming timestamp is from UTC+4, but the Filter is
-            #   configured to use UTC-11 by default.
+            # configured to use UTC-11 by default.
             self._filter(
                 '2015-05-11T03:14:38+04:00',
                 timezone = tzoffset('UTC-11', -11*3600)
             ),
 
             # Because the incoming timestamp has timezone info, the
-            #   Filter uses that instead of the default value.
+            # Filter uses that instead of the default value.
             # Note that the this test will fail if the Filter uses the
-            #   UTC-11 timezone (the result will be 1 day ahead).
+            # UTC-11 timezone (the result will be 1 day ahead).
             date(2015, 5, 10),
         )
 
     def test_pass_alternate_timezone_syntax(self):
         """
         When setting the default timezone for the Filter, you can use
-            an int/float offset (number of hours from UTC) instead of a
-            tzoffset object.
+        an int/float offset (number of hours from UTC) instead of a
+        tzoffset object.
         """
         self.assertFilterPasses(
             # Note that we use an int value instead of constructing a
-            #   tzoffset for `timezone`.
+            # tzoffset for `timezone`.
             self._filter('2015-05-11 21:14:38', timezone=-8),
             date(2015, 5, 12),
         )
@@ -393,7 +393,7 @@ class DateTestCase(BaseFilterTestCase):
     def test_pass_datetime_utc(self):
         """
         The incoming value is a datetime object that is already set to
-            UTC.
+        UTC.
         """
         self.assertFilterPasses(
             datetime(2015, 6, 27, 10, 5, 48, tzinfo=utc),
@@ -403,7 +403,7 @@ class DateTestCase(BaseFilterTestCase):
     def test_pass_datetime_non_utc(self):
         """
         The incoming value is a datetime object with a non-UTC
-            timezone.
+        timezone.
         """
         self.assertFilterPasses(
             datetime(
@@ -412,7 +412,7 @@ class DateTestCase(BaseFilterTestCase):
             ),
 
             # As you probably already guessed, the datetime gets
-            #   converted to UTC before it is converted to a date.
+            # converted to UTC before it is converted to a date.
             date(2015, 6, 28),
         )
 
@@ -422,11 +422,11 @@ class DateTestCase(BaseFilterTestCase):
         """
         self.assertFilterPasses(
             # The Filter will assume that this datetime is UTC-3 by
-            #   default.
+            # default.
             self._filter(datetime(2015, 6, 27, 23, 7, 18), timezone=-3),
 
             # The datetime is converted from UTC-3 to UTC before it is
-            #   converted to a date.
+            # converted to a date.
             date(2015, 6, 28),
         )
 
@@ -460,7 +460,7 @@ class DatetimeTestCase(BaseFilterTestCase):
     def test_pass_naive_timestamp(self):
         """
         The incoming value is a naive timestamp (does not include
-            timezone info).
+        timezone info).
         """
         self.assertFilterPasses(
             '2015-05-11 14:56:58',
@@ -481,11 +481,11 @@ class DatetimeTestCase(BaseFilterTestCase):
     def test_pass_naive_timestamp_default_timezone(self):
         """
         The incoming value is a naive timestamp, but the Filter is
-            configured not to treat naive timestamps as UTC.
+        configured not to treat naive timestamps as UTC.
         """
         self.assertFilterPasses(
             # The incoming value is a naive timestamp, and the Filter
-            #   is configured to use UTC+8 by default.
+            # is configured to use UTC+8 by default.
             self._filter(
                 '2015-05-12 09:20:03',
                 timezone = tzoffset('UTC+8', 8*3600),
@@ -498,32 +498,32 @@ class DatetimeTestCase(BaseFilterTestCase):
     def test_pass_aware_timestamp_default_timezone(self):
         """
         The Filter's default timezone has no effect if the incoming
-            value already contains timezone info.
+        value already contains timezone info.
         """
         self.assertFilterPasses(
             # The incoming value is UTC+4, but the Filter is configured
-            #   to use UTC-1 by default.
+            # to use UTC-1 by default.
             self._filter(
                 '2015-05-11T21:14:38+04:00',
                 timezone = tzoffset('UTC-1', -1*3600)
             ),
 
             # The incoming values timezone info is used instead of the
-            #   default.
+            # default.
             # Note that the resulting datetime is still converted to
-            #   UTC.
+            # UTC.
             datetime(2015, 5, 11, 17, 14, 38, tzinfo=utc),
         )
 
     def test_pass_alternate_timezone_syntax(self):
         """
         When setting the default timezone for the Filter, you can use
-            an int/float offset (number of hours from UTC) instead of a
-            tzoffset object.
+        an int/float offset (number of hours from UTC) instead of a
+        tzoffset object.
         """
         self.assertFilterPasses(
             # Note that we use an int value instead of constructing a
-            #   tzoffset for `timezone`.
+            # tzoffset for `timezone`.
             self._filter('2015-05-11 21:14:38', timezone=3),
 
             datetime(2015, 5, 11, 18, 14, 38, tzinfo=utc),
@@ -532,14 +532,14 @@ class DatetimeTestCase(BaseFilterTestCase):
     def test_pass_datetime_utc(self):
         """
         The incoming value is a datetime object that is already set to
-            UTC.
+        UTC.
         """
         self.assertFilterPasses(datetime(2015, 6, 27, 10, 5, 48, tzinfo=utc))
 
     def test_pass_datetime_non_utc(self):
         """
         The incoming value is a datetime object that is already set to
-            a non-UTC timezone.
+        a non-UTC timezone.
         """
         self.assertFilterPasses(
             datetime(2015, 6, 27, 10, 6, 32, tzinfo=tzoffset('UTC-5',-5*3600)),
@@ -549,11 +549,11 @@ class DatetimeTestCase(BaseFilterTestCase):
     def test_datetime_naive(self):
         """
         The incoming value is a datetime object that does not have
-            timezone info.
+        timezone info.
         """
         self.assertFilterPasses(
             # The Filter is configured to assume UTC-3 if the incoming
-            #   value has no timezone info.
+            # value has no timezone info.
             self._filter(datetime(2015, 6, 27, 18, 7, 18), timezone=-3),
 
             datetime(2015, 6, 27, 21, 7, 18, tzinfo=utc),
@@ -563,7 +563,7 @@ class DatetimeTestCase(BaseFilterTestCase):
         """The incoming value is a date object."""
         self.assertFilterPasses(
             # The Filter is configured to assume UTC+12 if the incoming
-            #   value has no timezone info.
+            # value has no timezone info.
             self._filter(date(2015, 6, 27), timezone=12),
 
             datetime(2015, 6, 26, 12, 0, 0, tzinfo=utc),
@@ -572,10 +572,10 @@ class DatetimeTestCase(BaseFilterTestCase):
     def test_return_naive_datetime(self):
         """
         You can configure the filter to return a naive datetime object
-            (e.g., for storing in a database).
+        (e.g., for storing in a database).
 
         Note that the datetime is still converted to UTC before its
-            tzinfo is removed.
+        tzinfo is removed.
         """
         self.assertFilterPasses(
             self._filter(
@@ -585,19 +585,17 @@ class DatetimeTestCase(BaseFilterTestCase):
                 ),
 
                 # Note that we pass `naive=True` to the Filter's
-                #   initializer.
+                # initializer.
                 naive = True,
             ),
 
             # The resulting datetime is converted to UTC before its
-            #   timezone info is stripped.
+            # timezone info is stripped.
             datetime(2015, 7, 1, 14, 22, 10, tzinfo=None),
         )
 
     def test_fail_invalid_value(self):
-        """
-        The incoming value cannot be parsed as a datetime.
-        """
+        """The incoming value cannot be parsed as a datetime."""
         self.assertFilterErrors(
             'this is not a datetime',
             [f.Datetime.CODE_INVALID],
@@ -638,7 +636,7 @@ class EmptyTestCase(BaseFilterTestCase):
     def test_fail_non_empty_collection(self):
         """The incoming value is a collection with length > 0."""
         # The values inside the collection may be empty, but the
-        #   collection itself is not.
+        # collection itself is not.
         self.assertFilterErrors(['', '', ''],   [f.Empty.CODE_NOT_EMPTY])
         self.assertFilterErrors({'': ''},       [f.Empty.CODE_NOT_EMPTY])
         self.assertFilterErrors(Lengthy(1),     [f.Empty.CODE_NOT_EMPTY])
@@ -657,7 +655,7 @@ class EmptyTestCase(BaseFilterTestCase):
     def test_false_is_not_empty(self):
         """
         The boolean value `False` is NOT considered empty because it
-            represents SOME kind of value.
+        represents SOME kind of value.
         """
         self.assertFilterErrors(False, [f.Empty.CODE_NOT_EMPTY])
 
@@ -697,7 +695,7 @@ class MaxLengthTestCase(BaseFilterTestCase):
     def test_multi_byte_characters(self):
         """
         Multibyte characters are treated differently depending on
-            whether you pass in a unicode or a byte string.
+        whether you pass in a unicode or a byte string.
         """
         # "Hello world" in Chinese:
         decoded_value   = '\u4f60\u597d\u4e16\u754c'
@@ -718,7 +716,7 @@ class MaxLengthTestCase(BaseFilterTestCase):
     def test_pass_short_collection(self):
         """
         The incoming value is a collection with length less than or
-            equal to the max length.
+        equal to the max length.
         """
         self.assertFilterPasses(
             self._filter(['foo', 'bar', 'baz', 'luhrmann'], max_length=4),
@@ -737,7 +735,7 @@ class MaxLengthTestCase(BaseFilterTestCase):
     def test_fail_long_collection(self):
         """
         The incoming value is a collection with length greater than the
-            max length.
+        max length.
         """
         self.assertFilterErrors(
             self._filter(['foo', 'bar', 'baz', 'luhrmann'], max_length=3),
@@ -796,7 +794,7 @@ class MinLengthTestCase(BaseFilterTestCase):
     def test_multi_byte_characters(self):
         """
         Multibyte characters are treated differently depending on
-            whether you pass in a unicode or a byte string.
+        whether you pass in a unicode or a byte string.
         """
         # "Hello world" in Chinese:
         decoded_value   = '\u4f60\u597d\u4e16\u754c'
@@ -816,7 +814,7 @@ class MinLengthTestCase(BaseFilterTestCase):
     def test_pass_long_collection(self):
         """
         The incoming value is a collection with length greater than or
-            equal to the minimum value.
+        equal to the minimum value.
         """
         self.assertFilterPasses(
             self._filter(['foo', 'bar', 'baz', 'luhrmann'], min_length=3),
@@ -835,7 +833,7 @@ class MinLengthTestCase(BaseFilterTestCase):
     def test_fail_short_collection(self):
         """
         The incoming value is a collection with length less than the
-            minimum value.
+        minimum value.
         """
         self.assertFilterErrors(
             self._filter(['foo', 'bar', 'baz', 'luhrmann'], min_length=5),
@@ -871,7 +869,7 @@ class NotEmptyTestCase(BaseFilterTestCase):
     def test_pass_none(self):
         """
         By default, `NotEmpty` will treat `None` as valid (just like
-            every other Filter).
+        every other Filter).
         """
         self.assertFilterPasses(None)
 
@@ -891,7 +889,7 @@ class NotEmptyTestCase(BaseFilterTestCase):
         The incoming value is a collection with length > 0.
         """
         # The values in the collection may be empty, but the collection
-        #   itself is not.
+        # itself is not.
         self.assertFilterPasses(['', '', ''])
         self.assertFilterPasses({'': ''})
         self.assertFilterPasses(Lengthy(1))
@@ -919,7 +917,7 @@ class NotEmptyTestCase(BaseFilterTestCase):
     def test_false_is_not_empty(self):
         """
         The boolean value `False` is NOT considered empty because it
-            represents SOME kind of value.
+        represents SOME kind of value.
         """
         self.assertFilterPasses(False)
 
@@ -930,14 +928,14 @@ class OptionalTestCase(BaseFilterTestCase):
     def test_pass_none(self):
         """
         It'd be pretty silly to name a Filter "Optional" if it rejects
-            `None`, wouldn't it?
+        `None`, wouldn't it?
         """
         self.assertFilterPasses(None)
 
     def test_replace_none(self):
         """
         The default replacement value is `None`, but you can change it
-            to something else.
+        to something else.
         """
         self.assertFilterPasses(
             self._filter(None, default='Hello, world!'),
@@ -989,7 +987,7 @@ class OptionalTestCase(BaseFilterTestCase):
     def test_false_is_not_empty(self):
         """
         The boolean value `False` is NOT considered empty because it
-            represents SOME kind of value.
+        represents SOME kind of value.
         """
         self.assertFilterPasses(
             self._filter(False, default='fail'),
@@ -1038,7 +1036,7 @@ class RequiredTestCase(BaseFilterTestCase):
     def test_false_is_not_empty(self):
         """
         The boolean value `False` is NOT considered empty because it
-            represents SOME kind of value.
+        represents SOME kind of value.
         """
         self.assertFilterPasses(False)
 
@@ -1101,7 +1099,7 @@ class TypeTestCase(BaseFilterTestCase):
     def test_fail_types_are_not_instances(self):
         """
         The Filter checks that the value is an INSTANCE of its allowed
-            type(s).  It will reject the type(s) themselves.
+        type(s).  It will reject the type(s) themselves.
         """
         self.assertFilterErrors(
             self._filter(text_type, allowed_types=text_type),
