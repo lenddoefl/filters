@@ -65,7 +65,7 @@ class FilterRepeater(BaseFilter):
         """
         super(FilterRepeater, self).__init__()
 
-        self._filter_chain = self.normalize(filter_chain, parent=self)
+        self._filter_chain = self.resolve_filter(filter_chain, parent=self)
 
         self.restrict_keys = (
             None
@@ -256,7 +256,7 @@ class FilterMapper(BaseFilter):
                 # applying any Filters to the value.
                 #
                 self._filters[key] =\
-                    self.normalize(filter_chain, parent=self, key=key)
+                    self.resolve_filter(filter_chain, parent=self, key=key)
 
 
     def __str__(self):

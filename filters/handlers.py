@@ -169,7 +169,7 @@ class FilterRunner(object):
         """
         super(FilterRunner, self).__init__()
 
-        self.filter_chain       = BaseFilter.normalize(starting_filter) # type: FilterCompatible
+        self.filter_chain       = BaseFilter.resolve_filter(starting_filter) # type: FilterCompatible
         self.data               = incoming_data
         self.capture_exc_info   = capture_exc_info
 
