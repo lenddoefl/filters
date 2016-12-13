@@ -1,10 +1,11 @@
 # coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
+# :bc: Not importing unicode_literals because in Python 2 distutils,
+# some values are expected to be byte strings.
+from __future__ import absolute_import, division, print_function
 
 from codecs import StreamReader, open
-from setuptools import setup
 
+from setuptools import setup
 
 with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
     long_description = f.read()
