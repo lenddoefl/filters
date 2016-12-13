@@ -1,15 +1,31 @@
 # coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
+# :bc: Not importing unicode_literals because in Python 2 distutils,
+# some values are expected to be byte strings.
+from __future__ import absolute_import, division, print_function
 
 from codecs import StreamReader, open
-from setuptools import setup
+from sys import version_info
 
+from setuptools import setup
 
 with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
     long_description = f.read()
 
-# noinspection SpellCheckingInspection
+
+dependencies = [
+    'python-dateutil',
+    'pytz',
+    'regex',
+    'six',
+]
+
+if version_info[0] < 3:
+    # noinspection SpellCheckingInspection
+    dependencies.append('py2casefold')
+
+if version_info[0:2] < (3, 5):
+    dependencies.append('typing')
+
 setup(
     name        = 'filters',
     description = 'Validation and data pipelines made easy!',
@@ -17,20 +33,13 @@ setup(
 
     # Don't forget to update version number in `filters/__init__.py`
     # and `docs/conf.py`!
-    version = '1.1.2',
+    version = '1.1.3',
 
     packages = ['filters'],
 
     long_description = long_description,
 
-    install_requires = [
-        'py2casefold ; python_version < "3"',
-        'python-dateutil',
-        'pytz',
-        'regex',
-        'six',
-        'typing ; python_version < "3.5"',
-    ],
+    install_requires = dependencies,
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',

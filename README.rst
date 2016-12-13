@@ -1,3 +1,8 @@
+.. image:: https://travis-ci.org/eflglobal/filters.svg?branch=master
+   :target: https://travis-ci.org/eflglobal/filters
+
+
+
 =======
 Filters
 =======
