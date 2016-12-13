@@ -4,13 +4,27 @@
 from __future__ import absolute_import, division, print_function
 
 from codecs import StreamReader, open
+from sys import version_info
 
 from setuptools import setup
 
 with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
     long_description = f.read()
 
-# noinspection SpellCheckingInspection
+
+dependencies = [
+    'python-dateutil',
+    'pytz',
+    'regex',
+    'six',
+]
+
+if version_info[0] < 3:
+    # noinspection SpellCheckingInspection
+    dependencies.append('py2casefold')
+elif version_info[0:2] < (3, 5):
+    dependencies.append('typing')
+
 setup(
     name        = 'filters',
     description = 'Validation and data pipelines made easy!',
@@ -24,14 +38,7 @@ setup(
 
     long_description = long_description,
 
-    install_requires = [
-        'py2casefold ; python_version < "3"',
-        'python-dateutil',
-        'pytz',
-        'regex',
-        'six',
-        'typing ; python_version < "3.5"',
-    ],
+    install_requires = dependencies,
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',
