@@ -1,7 +1,7 @@
 .. image:: https://travis-ci.org/eflglobal/filters.svg?branch=master
    :target: https://travis-ci.org/eflglobal/filters
-.. image:: https://readthedocs.org/projects/filters/badge/?version=latest
-   :target: http://filters.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/filters/badge/?version=stable
+   :target: http://filters.readthedocs.io/en/latest/?badge=stable
 
 =======
 Filters
