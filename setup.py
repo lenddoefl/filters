@@ -22,7 +22,8 @@ dependencies = [
 if version_info[0] < 3:
     # noinspection SpellCheckingInspection
     dependencies.append('py2casefold')
-elif version_info[0:2] < (3, 5):
+
+if version_info[0:2] < (3, 5):
     dependencies.append('typing')
 
 setup(
