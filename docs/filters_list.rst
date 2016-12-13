@@ -113,6 +113,23 @@ Number Filters
 --------------
 These filters are designed to operate on (or convert to) numeric types.
 
+:py:class:`filters.Decimal`
+   Interprets the incoming value as a ``decimal.Decimal``.
+
+   Virtually any value that can be passed to ``decimal.Decimal.__init__`` is
+   accepted (including scientific notation), with a few exceptions:
+
+      - Non-finite values (e.g., ``NaN``, ``+Inf``, etc.) are not allowed.
+      - Tuple/list values (e.g., ``(0, (4, 2), -1)``) are allowed by default,
+        but you can disallow these values in the filter initializer.
+
+   The filter initializer also accepts a parameter to set max precision.  If
+   specified, the resulting values will be *truncated* to the specified number
+   of decimal places.
+
+   If you want to round to the specified precision instead, chain the filter
+   with :py:class:`filters.Round`.
+
 :py:class:`filters.Int`
    Interprets the incoming value as an int.
 
