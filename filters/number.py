@@ -38,7 +38,7 @@ class Decimal(BaseFilter):
             fit.
 
             To avoid ambiguity, specify ``max_precision`` as a
-            `decimal.Decimal` object.
+            ``decimal.Decimal`` object.
 
             For example, to round to the nearest 1/100::
 
@@ -54,7 +54,10 @@ class Decimal(BaseFilter):
         super(Decimal, self).__init__()
 
         # Convert e.g., 3 => DecimalType('.001').
-        if (max_precision is not None) and not isinstance(max_precision, DecimalType):
+        if not (
+                    (max_precision is None)
+                or  isinstance(max_precision, DecimalType)
+        ):
             max_precision = DecimalType('.1') ** max_precision
 
         self.max_precision  = max_precision

@@ -1,7 +1,7 @@
 .. image:: https://travis-ci.org/eflglobal/filters.svg?branch=master
    :target: https://travis-ci.org/eflglobal/filters
-
-
+.. image:: https://readthedocs.org/projects/filters/badge/?version=stable
+   :target: http://filters.readthedocs.io/en/stable/?badge=stable
 
 =======
 Filters
@@ -82,7 +82,7 @@ Parse a JSON string and check that it has correct structure:
 ============
 Requirements
 ============
-Filters is compatible with Python 2.7 and 3.5.
+Filters is compatible with Python versions 3.6, 3.5 and 2.7.
 
 ============
 Installation
