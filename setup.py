@@ -48,7 +48,7 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'http://filters.readthedocs.io/',
 
-    version = '1.1.3',
+    version = '1.1.4',
 
     packages = ['filters'],
 
