@@ -31,8 +31,6 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'http://filters.readthedocs.io/',
 
-    # Don't forget to update version number in `filters/__init__.py`
-    # and `docs/conf.py`!
     version = '1.1.3',
 
     packages = ['filters'],
