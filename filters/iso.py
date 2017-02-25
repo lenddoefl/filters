@@ -16,7 +16,7 @@ __all__ = [
 
 class Country(BaseFilter):
     """
-    Validates an incoming value as an ISO-3166-1 alpha-2 or alpha-3
+    Interprets an incoming value as an ISO 3166-1 alpha-2 or alpha-3
     country code.
 
     The resulting value is a :py:class:`iso3166.Country` object.
@@ -24,7 +24,7 @@ class Country(BaseFilter):
     CODE_INVALID = 'not_iso_3166_1'
 
     templates = {
-        CODE_INVALID: 'This is not a valid ISO-3166-1 country code.',
+        CODE_INVALID: 'This is not a valid ISO 3166-1 country code.',
     }
 
     def _apply(self, value):
@@ -57,13 +57,14 @@ class Country(BaseFilter):
 
 class Currency(BaseFilter):
     """
-    Validates an incoming value as an ISO-4217 currency code.
-    The resulting value is a moneyed.Currency object.
+    Interprets an incoming value as an ISO 4217 currency code.
+
+    The resulting value is a :py:class:`moneyed.Currency` object.
     """
     CODE_INVALID = 'not_iso_4217'
 
     templates = {
-        CODE_INVALID: 'This is not a valid ISO-4217 currency code.',
+        CODE_INVALID: 'This is not a valid ISO 4217 currency code.',
     }
 
     def _apply(self, value):
@@ -85,14 +86,14 @@ class Currency(BaseFilter):
 
         try:
             #
-            # Note that `get_currency` explicitly casts the incoming
-            #   code to ASCII, so it is possible to get a
-            #   UnicodeDecodeError here (e.g., the incoming value is
-            #   a currency symbol instead of an ISO currency code).
+            # Note that ``get_currency`` explicitly casts the incoming
+            # code to ASCII, so it is possible to get a
+            # UnicodeDecodeError here (e.g., the incoming value is
+            # a currency symbol instead of an ISO currency code).
             #
             # To keep things simple for the end user, we will treat
-            #   this error the same as if the incoming value was a non-
-            #   matching ASCII value.
+            # this error the same as if the incoming value was a non-
+            # matching ASCII value.
             #
             return get_currency(code=value.upper())
         except (CurrencyDoesNotExist, UnicodeDecodeError):
