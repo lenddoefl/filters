@@ -29,6 +29,9 @@ setup(
     long_description = long_description,
 
     install_requires = [
+        'iso3166',
+        'language_tags',
+        'py-moneyed',
         'py2casefold',
         'python-dateutil',
         'pytz',
