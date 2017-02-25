@@ -157,9 +157,6 @@ class Max(BaseFilter):
         :param max_value:
             The max value that the Filter will accept.
 
-            Note that the incoming value must have the same type as the
-            max value, or else it will automatically fail!
-
         :param exclusive:
             Whether to exclude the max value itself as a valid value:
 
@@ -182,17 +179,9 @@ class Max(BaseFilter):
         )
 
     def _apply(self, value):
-        value = self._filter(
-            value,
-            Type(type(self.max_value), allow_subclass=False),
-        )
-
-        if self._has_errors:
-            return None
-
         # Note that this will yield weird results for string values.
         # We could add better unicode support, if we ever need it.
-        # :see: http://stackoverflow.com/q/1097908
+        # http://stackoverflow.com/q/1097908
         if (
                 (value > self.max_value)
             or  (self.exclusive and (value == self.max_value))
@@ -236,9 +225,6 @@ class Min(BaseFilter):
         :param min_value:
             The min value that the Filter will accept.
 
-            Note that the incoming value must have the same type as the
-            min value, or else it will automatically fail!
-
         :param exclusive:
             Whether to exclude the min value itself as a valid value:
 
@@ -262,14 +248,6 @@ class Min(BaseFilter):
         )
 
     def _apply(self, value):
-        value = self._filter(
-            value,
-            Type(type(self.min_value), allow_subclass=False),
-        )
-
-        if self._has_errors:
-            return None
-
         # Note that this will yield weird results for string values.
         # We could add better unicode support, if we ever need it.
         # :see: http://stackoverflow.com/q/1097908
