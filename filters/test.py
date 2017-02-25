@@ -169,7 +169,18 @@ class BaseFilterTestCase(TestCase):
         :param kwargs:
             Keyword params to pass to the Filter's initializer.
         """
-        assert len(args) > 0, 'First argument must be the filtered value.'
+        if not callable(self.filter_type):
+            self.fail('{cls}.filter_type is not callable.'.format(
+                cls = type(self).__name__,
+            ))
+
+        if not args:
+            self.fail(
+                'First argument to {cls}._filter '
+                'must be the filtered value.'.format(
+                    cls = type(self).__name__,
+                ),
+            )
 
         return FilterRunner(
             starting_filter     = self.filter_type(*args[1:], **kwargs),

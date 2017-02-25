@@ -17,12 +17,13 @@ from uuid import UUID
 # noinspection PyCompatibility
 import regex
 from six import (
+    PY2,
     PY3,
     binary_type,
     moves as compat,
     python_2_unicode_compatible,
     text_type,
-    PY2)
+)
 
 from filters.base import BaseFilter, Type
 from filters.simple import MaxLength

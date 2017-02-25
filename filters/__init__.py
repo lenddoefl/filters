@@ -14,6 +14,10 @@ from .handlers import *
 from .number import *
 from .simple import *
 from .complex import *
+
+# These imports can be included in any order...
+# ... so we alphabetized them (hint, hint).
+from .iso import *
 from .string import *
 
 

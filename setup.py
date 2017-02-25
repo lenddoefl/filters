@@ -4,35 +4,8 @@
 from __future__ import absolute_import, division, print_function
 
 from codecs import StreamReader, open
-from sys import version_info
 
 from setuptools import setup
-
-
-##
-# Check Python version.
-if version_info[0:2] < (2, 7):
-  raise EnvironmentError('Filters requires Python 2.7 or greater.')
-
-if (version_info[0] == 3) and (version_info[1] < 5):
-  raise EnvironmentError('Filters requires Python 3.5 or greater.')
-
-
-##
-# Determine dependencies, depending on Python version.
-dependencies = [
-    'python-dateutil',
-    'pytz',
-    'regex',
-    'six',
-]
-
-if version_info[0] < 3:
-    # noinspection SpellCheckingInspection
-    dependencies.append('py2casefold')
-
-if version_info[0:2] < (3, 5):
-    dependencies.append('typing')
 
 
 ##
@@ -43,18 +16,29 @@ with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
 
 ##
 # Off we go!
+# noinspection SpellCheckingInspection
 setup(
     name        = 'filters',
     description = 'Validation and data pipelines made easy!',
     url         = 'http://filters.readthedocs.io/',
 
-    version = '1.1.4',
+    version = '1.1.5',
 
     packages = ['filters'],
 
     long_description = long_description,
 
-    install_requires = dependencies,
+    install_requires = [
+        'iso3166',
+        'language_tags',
+        'py-moneyed',
+        'py2casefold',
+        'python-dateutil',
+        'pytz',
+        'regex',
+        'six',
+        'typing',
+    ],
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',
