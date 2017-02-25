@@ -68,6 +68,22 @@ Just like with macros, you can use a partial just like any other filter:
    assert input.is_valid() is True
    assert input.cleaned_data == datetime(2016, 12, 11, 2, 0, 0, tzinfo=None)
 
+Additionally, partials act just like :py:func:`functools.partials` objects; you
+can invoke them with different parameters if you want:
+
+.. code-block:: python
+
+   from pytz import utc
+
+   input =\
+     f.FilterRunner(
+       f.Required | NZ_Datetime(naive=False),
+       '2016-12-11 15:00:00'
+     )
+
+   assert input.is_valid() is True
+   assert input.cleaned_data == datetime(2016, 12, 11, 2, 0, 0, tzinfo=utc)
+
 --------------
 Custom Filters
 --------------
