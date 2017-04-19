@@ -9,12 +9,23 @@ from filters.test import BaseFilterTestCase
 class FilterChainTestCase(BaseFilterTestCase):
     def test_implicit_chain(self):
         """
-        Chaining two Filters together creates a FilterChain.
+        Chaining two filters together creates a FilterChain.
         """
         self.filter_type = lambda: f.Int | f.Max(3)
 
         self.assertFilterPasses('1', 1)
         self.assertFilterErrors('4', [f.Max.CODE_TOO_BIG])
+
+    def test_implicit_chain_null(self):
+        """
+        Chaining a filter with ``None`` also yields a FilterChain, but
+        unsurprisingly, the chain only contains the one filter.
+        """
+        filter_chain = f.Int() | None
+        self.assertIsInstance(filter_chain, f.FilterChain)
+
+        with self.assertRaises(f.FilterError):
+            filter_chain.apply('not an int')
 
     # noinspection SpellCheckingInspection
     def test_chainception(self):

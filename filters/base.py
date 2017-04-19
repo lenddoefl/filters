@@ -4,25 +4,12 @@ from __future__ import absolute_import, division, print_function, \
 
 from abc import ABCMeta, abstractmethod as abstract_method
 from copy import copy
-from six import (
-    binary_type,
-    python_2_unicode_compatible,
-    with_metaclass,
-    text_type,
-)
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Text,
-    Tuple,
-    Union,
-)
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Text, \
+    Tuple, Union
 from weakref import ProxyTypes, proxy
+
+from six import binary_type, python_2_unicode_compatible, text_type, \
+    with_metaclass
 
 from filters import FilterCompatible
 
@@ -35,7 +22,9 @@ __all__ = [
 
 
 class FilterMeta(ABCMeta):
-    """Metaclass for Filters."""
+    """
+    Metaclass for filters.
+    """
     # noinspection PyShadowingBuiltins
     def __init__(cls, what, bases=None, dict=None):
         super(FilterMeta, cls).__init__(what, bases, dict)
@@ -44,8 +33,8 @@ class FilterMeta(ABCMeta):
             cls.templates = {}
 
         # Copy error templates from base class to derived class, but
-        #   in the event of a conflict, preserve the derived class'
-        #   template.
+        # in the event of a conflict, preserve the derived class'
+        # template.
         templates = {}
         for base in bases:
             if isinstance(base, FilterMeta):
@@ -67,15 +56,16 @@ class FilterMeta(ABCMeta):
             Int() | Max(32) # Filter.__or__
 
         References:
-
-            - http://stackoverflow.com/a/10773232
+          - http://stackoverflow.com/a/10773232
         """
         return FilterChain(self) | next_filter
 
 
 @python_2_unicode_compatible
 class BaseFilter(with_metaclass(FilterMeta)):
-    """Base functionality for all Filters, macros, etc."""
+    """
+    Base functionality for all Filters, macros, etc.
+    """
     CODE_EXCEPTION = 'exception'
 
     templates = {
@@ -97,14 +87,18 @@ class BaseFilter(with_metaclass(FilterMeta)):
         # external code should instead interact with invalid value
         # handlers such as LogHandler and MemoryHandler.
         #
-        # :see: importer.core.filters.handlers
+        # References:
+        #   - :py:mod:`importer.core.filters.handlers`
         #
         self._has_errors = False
 
+    # noinspection PyProtectedMember
     @classmethod
     def __copy__(cls, the_filter):
         # type: (BaseFilter) -> BaseFilter
-        """Creates a shallow copy of the object."""
+        """
+        Creates a shallow copy of the object.
+        """
         new_filter = type(the_filter)() # type: BaseFilter
 
         new_filter._parent  = the_filter._parent
@@ -115,13 +109,15 @@ class BaseFilter(with_metaclass(FilterMeta)):
 
     def __or__(self, next_filter):
         # type: (FilterCompatible) -> FilterChain
-        """Chains another filter with this one."""
+        """
+        Chains another filter with this one.
+        """
         normalized = self.resolve_filter(next_filter)
 
         if normalized:
             #
             # Officially, we should do this:
-            # return FilterChain(self) | next_filter
+            # return ``FilterChain(self) | next_filter``
             #
             # But that wastes some CPU cycles by creating an extra
             # FilterChain instance that gets thrown away almost
@@ -131,7 +127,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
             # noinspection PyProtectedMember
             return FilterChain(self)._add(next_filter)
         else:
-            return self
+            return self if isinstance(self, FilterChain) else FilterChain(self)
 
     def __str__(self):
         """
