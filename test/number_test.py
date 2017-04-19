@@ -221,22 +221,26 @@ class MaxTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | Max` if you want to reject `None`.
+        Use ``Required | Max`` if you want to reject ``None``.
         """
         self.assertFilterPasses(
             self._filter(None, max_value=5),
         )
 
     def test_pass_lesser_value(self):
-        """The incoming value is smaller than the max value."""
+        """
+        The incoming value is smaller than the max value.
+        """
         self.assertFilterPasses(
             self._filter(3, max_value=5),
         )
 
     def test_pass_equal_value(self):
-        """The incoming value is equal to the max value."""
+        """
+        The incoming value is equal to the max value.
+        """
         self.assertFilterPasses(
             self._filter(5, max_value=5),
         )
@@ -257,7 +261,9 @@ class MaxTestCase(BaseFilterTestCase):
         )
 
     def test_fail_greater_value(self):
-        """The incoming value is greater than the max value."""
+        """
+        The incoming value is greater than the max value.
+        """
         self.assertFilterErrors(
             self._filter(8, max_value=5),
             [f.Max.CODE_TOO_BIG],
@@ -282,60 +288,32 @@ class MaxTestCase(BaseFilterTestCase):
             [f.Max.CODE_TOO_BIG],
         )
 
-    def test_fail_wrong_type(self):
-        """
-        If the value has a different type than the max value, it fails.
-
-        Be sure to leverage other filters (e.g., Int) to ensure that
-        the incoming value has the correct type.
-        """
-        # Ints and strings are not compatible.
-        self.assertFilterErrors(
-            self._filter('4', max_value=5),
-            [f.Type.CODE_WRONG_TYPE]
-        )
-
-        # Also not compatible: ints and floats.
-        self.assertFilterErrors(
-            self._filter(4.99, max_value=5),
-            [f.Type.CODE_WRONG_TYPE],
-        )
-
-        # Even though bool is a subclass of int, it still won't work.
-        # It's gotta be an exact type match!
-        self.assertFilterErrors(
-            self._filter(True, max_value=5),
-            [f.Type.CODE_WRONG_TYPE],
-        )
-
-        # Floats and Decimals don't play nice, either.
-        self.assertFilterErrors(
-            self._filter(Decimal('4'), max_value=4.5),
-            [f.Type.CODE_WRONG_TYPE],
-        )
-
 
 class MinTestCase(BaseFilterTestCase):
     filter_type = f.Min
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | Min` if you want to reject `None`.
+        Use ``Required | Min`` if you want to reject ``None``.
         """
         self.assertFilterPasses(
             self._filter(None, min_value=5),
         )
 
     def test_pass_greater_value(self):
-        """The incoming value is greater than the min value."""
+        """
+        The incoming value is greater than the min value.
+        """
         self.assertFilterPasses(
             self._filter(8, min_value=5),
         )
 
     def test_pass_equal_value(self):
-        """The incoming value is equal to the min value."""
+        """
+        The incoming value is equal to the min value.
+        """
         self.assertFilterPasses(
             self._filter(5, min_value=5),
         )
@@ -356,7 +334,9 @@ class MinTestCase(BaseFilterTestCase):
         )
 
     def test_fail_lesser_value(self):
-        """The incoming value is less than the min value."""
+        """
+        The incoming value is less than the min value.
+        """
         self.assertFilterErrors(
             self._filter(4, min_value=5),
             [f.Min.CODE_TOO_SMALL],
@@ -379,38 +359,6 @@ class MinTestCase(BaseFilterTestCase):
         self.assertFilterErrors(
             self._filter('Foo', min_value='foo'),
             [f.Min.CODE_TOO_SMALL],
-        )
-
-    def test_fail_wrong_type(self):
-        """
-        If the value has a different type than the max value, it fails.
-
-        Be sure to leverage other filters (e.g., Int) to ensure that
-        the incoming value has the correct type.
-        """
-        # Ints and strings are not compatible.
-        self.assertFilterErrors(
-            self._filter('6', min_value=5),
-            [f.Type.CODE_WRONG_TYPE],
-        )
-
-        # Also not compatible: ints and floats.
-        self.assertFilterErrors(
-            self._filter(5.01, min_value=5),
-            [f.Type.CODE_WRONG_TYPE],
-        )
-
-        # Even though bool is a subclass of int, it still won't work.
-        # It's gotta be an exact type match!
-        self.assertFilterErrors(
-            self._filter(True, min_value=0),
-            [f.Type.CODE_WRONG_TYPE],
-        )
-
-        # Floats and Decimals don't play nice, either.
-        self.assertFilterErrors(
-            self._filter(Decimal('3.14'), min_value=2.5),
-            [f.Type.CODE_WRONG_TYPE],
         )
 
 
