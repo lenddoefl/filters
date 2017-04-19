@@ -12,7 +12,9 @@ from filters.macros import filter_macro
 
 
 class FilterMacroTestCase(TestCase):
-    """Unit tests for `filter_macro`."""
+    """
+    Unit tests for :py:func:`filter_macro`.
+    """
     def test_decorator(self):
         """
         A common use case for Filter macros is to use them as
@@ -46,7 +48,7 @@ class FilterMacroTestCase(TestCase):
         # Note that you don't have to invoke the macro to include it in
         # a chain.
         # If you don't believe me, try removing the decorator from
-        # `MyFilter`, and watch this test explode.
+        # ``MyFilter``, and watch this test explode.
         filter_chain = MyFilter | f.Split(r'\s+')
 
         self.assertEqual(
@@ -58,7 +60,9 @@ class FilterMacroTestCase(TestCase):
             filter_chain.apply('Hi there!')
 
     def test_chain_macros(self):
-        """Yup, you can chain Filter macros together, too."""
+        """
+        Yup, you can chain Filter macros together, too.
+        """
         @filter_macro
         def Filter1():
             return f.Unicode | f.Strip
@@ -78,7 +82,9 @@ class FilterMacroTestCase(TestCase):
             filter_chain.apply('whazzup!')
 
     def test_decorator_optional_parameters(self):
-        """A filter macro may accept optional parameters."""
+        """
+        A filter macro may accept optional parameters.
+        """
         @filter_macro
         def MyFilter(min_length=12):
             return f.Unicode | f.MinLength(min_length)

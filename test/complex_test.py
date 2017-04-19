@@ -8,7 +8,9 @@ from filters.test import BaseFilterTestCase
 
 class FilterChainTestCase(BaseFilterTestCase):
     def test_implicit_chain(self):
-        """Chaining two Filters together creates a FilterChain."""
+        """
+        Chaining two Filters together creates a FilterChain.
+        """
         self.filter_type = lambda: f.Int | f.Max(3)
 
         self.assertFilterPasses('1', 1)
@@ -16,7 +18,9 @@ class FilterChainTestCase(BaseFilterTestCase):
 
     # noinspection SpellCheckingInspection
     def test_chainception(self):
-        """You can also chain FilterChains together."""
+        """
+        You can also chain FilterChains together.
+        """
         fc1 = f.NotEmpty | f.Choice(choices=('Lucky', 'Dusty', 'Ned'))
         fc2 = f.NotEmpty | f.MinLength(4)
 
@@ -32,13 +36,13 @@ class FilterChainTestCase(BaseFilterTestCase):
         filter fails.
         """
         # This FilterChain will pretty much reject anything that you
-        #   throw at it.
+        # throw at it.
         self.filter_type =\
             lambda: f.MaxLength(3) | f.MinLength(8) | f.Required
 
         # Note that the value 'foobar' fails both the MaxLength and the
-        #   MinLength filters, but the FilterChain stops processing
-        #   after MaxLength fails.
+        # MinLength filters, but the FilterChain stops processing
+        # after MaxLength fails.
         self.assertFilterErrors('foobar', [f.MaxLength.CODE_TOO_LONG])
 
 
@@ -520,7 +524,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
 
             # The valid fields were still included in the return value,
-            #   but the invalid field was removed.
+            # but the invalid field was removed.
             expected_value = {
                 'id':       42,
                 'subject':  'Hello, world!',
@@ -542,7 +546,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )
 
         # As long as the extra keys are in the FilterMapper's
-        #   `allow_extra_keys` setting, everything is fine.
+        # ``allow_extra_keys`` setting, everything is fine.
         self.assertFilterPasses(
             {
                 'id':       '42',
@@ -557,8 +561,8 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
         )
 
-        # But, add a key that isn't in `allow_extra_keys`, and you've
-        #   got a problem.
+        # But, add a key that isn't in ``allow_extra_keys``, and you've
+        # got a problem.
         self.assertFilterErrors(
             {
                 'id':           '42',
@@ -601,7 +605,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )
 
         # However, 'id' has Required in its FilterChain, so a missing
-        #   'id' is still an error.
+        # 'id' is still an error.
         self.assertFilterErrors(
             {
                 'subject': 'Hello, world!',
@@ -805,9 +809,10 @@ class FilterMapperTestCase(BaseFilterTestCase):
             {},
 
             {
-                # `fm1` allows missing keys, so it sets 'id' to `None`.
-                # However, `fm2` does not allow `None` for 'id'
-                # (because of the `Required` filter).
+                # ``fm1`` allows missing keys, so it sets 'id' to
+                # ``None``.
+                # However, ``fm2`` does not allow ``None`` for 'id'
+                # (because of the ``Required`` filter).
                 'id':       [f.Required.CODE_EMPTY],
 
                 # `fm1` does not care about `subject`, but `fm2`

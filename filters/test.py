@@ -146,7 +146,7 @@ class BaseFilterTestCase(TestCase):
             )
 
     def _filter(self, *args, **kwargs):
-        # type: (tuple, dict) -> FilterRunner
+        # type: (...) -> FilterRunner
         """
         Applies the Filter to the specified value.
 
