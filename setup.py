@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 
 from codecs import StreamReader, open
+from sys import version_info
 
 from setuptools import setup
 
@@ -15,12 +16,31 @@ with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
 
 
 ##
+# Certain dependencies are optional depending on Python version.
+dependencies = [
+    'iso3166',
+    'language_tags',
+    'py-moneyed',
+    'python-dateutil',
+    'pytz',
+    'regex',
+    'six',
+    'typing',
+]
+
+if version_info[0] < 3:
+    # noinspection SpellCheckingInspection
+    dependencies.extend([
+        'py2casefold',
+    ])
+
+
+##
 # Off we go!
-# noinspection SpellCheckingInspection
 setup(
     name        = 'filters',
     description = 'Validation and data pipelines made easy!',
-    url         = 'http://filters.readthedocs.io/',
+    url         = 'https://filters.readthedocs.io/',
 
     version = '1.1.5',
 
@@ -28,17 +48,7 @@ setup(
 
     long_description = long_description,
 
-    install_requires = [
-        'iso3166',
-        'language_tags',
-        'py-moneyed',
-        'py2casefold',
-        'python-dateutil',
-        'pytz',
-        'regex',
-        'six',
-        'typing',
-    ],
+    install_requires = dependencies,
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',
