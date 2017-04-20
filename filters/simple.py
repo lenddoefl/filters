@@ -4,28 +4,16 @@ from __future__ import absolute_import, division, print_function, \
 
 import json
 from datetime import date, datetime, time, tzinfo
-from typing import (
-    Hashable,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Sized,
-    Text,
-    Union,
-)
+from typing import Hashable, Iterable, Mapping, Optional, Sequence, Sized, Text, \
+    Union
 
 from dateutil.parser import parse as dateutil_parse
 from dateutil.tz import tzoffset
 from pytz import utc
-from six import (
-    binary_type,
-    python_2_unicode_compatible,
-    text_type,
-)
+from six import binary_type, python_2_unicode_compatible, text_type
 
 from filters.base import BaseFilter, Type
-from filters.number import Max, Min, Int
+from filters.number import Int, Max, Min
 
 __all__ = [
     'Array',
@@ -73,7 +61,9 @@ class Array(Type):
 
 
 class ByteArray(BaseFilter):
-    """Converts an incoming value into a bytearray."""
+    """
+    Converts an incoming value into a bytearray.
+    """
     CODE_BAD_ENCODING = 'bad_encoding'
 
     templates = {
@@ -84,7 +74,8 @@ class ByteArray(BaseFilter):
     def __init__(self, encoding='utf-8'):
         # type: (Text) -> None
         """
-        :param encoding: The encoding to use when converting strings.
+        :param encoding:
+            The encoding to use when decoding strings into bytes.
         """
         super(ByteArray, self).__init__()
 
@@ -119,12 +110,12 @@ class ByteArray(BaseFilter):
         filtered = self._filter(value, FilterRepeater(
                 # Only allow ints and booleans.
                 Type(int)
-                # Convert booleans to int (Min and Max require an
-                #   exact type match).
+                  # Convert booleans to int (Min and Max require an
+                  # exact type match).
                 | Int
-                # Min value for each byte is 2^0-1.
+                  # Min value for each byte is 2^0-1.
                 | Min(0)
-                # Max value for each byte is 2^8-1.
+                  # Max value for each byte is 2^8-1.
                 | Max(255)
         ))
 
@@ -140,8 +131,8 @@ class Choice(BaseFilter):
     Expects the value to match one of the items in a set.
 
     Note:  When matching string values, the comparison is case-
-    sensitive!  Use the `CaseFold` Filter if you want to perform a
-    case-insensitive comparison.
+    sensitive!  Use the :py:class:`CaseFold` Filter if you want to
+    perform a case-insensitive comparison.
     """
     CODE_INVALID = 'not_valid_choice'
 
@@ -161,7 +152,7 @@ class Choice(BaseFilter):
 
             # Use JSON to mask Python syntax (e.g., remove "u" prefix
             # on unicode strings in Python 2).
-            # :see: Type.__init__
+            # :py:meth:`Type.__init__`
             choices = json.dumps(sorted(self.choices)),
         )
 
@@ -182,7 +173,9 @@ class Choice(BaseFilter):
 
 @python_2_unicode_compatible
 class Datetime(BaseFilter):
-    """Interprets the value as a UTC datetime."""
+    """
+    Interprets the value as a UTC datetime.
+    """
     CODE_INVALID = 'not_datetime'
 
     templates = {
@@ -191,18 +184,18 @@ class Datetime(BaseFilter):
     }
 
     def __init__(self, timezone=None, naive=False):
-        # type: (Union[tzinfo, int, float], bool) -> None
+        # type: (Optional[Union[tzinfo, int, float]], bool) -> None
         """
         :param timezone:
             Specifies the timezone to use when the *incoming* value is
             a naive timestamp.  Has no effect on timezone-aware
             timestamps.
 
-            Note that the result is always converted to UTC, regardless
-            of the value of the `timezone` param!
+            IMPORTANT:  The result is always converted to UTC,
+            regardless of the value of the ``timezone`` param!
 
-            You can provide an int/float, which is the offset from UTC
-            in hours (e.g., 5 = UTC+5).
+            You can provide an int/float here, which is the offset from
+            UTC in hours (e.g., 5 = UTC+5).
 
         :param naive:
             If True, the filter will *return* naive datetime objects
@@ -210,8 +203,8 @@ class Datetime(BaseFilter):
             will be stored in a database that doesn't understand aware
             timestamps.
 
-            Note that the result is still converted to UTC before
-            removing its tzinfo!
+            IMPORTANT:  Incoming values are still converted to UTC
+            before stripping tzinfo!
         """
         super(Datetime, self).__init__()
 
@@ -239,17 +232,17 @@ class Datetime(BaseFilter):
         if isinstance(value, datetime):
             parsed = value
         elif isinstance(value, date):
-            # :see: http://stackoverflow.com/a/1937636
+            # http://stackoverflow.com/a/1937636
             parsed = datetime.combine(value, time.min)
         else:
             try:
                 #
-                # It's a shame we can't pass `tzinfos` to
-                # `dateutil.parser.parse`; `tzinfos` only has effect
-                # if we also specify `ignoretz = True`, which we
-                # don't want to do here.
+                # It's a shame we can't pass ``tzinfos`` to
+                # :py:meth:`dateutil_parse.parse`; ``tzinfos`` only has
+                # effect if we also specify ``ignoretz = True``, which
+                # we definitely don't want to do here!
                 #
-                # :see: https://dateutil.readthedocs.org/en/latest/parser.html#dateutil.parser.parse
+                # https://dateutil.readthedocs.org/en/latest/parser.html#dateutil.parser.parse
                 #
                 parsed = dateutil_parse(value)
             except ValueError:
@@ -294,7 +287,7 @@ class Date(Datetime):
         filtered = super(Date, self)._apply(value) # type: datetime
 
         # Normally we return `None` if we get any errors, but in this
-        #   case, we'll let the superclass method decide.
+        # case, we'll let the superclass method decide.
         return filtered if self._has_errors else filtered.date()
 
 
@@ -328,7 +321,9 @@ class Empty(BaseFilter):
 
 @python_2_unicode_compatible
 class Length(BaseFilter):
-    """Ensures incoming values have exactly the right length."""
+    """
+    Ensures incoming values have exactly the right length.
+    """
     CODE_TOO_LONG   = 'too_long'
     CODE_TOO_SHORT  = 'too_short'
 
@@ -381,7 +376,9 @@ class Length(BaseFilter):
 
 @python_2_unicode_compatible
 class MaxLength(BaseFilter):
-    """Enforces a maximum length on the value."""
+    """
+    Enforces a maximum length on the value.
+    """
     CODE_TOO_LONG = 'too_long'
 
     templates = {
@@ -402,14 +399,11 @@ class MaxLength(BaseFilter):
 
     def _apply(self, value):
         if len(value) > self.max_length:
-            #
             # Note that we do not truncate the value:
-            #
             #   - It's not always clear which end we should truncate
             #     from.
-            #   - We should keep this Filter's behavior consistent with
+            #   - We should keep this filter's behavior consistent with
             #     that of MinLength.
-            #
             return self._invalid_value(
                 value   = value,
                 reason  = self.CODE_TOO_LONG,
@@ -424,7 +418,9 @@ class MaxLength(BaseFilter):
 
 
 class MinLength(BaseFilter):
-    """Enforces a minimum length on the value."""
+    """
+    Enforces a minimum length on the value.
+    """
     CODE_TOO_SHORT = 'too_short'
 
     templates = {
@@ -447,11 +443,10 @@ class MinLength(BaseFilter):
         if len(value) < self.min_length:
             #
             # Note that we do not pad the value:
-            #
             #   - It is not clear to which end(s) we should add the
             #     padding.
             #   - It is not clear what the padding value(s) should be.
-            #   - We should keep this Filter's behavior consistent with
+            #   - We should keep this filter's behavior consistent with
             #     that of MaxLength.
             #
             return self._invalid_value(
@@ -482,13 +477,13 @@ class NotEmpty(BaseFilter):
     Expects the value not to be empty.
 
     In this context, "empty" is defined as having zero length.  Note
-    that this Filter considers values that do not have length to be
+    that this filter considers values that do not have length to be
     not empty (in particular, False and 0 are not considered empty
     here).
 
-    By default, this Filter treats `None` as valid, just like every
-    other Filter.  However, you can configure the Filter to reject
-    `None` in its initializer method.
+    By default, this filter treats ``None`` as valid, just like every
+    other filter.  However, you can configure the filter to reject
+    ``None`` in its initializer method.
     """
     CODE_EMPTY = 'empty'
 
@@ -499,7 +494,8 @@ class NotEmpty(BaseFilter):
     def __init__(self, allow_none=True):
         # type: (bool) -> None
         """
-        :param allow_none: Whether to allow `None`.
+        :param allow_none:
+            Whether to allow ``None``.
         """
         super(NotEmpty, self).__init__()
 
@@ -528,10 +524,10 @@ class NotEmpty(BaseFilter):
 
 class Required(NotEmpty):
     """
-    Same as NotEmpty, but with `allow_none` hard-wired to `False`.
+    Same as NotEmpty, but with ``allow_none`` hard-wired to ``False``.
 
-    This Filter is the only exception to the "`None` passes by default"
-    rule.
+    This filter is the only exception to the "``None`` passes by
+    default" rule.
     """
     templates = {
         NotEmpty.CODE_EMPTY: 'This value is required.',
@@ -553,7 +549,8 @@ class Optional(BaseFilter):
     """
     def __init__(self, default=None):
         """
-        :param default: The default value used to replace empty values.
+        :param default:
+            The default value used to replace empty values.
         """
         super(Optional, self).__init__()
 

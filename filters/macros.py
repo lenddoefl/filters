@@ -36,13 +36,13 @@ def filter_macro(func, *args, **kwargs):
         @staticmethod
         def __new__(mcs, name, bases, attrs):
             # This is as close as we can get to running
-            # `update_wrapper` on a type.
+            # ``update_wrapper`` on a type.
             for attr in WRAPPER_ASSIGNMENTS:
                 if hasattr(func, attr):
                     attrs[attr] = getattr(func, attr)
 
-            # Note that we ignore the `name` argument, passing in
-            # `func.__name__` instead.
+            # Note that we ignore the ``name`` argument, passing in
+            # ``func.__name__`` instead.
             return super(FilterMacroMeta, mcs)\
                 .__new__(mcs, func.__name__, bases, attrs)
 
@@ -51,9 +51,10 @@ def filter_macro(func, *args, **kwargs):
 
     class FilterMacro(with_metaclass(FilterMacroMeta, BaseFilter)):
         # This method will probably never get called due to overloaded
-        # `__call__` in the metaclass, but just in case, we'll include
+        # ``__call__`` in the metaclass, but just in case, we'll include
         # it because it is an abstract method in `BaseFilter`.
         def _apply(self, value):
+            # noinspection PyProtectedMember
             return self.__class__()._apply(value)
 
     return FilterMacro
