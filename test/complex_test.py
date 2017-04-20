@@ -2,21 +2,38 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
+from collections import OrderedDict
+
 import filters as f
 from filters.test import BaseFilterTestCase
 
 
 class FilterChainTestCase(BaseFilterTestCase):
     def test_implicit_chain(self):
-        """Chaining two Filters together creates a FilterChain."""
+        """
+        Chaining two filters together creates a FilterChain.
+        """
         self.filter_type = lambda: f.Int | f.Max(3)
 
         self.assertFilterPasses('1', 1)
         self.assertFilterErrors('4', [f.Max.CODE_TOO_BIG])
 
+    def test_implicit_chain_null(self):
+        """
+        Chaining a filter with ``None`` also yields a FilterChain, but
+        unsurprisingly, the chain only contains the one filter.
+        """
+        filter_chain = f.Int() | None
+        self.assertIsInstance(filter_chain, f.FilterChain)
+
+        with self.assertRaises(f.FilterError):
+            filter_chain.apply('not an int')
+
     # noinspection SpellCheckingInspection
     def test_chainception(self):
-        """You can also chain FilterChains together."""
+        """
+        You can also chain FilterChains together.
+        """
         fc1 = f.NotEmpty | f.Choice(choices=('Lucky', 'Dusty', 'Ned'))
         fc2 = f.NotEmpty | f.MinLength(4)
 
@@ -32,13 +49,13 @@ class FilterChainTestCase(BaseFilterTestCase):
         filter fails.
         """
         # This FilterChain will pretty much reject anything that you
-        #   throw at it.
+        # throw at it.
         self.filter_type =\
             lambda: f.MaxLength(3) | f.MinLength(8) | f.Required
 
         # Note that the value 'foobar' fails both the MaxLength and the
-        #   MinLength filters, but the FilterChain stops processing
-        #   after MaxLength fails.
+        # MinLength filters, but the FilterChain stops processing
+        # after MaxLength fails.
         self.assertFilterErrors('foobar', [f.MaxLength.CODE_TOO_LONG])
 
 
@@ -431,17 +448,50 @@ class FilterMapperTestCase(BaseFilterTestCase):
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
+        filter_ = self._filter({
+            'id':       '42',
+            'subject':  'Hello, world!',
+        })
+
         self.assertFilterPasses(
-            {
-                'id':       '42',
-                'subject':  'Hello, world!',
-            },
+            filter_,
 
             {
                 'id':       42,
                 'subject':  'Hello, world!',
             },
         )
+
+        # The result is a dict, to match the type of the filter map.
+        self.assertIs(type(filter_.cleaned_data), dict)
+
+    def test_pass_ordered_mapping(self):
+        """
+        Configuring the FilterRepeater to return an OrderedDict.
+        """
+        # Note that we pass an OrderedDict to the filter initializer.
+        self.filter_type = lambda: f.FilterMapper(OrderedDict((
+            ('subject', f.NotEmpty | f.MaxLength(16)),
+            ('id', f.Required | f.Int | f.Min(1)),
+        )))
+
+        filter_ = self._filter({
+            'id':       '42',
+            'subject':  'Hello, world!',
+        })
+
+        self.assertFilterPasses(
+            filter_,
+
+            OrderedDict((
+                ('subject', 'Hello, world!'),
+                ('id', 42),
+            )),
+        )
+
+        # The result is an OrderedDict, to match the type of the filter
+        # map.
+        self.assertIs(type(filter_.cleaned_data), OrderedDict)
 
     def test_fail_mapping(self):
         """
@@ -493,6 +543,41 @@ class FilterMapperTestCase(BaseFilterTestCase):
             }
         )
 
+    def test_extra_keys_ordered(self):
+        """
+        When the filter map is an OrderedDict, extra keys are
+        alphabetized.
+        """
+        # Note that we pass an OrderedDict to the filter initializer.
+        self.filter_type = lambda: f.FilterMapper(OrderedDict((
+            ('subject', f.NotEmpty | f.MaxLength(16)),
+            ('id', f.Required | f.Int | f.Min(1)),
+        )))
+
+        filter_ = self._filter({
+            'id':       '42',
+            'subject':  'Hello, world!',
+            'cat':      'felix',
+            'bird':     'phoenix',
+            'fox':      'fennecs',
+        })
+
+        self.assertFilterPasses(
+            filter_,
+
+            OrderedDict((
+                # The filtered keys are always listed first.
+                ('subject', 'Hello, world!'),
+                ('id', 42),
+
+                # Extra keys are listed afterward, in alphabetical
+                # order.
+                ('bird', 'phoenix'),
+                ('cat', 'felix'),
+                ('fox', 'fennecs'),
+            )),
+        )
+
     def test_extra_keys_disallowed(self):
         """
         FilterMappers can be configured to treat any extra key as an
@@ -520,7 +605,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
 
             # The valid fields were still included in the return value,
-            #   but the invalid field was removed.
+            # but the invalid field was removed.
             expected_value = {
                 'id':       42,
                 'subject':  'Hello, world!',
@@ -542,7 +627,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )
 
         # As long as the extra keys are in the FilterMapper's
-        #   `allow_extra_keys` setting, everything is fine.
+        # ``allow_extra_keys`` setting, everything is fine.
         self.assertFilterPasses(
             {
                 'id':       '42',
@@ -557,8 +642,8 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
         )
 
-        # But, add a key that isn't in `allow_extra_keys`, and you've
-        #   got a problem.
+        # But, add a key that isn't in ``allow_extra_keys``, and you've
+        # got a problem.
         self.assertFilterErrors(
             {
                 'id':           '42',
@@ -601,7 +686,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )
 
         # However, 'id' has Required in its FilterChain, so a missing
-        #   'id' is still an error.
+        # 'id' is still an error.
         self.assertFilterErrors(
             {
                 'subject': 'Hello, world!',
@@ -805,9 +890,10 @@ class FilterMapperTestCase(BaseFilterTestCase):
             {},
 
             {
-                # `fm1` allows missing keys, so it sets 'id' to `None`.
-                # However, `fm2` does not allow `None` for 'id'
-                # (because of the `Required` filter).
+                # ``fm1`` allows missing keys, so it sets 'id' to
+                # ``None``.
+                # However, ``fm2`` does not allow ``None`` for 'id'
+                # (because of the ``Required`` filter).
                 'id':       [f.Required.CODE_EMPTY],
 
                 # `fm1` does not care about `subject`, but `fm2`

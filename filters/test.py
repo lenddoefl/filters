@@ -48,7 +48,7 @@ class BaseFilterTestCase(TestCase):
     ``assertFilterPasses`` and ``assertFilterErrors`` to check use
     cases.
     """
-    filter_type = None # type: Callable[..., BaseFilter]
+    filter_type = None # type: Callable[[...], BaseFilter]
 
     class unmodified(object):
         """
@@ -146,7 +146,7 @@ class BaseFilterTestCase(TestCase):
             )
 
     def _filter(self, *args, **kwargs):
-        # type: (tuple, dict) -> FilterRunner
+        # type: (...) -> FilterRunner
         """
         Applies the Filter to the specified value.
 
@@ -196,6 +196,7 @@ class BaseFilterTestCase(TestCase):
         In certain cases, it may be useful to override this method in
         your test case subclass.
 
-        :param cleaned_data: FilterRunner.cleaned_data
+        :param cleaned_data:
+            ``cleaned_data`` from the FilterRunner.
         """
         self.assertEqual(cleaned_data, expected)

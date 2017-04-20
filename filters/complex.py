@@ -3,17 +3,8 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 from collections import OrderedDict
-from typing import (
-    Any,
-    Dict,
-    Generator,
-    Hashable,
-    Iterable,
-    Mapping,
-    Optional,
-    Text,
-    Union,
-)
+from typing import Any, Dict, Generator, Iterable, Mapping, Optional, \
+    Text, Tuple, Union
 
 from six import iteritems, iterkeys, python_2_unicode_compatible
 
@@ -79,10 +70,13 @@ class FilterRepeater(BaseFilter):
             filter_chain    = self._filter_chain,
         )
 
+    # noinspection PyProtectedMember
     @classmethod
     def __copy__(cls, the_filter):
         # type: (FilterRepeater) -> FilterRepeater
-        """Creates a shallow copy of the object."""
+        """
+        Creates a shallow copy of the object.
+        """
         new_filter = super(FilterRepeater, cls).__copy__(the_filter) # type: FilterRepeater
 
         new_filter._filter_chain = the_filter._filter_chain
@@ -106,7 +100,9 @@ class FilterRepeater(BaseFilter):
 
     def iter(self, value):
         # type: (Iterable) -> Generator[Any]
-        """Iterator version of `apply`."""
+        """
+        Iterator version of :py:meth:`apply`.
+        """
         if value is not None:
             if isinstance(value, Mapping):
                 for k, v in iteritems(value):
@@ -121,7 +117,7 @@ class FilterRepeater(BaseFilter):
                         # For consistency with FilterMapper, invalid
                         # keys are not included in the filtered
                         # value (hence this statement does not
-                        # `yield`).
+                        # ``yield``).
                         self._invalid_value(
                             value   = v,
                             reason  = self.CODE_EXTRA_KEY,
@@ -160,7 +156,7 @@ class FilterRepeater(BaseFilter):
 
     @staticmethod
     def unicodify_key(key):
-        # type: (Hashable) -> Text
+        # type: (Text) -> Text
         """
         Converts a key value into a unicode so that it can be
         represented in e.g., error message contexts.
@@ -191,11 +187,9 @@ class FilterMapper(BaseFilter):
     CODE_MISSING_KEY    = 'missing'
 
     templates = {
-        CODE_EXTRA_KEY:     'Unexpected key "{key}".',
+        CODE_EXTRA_KEY:     'Unexpected key "{actual_key}".',
         CODE_MISSING_KEY:   '{key} is required.',
     }
-
-    result_type = OrderedDict
 
     def __init__(
             self,
@@ -203,7 +197,7 @@ class FilterMapper(BaseFilter):
             allow_missing_keys  = True,
             allow_extra_keys    = True,
     ):
-        # type: (Dict[Hashable, FilterCompatible], Union[bool, Iterable[Hashable]], Union[bool, Iterable[Hashable]]) -> None
+        # type: (Dict[Text, FilterCompatible], Union[bool, Iterable[Text]], Union[bool, Iterable[Text]]) -> None
         """
         :param filter_map:
             This mapping also determines the key order of the resulting
@@ -247,7 +241,7 @@ class FilterMapper(BaseFilter):
         )
 
         if filter_map:
-            for key, filter_chain in iteritems(filter_map):
+            for key, filter_chain in iteritems(filter_map): # type: Tuple[Text, BaseFilter]
                 #
                 # Note that the normalized Filter could be `None`.
                 #
@@ -257,6 +251,15 @@ class FilterMapper(BaseFilter):
                 #
                 self._filters[key] =\
                     self.resolve_filter(filter_chain, parent=self, key=key)
+
+        # If the filter map is an OrderedDict, we should try to
+        # preserve order when applying the filter.  Otherwise use a
+        # plain ol' dict to improve readability.
+        self.result_type = (
+            OrderedDict
+                if isinstance(filter_map, OrderedDict)
+                else dict
+        )
 
 
     def __str__(self):
@@ -277,8 +280,10 @@ class FilterMapper(BaseFilter):
         return self.result_type(self.iter(value))
 
     def iter(self, value):
-        # type: (Mapping) -> Generator[Hashable, Any]
-        """Iterator version of `apply`."""
+        # type: (Mapping) -> Generator[Text, Any]
+        """
+        Iterator version of :py:meth:`apply`.
+        """
         if value is not None:
             # Apply filtered values first.
             for key, filter_chain in iteritems(self._filters):
@@ -286,7 +291,8 @@ class FilterMapper(BaseFilter):
                     yield key, self._apply_item(key, value[key], filter_chain)
 
                 elif self._missing_key_allowed(key):
-                    # Filter the missing value as if it was set to `None`.
+                    # Filter the missing value as if it was set to
+                    # ``None``.
                     yield key, self._apply_item(key, None, filter_chain)
 
                 else:
@@ -298,21 +304,34 @@ class FilterMapper(BaseFilter):
                     )
 
             # Extra values go last.
-            for key in (set(iterkeys(value)) - set(iterkeys(self._filters))):
+            # Note that we iterate in sorted order, in case the result
+            # type preserves ordering.
+            # https://github.com/eflglobal/filters/issues/13
+            for key in sorted(
+                            set(iterkeys(value))
+                        -   set(iterkeys(self._filters))
+            ):
                 if self._extra_key_allowed(key):
                     yield key, value[key]
                 else:
+                    unicode_key = self.unicodify_key(key)
+
                     # Handle the extra value just like any other
                     # invalid value, but do not include it in the
-                    # result (note that there is no `yield` here).
+                    # result (note that there is no ``yield`` here).
                     self._invalid_value(
                         value   = value[key],
                         reason  = self.CODE_EXTRA_KEY,
-                        sub_key = self.unicodify_key(key),
+                        sub_key = unicode_key,
+
+                        # https://github.com/eflglobal/filters/issues/15
+                        template_vars = {
+                            'actual_key': unicode_key,
+                        },
                     )
 
     def _apply_item(self, key, value, filter_chain):
-        # type: (Hashable, Any, FilterCompatible) -> Any
+        # type: (Text, Any, FilterCompatible) -> Any
         """
         Applies filters to a single item in the mapping.
 
@@ -322,7 +341,7 @@ class FilterMapper(BaseFilter):
         return self._filter(value, filter_chain, sub_key=key)
 
     def _missing_key_allowed(self, key):
-        # type: (Hashable) -> bool
+        # type: (Text) -> bool
         """
         Returns whether the specified key is allowed to be omitted from
         the incoming value.
@@ -336,8 +355,10 @@ class FilterMapper(BaseFilter):
             return False
 
     def _extra_key_allowed(self, key):
-        # type: (Hashable) -> bool
-        """Returns whether the specified extra key is allowed."""
+        # type: (Text) -> bool
+        """
+        Returns whether the specified extra key is allowed.
+        """
         if self.allow_extra_keys is True:
             return True
 
@@ -348,7 +369,7 @@ class FilterMapper(BaseFilter):
 
     @staticmethod
     def unicodify_key(key):
-        # type: (Hashable) -> Text
+        # type: (Text) -> Text
         """
         Converts a key value into a unicode so that it can be
         represented in e.g., error message contexts.

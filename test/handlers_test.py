@@ -2,14 +2,14 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
+import logging
 import sys
 from logging import WARNING, getLevelName
-from six import text_type
 from traceback import format_exc, format_exception
-from typing import Generator, List
+from typing import Iterator, List
 from unittest import TestCase
 
-import logging
+from six import text_type
 
 import filters as f
 from filters.base import ExceptionHandler
@@ -22,7 +22,9 @@ class ExceptionHandlerTestCase(TestCase):
         self.handler = ExceptionHandler()
 
     def test_invalid_value(self):
-        """Sends an invalid value to the handler."""
+        """
+        Sends an invalid value to the handler.
+        """
         message = 'Needs more cowbell.'
         context = {
             'key':      'test',
@@ -40,7 +42,9 @@ class ExceptionHandlerTestCase(TestCase):
         self.assertEqual(exc.exception.context, context)
 
     def test_exception(self):
-        """Sends an exception to the handler."""
+        """
+        Sends an exception to the handler.
+        """
         message = 'An exception occurred!'
         context = {
             'key':      'test',
@@ -80,30 +84,34 @@ class ExceptionHandlerTestCase(TestCase):
 
 class MemoryLogHandler(logging.Handler):
     """
-    A log handler that retains all of its records in a list in memory.
+    A log handler that retains all of its records in a list in memory,
+    so that we can test :py:class:`LogHandler`.
 
     This class is similar in function (though not in purpose) to
     BufferingHandler.
 
     References:
-
-        - :py:class:`logging.handlers.BufferingHandler`
+      - :py:class:`logging.handlers.BufferingHandler`
     """
     def __init__(self, level=logging.NOTSET):
         # type: (int) -> None
         super(MemoryLogHandler, self).__init__(level)
 
-        self._records           = []
+        self._records           = [] # type: List[logging.LogRecord]
         self.max_level_emitted  = logging.NOTSET
 
     def __getitem__(self, index):
         # type: (int) -> logging.LogRecord
-        """Returns the log message at the specified index."""
+        """
+        Returns the log message at the specified index.
+        """
         return self._records[index]
 
     def __iter__(self):
-        # type: () -> Generator[logging.LogRecord]
-        """Creates an iterator for the collected records."""
+        # type: () -> Iterator[logging.LogRecord]
+        """
+        Creates an iterator for the collected records.
+        """
         return iter(self._records)
 
     def __len__(self):
@@ -114,16 +122,22 @@ class MemoryLogHandler(logging.Handler):
     @property
     def records(self):
         # type: () -> List[logging.LogRecord]
-        """Returns all log messages that the handler has collected."""
+        """
+        Returns all log messages that the handler has collected.
+        """
         return self._records[:]
 
     def clear(self):
-        """Removes all log messages that this handler has collected."""
+        """
+        Removes all log messages that this handler has collected.
+        """
         del self._records[:]
 
     def emit(self, record):
         # type: (logging.LogRecord) -> None
-        """Records the log message."""
+        """
+        Records the log message.
+        """
         # Remove `exc_info` to reclaim memory.
         if record.exc_info:
             if not record.exc_text:
@@ -136,7 +150,6 @@ class MemoryLogHandler(logging.Handler):
 
 
 class LogHandlerTestCase(TestCase):
-    """Unit tests for LogHandler."""
     def setUp(self):
         super(LogHandlerTestCase, self).setUp()
 
@@ -149,7 +162,9 @@ class LogHandlerTestCase(TestCase):
         self.handler = f.LogHandler(logger, WARNING)
 
     def test_invalid_value(self):
-        """Sends an invalid value to the handler."""
+        """
+        Sends an invalid value to the handler.
+        """
         message = 'Needs more cowbell.'
         context = {
             'key':      'test',
@@ -169,7 +184,9 @@ class LogHandlerTestCase(TestCase):
         self.assertIsNone(self.logs[0].exc_text)
 
     def test_exception(self):
-        """Sends an exception to the handler."""
+        """
+        Sends an exception to the handler.
+        """
         message = 'An exception occurred!'
         context = {
             'key':      'test',
@@ -212,7 +229,9 @@ class MemoryHandlerTestCase(TestCase):
         self.handler = f.MemoryHandler()
 
     def test_invalid_value(self):
-        """Sends an invalid value to the handler."""
+        """
+        Sends an invalid value to the handler.
+        """
         code    = 'foo'
         key     = 'test'
         message = 'Needs more cowbell.'
@@ -234,8 +253,8 @@ class MemoryHandlerTestCase(TestCase):
         self.handler.handle_invalid_value('Test message 2', False, {})
 
         # As filter messages are captured, they are sorted according to
-        # their contexts' `key` values.
-        # If a message doesn't have a `key` value, an empty string is
+        # their contexts' ``key`` values.
+        # If a message doesn't have a ``key`` value, an empty string is
         # used.
         self.assertListEqual(sorted(self.handler.messages.keys()), ['', key])
 
@@ -264,7 +283,9 @@ class MemoryHandlerTestCase(TestCase):
         self.assertListEqual(self.handler.exc_info, [])
 
     def test_exception(self):
-        """Sends an exception to the handler."""
+        """
+        Sends an exception to the handler.
+        """
         code    = 'error'
         key     = 'test'
         message = 'An exception occurred!'
@@ -307,8 +328,8 @@ class MemoryHandlerTestCase(TestCase):
 
     def test_capture_exc_info(self):
         """
-        The handler is configured to capture `sys.exc_info()` in the
-        event of an exception.
+        The handler is configured to capture :py:func:`sys.exc_info` in
+        the event of an exception.
 
         This is generally turned off because the filter already
         captures a formatted traceback in the event of an
@@ -323,7 +344,7 @@ class MemoryHandlerTestCase(TestCase):
 
         try:
             # Raise an exception so that the handler has a traceback to
-            #   work with.
+            # work with.
             raise ValueError('I gotta have more cowbell, baby!')
         except ValueError as e:
             self.handler.handle_exception('An exception occurred!', e)

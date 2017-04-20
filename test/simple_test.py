@@ -2,9 +2,10 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-from datetime import datetime, date
-
 from collections import Sequence
+from datetime import date, datetime
+from typing import Sized
+
 from dateutil.tz import tzoffset
 from pytz import utc
 from six import PY2, binary_type, python_2_unicode_compatible, text_type
@@ -13,10 +14,10 @@ import filters as f
 from filters.test import BaseFilterTestCase
 
 
-class Lengthy(object):
+class Lengthy(Sized):
     """
-    A class that defines `__len__`, used to test Filters that check for
-    object length.
+    A class that defines ``__len__``, used to test Filters that check
+    for object length.
     """
     def __init__(self, length):
         super(Lengthy, self).__init__()
@@ -29,8 +30,8 @@ class Lengthy(object):
 # noinspection SpellCheckingInspection
 class Bytesy(object):
     """
-    A class that defines `__bytes__`, used to test Filters that convert
-    values into byte strings.
+    A class that defines ``__bytes__``, used to test Filters that
+    convert values into byte strings.
     """
     def __init__(self, value):
         super(Bytesy, self).__init__()
@@ -47,7 +48,7 @@ class Bytesy(object):
 @python_2_unicode_compatible
 class Unicody(object):
     """
-    A class that defines `__str__`, used to test Filters that convert
+    A class that defines ``__str__``, used to test Filters that convert
     values into unicodes.
     """
     def __init__(self, value):
@@ -63,37 +64,49 @@ class ArrayTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this filter.
+        ``None`` always passes this filter.
 
-        Use `Required | Array` if you want to reject null values.
+        Use ``Required | Array`` if you want to reject null values.
         """
         self.assertFilterPasses(None)
 
     def test_pass_sequence(self):
-        """The incoming value is a sequence."""
+        """
+        The incoming value is a sequence.
+        """
         self.assertFilterPasses(tuple())
         self.assertFilterPasses(list())
 
     def test_pass_custom_sequence_type(self):
-        """The incoming value has a type that extends Sequence."""
+        """
+        The incoming value has a type that extends Sequence.
+        """
         class CustomSequence(Sequence):
-            """Technically, it's a Sequence. Technically."""
+            """
+            Technically, it's a Sequence. Technically.
+            """
             def __len__(self): return 0
             def __getitem__(self, index): return None
 
         self.assertFilterPasses(CustomSequence())
 
     def test_fail_string(self):
-        """The incoming value is a string."""
+        """
+        The incoming value is a string.
+        """
         self.assertFilterErrors(binary_type(), [f.Array.CODE_WRONG_TYPE])
         self.assertFilterErrors(text_type(), [f.Array.CODE_WRONG_TYPE])
 
     def test_fail_mapping(self):
-        """The incoming value is a mapping."""
+        """
+        The incoming value is a mapping.
+        """
         self.assertFilterErrors(dict(), [f.Array.CODE_WRONG_TYPE])
 
     def test_fail_set(self):
-        """The incoming value is a set."""
+        """
+        The incoming value is a set.
+        """
         self.assertFilterErrors(set(), [f.Array.CODE_WRONG_TYPE])
 
     def test_fail_custom_sequence_type(self):
@@ -101,7 +114,9 @@ class ArrayTestCase(BaseFilterTestCase):
         The incoming value looks like a Sequence, but it's not official.
         """
         class CustomSequence(object):
-            """Walks, talks and quacks like a Sequence, but isn't."""
+            """
+            Walks, talks and quacks like a Sequence, but isn't.
+            """
             def __len__(self): return 0
             def __getitem__(self, index): return None
 
@@ -121,14 +136,16 @@ class ByteArrayTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this filter.
+        ``None`` always passes this filter.
 
-        Use `Required | ByteArray` if you want to reject null values.
+        Use ``Required | ByteArray`` if you want to reject null values.
         """
         self.assertFilterPasses(None)
 
     def test_pass_bytes(self):
-        """The incoming value is a byte string."""
+        """
+        The incoming value is a byte string.
+        """
         self.assertFilterPasses(
             b'|\xa8\xc1.8\xbd4\xd5s\x1e\xa6%+\xea!6',
 
@@ -151,6 +168,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
         """
         self.assertFilterPasses(
             u'\xccK\xdf\xb1\x8bM\xc7\x01\xf0B\xac":\xeb>\x85',
+
             bytearray([
                 195, 140, 75, 195, 159, 194, 177, 194, 139, 77, 195, 135,
                 1, 195, 176, 66, 194, 172, 34, 58, 195, 171, 62, 194, 133,
@@ -167,6 +185,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
                 u'\xccK\xdf\xb1\x8bM\xc7\x01\xf0B\xac":\xeb>\x85',
                 encoding='latin-1',
             ),
+
             bytearray([
                 204, 75, 223, 177, 139, 77, 199, 1,
                 240, 66, 172, 34, 58, 235, 62, 133,
@@ -174,7 +193,9 @@ class ByteArrayTestCase(BaseFilterTestCase):
         )
 
     def test_pass_bytearray(self):
-        """The incoming value is already a bytearray."""
+        """
+        The incoming value is already a bytearray.
+        """
         self.assertFilterPasses(
             bytearray([
                 84, 234, 48, 177, 119, 69, 36, 147,
@@ -244,7 +265,7 @@ class ByteArrayTestCase(BaseFilterTestCase):
         contains values outside the acceptable range.
 
         Each value inside a bytearray must fit within 1 byte, so its
-        value must satisfy `0 <= x < 2^8`.
+        value must satisfy ``0 <= x < 2^8``.
         """
         self.assertFilterErrors(
             [-1, 0, 1, 255, 256, 9001],
@@ -282,24 +303,28 @@ class ChoiceTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | Choice` if you want to reject `None`.
+        Use ``Required | Choice`` if you want to reject null values.
         """
         self.assertFilterPasses(
             # Even if you specify no valid choices, `None` still
-            #   passes.
+            # passes.
             self._filter(None, choices=()),
         )
 
     def test_pass_valid_value(self):
-        """The incoming value matches one of the choices."""
+        """
+        The incoming value matches one of the choices.
+        """
         self.assertFilterPasses(
             self._filter('Curly', choices=('Moe', 'Larry', 'Curly')),
         )
 
     def test_fail_invalid_value(self):
-        """The incoming value does not match any of the choices."""
+        """
+        The incoming value does not match any of the choices.
+        """
         self.assertFilterErrors(
             self._filter('Shemp', choices=('Moe', 'Larry', 'Curly')),
             [f.Choice.CODE_INVALID],
@@ -311,9 +336,9 @@ class DateTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | Date` if you want to reject `None`.
+        Use `Required | Date` if you want to reject null values.
         """
         self.assertFilterPasses(None)
 
@@ -327,7 +352,9 @@ class DateTestCase(BaseFilterTestCase):
         )
 
     def test_pass_aware_timestamp(self):
-        """The incoming value includes timezone info."""
+        """
+        The incoming value includes timezone info.
+        """
         self.assertFilterPasses(
             # Note that the value we are parsing is 5 hours behind UTC.
             '2015-05-11T19:56:58-05:00',
@@ -360,7 +387,7 @@ class DateTestCase(BaseFilterTestCase):
     def test_pass_aware_timestamp_default_timezone(self):
         """
         The Filter's default timezone has no effect if the incoming
-            value already contains timezone info.
+        value already contains timezone info.
         """
         self.assertFilterPasses(
             # The incoming timestamp is from UTC+4, but the Filter is
@@ -431,7 +458,9 @@ class DateTestCase(BaseFilterTestCase):
         )
 
     def test_pass_date(self):
-        """The incoming value is a date object."""
+        """
+        The incoming value is a date object.
+        """
         self.assertFilterPasses(date(2015, 6, 27))
 
     def test_fail_invalid_value(self):
@@ -441,7 +470,7 @@ class DateTestCase(BaseFilterTestCase):
         Insert socially-awkward nerd joke here.
         """
         self.assertFilterErrors(
-            'this is not a date',
+            'this is not a date', # it's a space station
             [f.Date.CODE_INVALID],
         )
 
@@ -451,9 +480,9 @@ class DatetimeTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | Datetime` if you want to reject `None`.
+        Use `Required | Datetime` if you want to reject null values.
         """
         self.assertFilterPasses(None)
 
@@ -523,7 +552,7 @@ class DatetimeTestCase(BaseFilterTestCase):
         """
         self.assertFilterPasses(
             # Note that we use an int value instead of constructing a
-            # tzoffset for `timezone`.
+            # tzoffset for ``timezone``.
             self._filter('2015-05-11 21:14:38', timezone=3),
 
             datetime(2015, 5, 11, 18, 14, 38, tzinfo=utc),
@@ -560,7 +589,9 @@ class DatetimeTestCase(BaseFilterTestCase):
         )
 
     def test_pass_date(self):
-        """The incoming value is a date object."""
+        """
+        The incoming value is a date object.
+        """
         self.assertFilterPasses(
             # The Filter is configured to assume UTC+12 if the incoming
             # value has no timezone info.
@@ -595,9 +626,11 @@ class DatetimeTestCase(BaseFilterTestCase):
         )
 
     def test_fail_invalid_value(self):
-        """The incoming value cannot be parsed as a datetime."""
+        """
+        The incoming value cannot be parsed as a datetime.
+        """
         self.assertFilterErrors(
-            'this is not a datetime',
+            'this is not a datetime', # it's a pipe
             [f.Datetime.CODE_INVALID],
         )
 
@@ -607,34 +640,42 @@ class EmptyTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` shall pass.
+        ``None`` shall pass.
 
         What?
 
-        `None` shall pass!
+        ``None`` shall pass!
         """
         self.assertFilterPasses(None)
 
     def test_pass_empty_string(self):
-        """The incoming value is an empty string."""
+        """
+        The incoming value is an empty string.
+        """
         self.assertFilterPasses('')
 
     def test_pass_empty_collection(self):
-        """The incoming value is a collection with length < 1."""
+        """
+        The incoming value is a collection with length < 1.
+        """
         self.assertFilterPasses([])
         self.assertFilterPasses({})
         self.assertFilterPasses(Lengthy(0))
         # etc.
 
     def test_fail_non_empty_string(self):
-        """The incoming value is a non-empty string."""
+        """
+        The incoming value is a non-empty string.
+        """
         self.assertFilterErrors(
             'Goodbye world!',
             [f.Empty.CODE_NOT_EMPTY],
         )
 
     def test_fail_non_empty_collection(self):
-        """The incoming value is a collection with length > 0."""
+        """
+        The incoming value is a collection with length > 0.
+        """
         # The values inside the collection may be empty, but the
         # collection itself is not.
         self.assertFilterErrors(['', '', ''],   [f.Empty.CODE_NOT_EMPTY])
@@ -643,18 +684,22 @@ class EmptyTestCase(BaseFilterTestCase):
         # etc.
 
     def test_fail_non_collection(self):
-        """The incoming value does not have a length."""
+        """
+        The incoming value does not have a length.
+        """
         # The Filter can't determine the length of this object, so it
-        #   assumes that it is not empty.
+        # assumes that it is not empty.
         self.assertFilterErrors(object(), [f.Empty.CODE_NOT_EMPTY])
 
     def test_zero_is_not_empty(self):
-        """PHP developers take note!"""
+        """
+        PHP developers take note!
+        """
         self.assertFilterErrors(0, [f.Empty.CODE_NOT_EMPTY])
 
     def test_false_is_not_empty(self):
         """
-        The boolean value `False` is NOT considered empty because it
+        The boolean value ``False`` is NOT considered empty because it
         represents SOME kind of value.
         """
         self.assertFilterErrors(False, [f.Empty.CODE_NOT_EMPTY])
@@ -665,28 +710,34 @@ class MaxLengthTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | MaxLength` if you want to reject `None`.
+        Use ``Required | MaxLength`` if you want to reject null values.
         """
         self.assertFilterPasses(
             self._filter(None, max_length=0),
         )
 
     def test_pass_short(self):
-        """The incoming value is shorter than the max length."""
+        """
+        The incoming value is shorter than the max length.
+        """
         self.assertFilterPasses(
             self._filter('Hello', max_length=6),
         )
 
     def test_pass_max_length(self):
-        """The incoming value has the max allowed length."""
+        """
+        The incoming value has the max allowed length.
+        """
         self.assertFilterPasses(
             self._filter('World', max_length=5),
         )
 
     def test_fail_long(self):
-        """The incoming value is longer than the max length."""
+        """
+        The incoming value is longer than the max length.
+        """
         self.assertFilterErrors(
             self._filter('Goodbye', max_length=5),
             [f.MaxLength.CODE_TOO_LONG],
@@ -760,9 +811,9 @@ class MinLengthTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | MinLength` if you want to reject `None`.
+        Use `Required | MinLength` if you want to reject null values.
         """
         self.assertFilterPasses(
             self._filter(None, min_length=5),
@@ -777,7 +828,9 @@ class MinLengthTestCase(BaseFilterTestCase):
         )
 
     def test_pass_min_length(self):
-        """The incoming value has length equal to the minimum value."""
+        """
+        The incoming value has length equal to the minimum value.
+        """
         self.assertFilterPasses(
             self._filter('World', min_length=5),
         )
@@ -868,20 +921,28 @@ class NotEmptyTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        By default, `NotEmpty` will treat `None` as valid (just like
-        every other Filter).
+        By default, :py:class:`f.NotEmpty` will treat ``None`` as
+        valid, just like every other filter.
+
+        Unlike every other filter, however, the strategy for rejecting
+        null values is a wee bit different, as we'll see in the next
+        test.
         """
         self.assertFilterPasses(None)
 
     def test_fail_none(self):
-        """You can configure the filter to reject `None` values."""
+        """
+        You can configure the filter to reject null values.
+        """
         self.assertFilterErrors(
             self._filter(None, allow_none=False),
             [f.NotEmpty.CODE_EMPTY],
         )
 
     def test_pass_non_empty_string(self):
-        """The incoming value is a non-empty string."""
+        """
+        The incoming value is a non-empty string.
+        """
         self.assertFilterPasses('Hello, world!')
 
     def test_pass_non_empty_collection(self):
@@ -896,27 +957,35 @@ class NotEmptyTestCase(BaseFilterTestCase):
         # etc.
 
     def test_pass_non_collection(self):
-        """The incoming value does not have a length."""
+        """
+        The incoming value does not have a length.
+        """
         self.assertFilterPasses(object())
 
     def test_fail_empty_string(self):
-        """The incoming value is an empty string."""
+        """
+        The incoming value is an empty string.
+        """
         self.assertFilterErrors('', [f.NotEmpty.CODE_EMPTY])
 
     def test_fail_empty_collection(self):
-        """The incoming value is a collection with length < 1."""
+        """
+        The incoming value is a collection with length < 1.
+        """
         self.assertFilterErrors([],         [f.NotEmpty.CODE_EMPTY])
         self.assertFilterErrors({},         [f.NotEmpty.CODE_EMPTY])
         self.assertFilterErrors(Lengthy(0), [f.NotEmpty.CODE_EMPTY])
         # etc.
 
     def test_zero_is_not_empty(self):
-        """PHP developers take note!"""
+        """
+        PHP developers take note!
+        """
         self.assertFilterPasses(0)
 
     def test_false_is_not_empty(self):
         """
-        The boolean value `False` is NOT considered empty because it
+        The boolean value ``False`` is NOT considered empty because it
         represents SOME kind of value.
         """
         self.assertFilterPasses(False)
@@ -928,14 +997,14 @@ class OptionalTestCase(BaseFilterTestCase):
     def test_pass_none(self):
         """
         It'd be pretty silly to name a Filter "Optional" if it rejects
-        `None`, wouldn't it?
+        ``None``, wouldn't it?
         """
         self.assertFilterPasses(None)
 
     def test_replace_none(self):
         """
-        The default replacement value is `None`, but you can change it
-        to something else.
+        The default replacement value is ``None``, but you can change
+        it to something else.
         """
         self.assertFilterPasses(
             self._filter(None, default='Hello, world!'),
@@ -943,14 +1012,18 @@ class OptionalTestCase(BaseFilterTestCase):
         )
 
     def test_replace_empty_string(self):
-        """The incoming value is an empty string."""
+        """
+        The incoming value is an empty string.
+        """
         self.assertFilterPasses(
             self._filter('', default='42'),
             '42',
         )
 
     def test_replace_empty_collection(self):
-        """The incoming value is a collection with length < 1."""
+        """
+        The incoming value is a collection with length < 1.
+        """
         # By default, the Filter will replace empty values with `None`.
         self.assertFilterPasses([],         None)
         self.assertFilterPasses({},         None)
@@ -958,35 +1031,43 @@ class OptionalTestCase(BaseFilterTestCase):
         # etc.
 
     def test_pass_non_empty_string(self):
-        """The incoming value is a non-empty string."""
+        """
+        The incoming value is a non-empty string.
+        """
         self.assertFilterPasses(
             self._filter('Goodbye, world!', default='fail')
         )
 
     def test_pass_non_empty_collection(self):
-        """The incoming value is a collection with length > 0."""
+        """
+        The incoming value is a collection with length > 0.
+        """
         # The values inside the collection may be empty, but the
-        #   collection itself is not.
+        # collection itself is not.
         self.assertFilterPasses(['', '', ''])
         self.assertFilterPasses({'': ''})
         self.assertFilterPasses(Lengthy(12))
         # etc.
 
     def test_pass_non_collection(self):
-        """Any value that doesn't have a length is left alone."""
+        """
+        Any value that doesn't have a length is left alone.
+        """
         self.assertFilterPasses(
             self._filter(object(), default='fail'),
         )
 
     def test_zero_is_not_empty(self):
-        """PHP developers take note!"""
+        """
+        PHP developers take note!
+        """
         self.assertFilterPasses(
             self._filter(0, default='fail'),
         )
 
     def test_false_is_not_empty(self):
         """
-        The boolean value `False` is NOT considered empty because it
+        The boolean value ``False`` is NOT considered empty because it
         represents SOME kind of value.
         """
         self.assertFilterPasses(
@@ -998,44 +1079,60 @@ class RequiredTestCase(BaseFilterTestCase):
     filter_type = f.Required
 
     def test_fail_none(self):
-        """Required is the only filter that does not allow `None`."""
+        """
+        :py:class:`f.Required` is the only filter that does not allow
+        null values.
+        """
         self.assertFilterErrors(None, [f.Required.CODE_EMPTY])
 
     def test_pass_non_empty_string(self):
-        """The incoming value is a non-empty string."""
+        """
+        The incoming value is a non-empty string.
+        """
         self.assertFilterPasses('Hello, world!')
 
     def test_pass_non_empty_collection(self):
-        """The incoming value is a collection with length > 0."""
+        """
+        The incoming value is a collection with length > 0.
+        """
         # The values in the collection may be empty, but the collection
-        #   itself is not.
+        # itself is not.
         self.assertFilterPasses(['', '', ''])
         self.assertFilterPasses({'': ''})
         self.assertFilterPasses(Lengthy(1))
         # etc.
 
     def test_pass_non_collection(self):
-        """Any value that does not have a length passes."""
+        """
+        Any value that does not have a length is assumed to be not
+        empty.
+        """
         self.assertFilterPasses(object())
 
     def test_fail_empty_string(self):
-        """The incoming value is an empty string."""
+        """
+        The incoming value is an empty string.
+        """
         self.assertFilterErrors('', [f.Required.CODE_EMPTY])
 
     def test_fail_empty_collection(self):
-        """The incoming value is a collection with length < 1."""
+        """
+        The incoming value is a collection with length < 1.
+        """
         self.assertFilterErrors([],         [f.Required.CODE_EMPTY])
         self.assertFilterErrors({},         [f.Required.CODE_EMPTY])
         self.assertFilterErrors(Lengthy(0), [f.Required.CODE_EMPTY])
         # etc.
 
     def test_zero_is_not_empty(self):
-        """PHP developers take note!"""
+        """
+        PHP developers take note!
+        """
         self.assertFilterPasses(0)
 
     def test_false_is_not_empty(self):
         """
-        The boolean value `False` is NOT considered empty because it
+        The boolean value ``False`` is NOT considered empty because it
         represents SOME kind of value.
         """
         self.assertFilterPasses(False)
@@ -1046,29 +1143,35 @@ class TypeTestCase(BaseFilterTestCase):
 
     def test_pass_none(self):
         """
-        `None` always passes this Filter.
+        ``None`` always passes this Filter.
 
-        Use `Required | Type` if you want to reject `None`.
+        Use ``Required | Type`` if you want to reject null values.
         """
         self.assertFilterPasses(
             self._filter(None, allowed_types=text_type),
         )
 
     def test_pass_matching_type(self):
-        """The incoming value has the expected type."""
+        """
+        The incoming value has the expected type.
+        """
         self.assertFilterPasses(
             self._filter('Hello, world!', allowed_types=text_type),
         )
 
     def test_fail_non_matching_type(self):
-        """The incoming value does not have the expected type."""
+        """
+        The incoming value does not have the expected type.
+        """
         self.assertFilterErrors(
             self._filter(b'Not a string, sorry.', allowed_types=text_type),
             [f.Type.CODE_WRONG_TYPE],
         )
 
     def test_multiple_allowed_types(self):
-        """You can configure the Filter to allow multiple types."""
+        """
+        You can configure the Filter to allow multiple types.
+        """
         self.assertFilterPasses(
             self._filter('Hello, world!', allowed_types=(text_type, int)),
         )
@@ -1082,15 +1185,19 @@ class TypeTestCase(BaseFilterTestCase):
             [f.Type.CODE_WRONG_TYPE],
         )
 
-    def test_pass_subclass(self):
-        """The incoming value's type is a subclass of an allowed type."""
+    def test_pass_subclass_allowed(self):
+        """
+        The incoming value's type is a subclass of an allowed type.
+        """
         self.assertFilterPasses(
             # bool is a subclass of int.
             self._filter(True, allowed_types=int),
         )
 
-    def test_fail_subclass(self):
-        """You can configure the Filter to require exact type matches."""
+    def test_fail_subclass_not_allowed(self):
+        """
+        You can configure the Filter to require exact type matches.
+        """
         self.assertFilterErrors(
             self._filter(True, allowed_types=int, allow_subclass=False),
             [f.Type.CODE_WRONG_TYPE],

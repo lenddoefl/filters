@@ -3,27 +3,20 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import json
-import unicodedata
-from decimal import Decimal as DecimalType
-from xml.etree.ElementTree import Element, tostring
-
 import re
 import socket
+import unicodedata
 from base64 import standard_b64decode, urlsafe_b64decode
 from collections import OrderedDict
+from decimal import Decimal as DecimalType
 from typing import Any, Callable, Optional, Sequence, Text, Union
 from uuid import UUID
+from xml.etree.ElementTree import Element, tostring
 
 # noinspection PyCompatibility
 import regex
-from six import (
-    PY2,
-    PY3,
-    binary_type,
-    moves as compat,
-    python_2_unicode_compatible,
-    text_type,
-)
+from six import PY2, PY3, binary_type, moves as compat, \
+    python_2_unicode_compatible, text_type
 
 from filters.base import BaseFilter, Type
 from filters.simple import MaxLength
@@ -44,7 +37,9 @@ __all__ = [
 
 
 class Base64Decode(BaseFilter):
-    """Decodes an incoming value using the Base64 codec."""
+    """
+    Decodes an incoming value using the Base64 algo.
+    """
     CODE_INVALID = 'not_base64'
 
     templates = {
@@ -58,7 +53,7 @@ class Base64Decode(BaseFilter):
         self.base64_re = regex.compile(b'^[-+_/A-Za-z0-9=]+$', regex.ASCII)
 
     def _apply(self, value):
-        value = self._filter(value, Type(binary_type)) # type binary_type
+        value = self._filter(value, Type(binary_type)) # type: binary_type
 
         if self._has_errors:
             return None
@@ -71,7 +66,7 @@ class Base64Decode(BaseFilter):
         # Check for invalid characters.
         # Note that Python 3's b64decode does this for us, but we also
         # have to support Python 2.
-        # :see: https://docs.python.org/3/library/base64.html#base64.b64decode
+        # https://docs.python.org/3/library/base64.html#base64.b64decode
         if not self.base64_re.match(value):
             return self._invalid_value(
                 value   = value,
@@ -79,7 +74,7 @@ class Base64Decode(BaseFilter):
             )
 
         # Check to see if we are working with a URL-safe dialect.
-        # :see: https://en.wikipedia.org/wiki/Base64#URL_applications
+        # https://en.wikipedia.org/wiki/Base64#URL_applications
         if (b'_' in value) or (b'-' in value):
             # You can't mix dialects, silly!
             if (b'+' in value) or (b'/' in value):
@@ -93,7 +88,7 @@ class Base64Decode(BaseFilter):
             url_safe = False
 
         # Normalize padding.
-        # :see: http://stackoverflow.com/a/9807138/
+        # http://stackoverflow.com/a/9807138/
         value = value.rstrip(b'=')
         value += (b'=' * (4 - (len(value) % 4)))
 
@@ -117,13 +112,14 @@ class CaseFold(BaseFilter):
     NOT treat CaseFold as a Unicode-aware lowercase filter!  The
     proper way to lowercase a string is very much locale-dependent.
 
-    Note that the built in `unicode.upper` and `unicode.lower` methods
-    tend do a pretty good job of properly changing the case of
-    unicode strings.
+    Note that the built in :py:meth:`str.upper` and
+    :py:meth:`str.lower` methods tend do a pretty good job of properly
+    changing the case of unicode strings.
 
-    :see: http://www.w3.org/International/wiki/Case_folding
-    :see: https://docs.python.org/2/library/stdtypes.html#str.lower
-    :see: https://docs.python.org/2/library/stdtypes.html#str.upper
+    References:
+      - http://www.w3.org/International/wiki/Case_folding
+      - https://docs.python.org/3/library/stdtypes.html#str.lower
+      - https://docs.python.org/3/library/stdtypes.html#str.upper
     """
     def _apply(self, value):
         value = self._filter(value, Type(text_type)) # type: Text
@@ -133,8 +129,9 @@ class CaseFold(BaseFilter):
 
         # In Python 3, case folding is supported natively.
         # In Python 2, this is the best we can do.
-        # :see: https://docs.python.org/3/library/stdtypes.html#str.casefold
+        # https://docs.python.org/3/library/stdtypes.html#str.casefold
         if PY3:
+            # noinspection PyUnresolvedReferences
             return value.casefold()
         else:
             # noinspection PyUnresolvedReferences
@@ -144,7 +141,9 @@ class CaseFold(BaseFilter):
 
 @python_2_unicode_compatible
 class IpAddress(BaseFilter):
-    """Validates an incoming value as an IPv[46] address."""
+    """
+    Validates an incoming value as an IPv[46] address.
+    """
     CODE_INVALID = 'not_ip_address'
 
     templates = {
@@ -168,7 +167,9 @@ class IpAddress(BaseFilter):
     @property
     def ip_type(self):
         # type: () -> Text
-        """Returns the IP address versions that this Filter accepts."""
+        """
+        Returns the IP address versions that this Filter accepts.
+        """
         return '/'.join(filter(None, [
             'IPv4' if self.ipv4 else None,
             'IPv6' if self.ipv6 else None,
@@ -180,7 +181,7 @@ class IpAddress(BaseFilter):
         if self._has_errors:
             return None
 
-        # :see: http://stackoverflow.com/a/4017219
+        # http://stackoverflow.com/a/4017219
         if self.ipv4:
             try:
                 socket.inet_pton(socket.AF_INET, value)
@@ -196,13 +197,13 @@ class IpAddress(BaseFilter):
                 pass
             else:
                 # Convert the binary value back into a string
-                #   representation so that the end result is
-                #   normalized.
-                # :see: https://en.wikipedia.org/wiki/IPv6_address#Presentation
+                # representation so that the end result is
+                # normalized.
+                # https://en.wikipedia.org/wiki/IPv6_address#Presentation
                 return socket.inet_ntop(socket.AF_INET6, n)
 
         # If we get here, we failed the above checks (or the Filter is
-        #   configured not to allow anything through).
+        # configured not to allow anything through).
         return self._invalid_value(
             value   = value,
             reason  = self.CODE_INVALID,
@@ -271,15 +272,19 @@ class MaxBytes(BaseFilter):
     ):
         # type: (int, bool, Text, Text) -> None
         """
-        :param max_bytes: Max number of bytes to allow.
+        :param max_bytes:
+            Max number of bytes to allow.
 
         :param truncate:
             Whether to truncate values that are too long.
 
-            Set this to `False` to save system resources when you know
-            that you will reject values that are too long.
+            Set this to ``False`` to save system resources when you
+            know that you will reject values that are too long.
 
-        :param prefix: Prefix to apply to truncated values.
+        :param prefix:
+            Prefix to apply to truncated values.
+            
+            Ignored when ``truncate`` is ``False``.
 
         :param encoding:
             The character encoding to check against.
@@ -312,7 +317,7 @@ class MaxBytes(BaseFilter):
             value = value,
 
             filter_chain = (
-                    Type((binary_type, text_type))
+                    Type((binary_type, text_type,))
                 |   Unicode(encoding=self.encoding)
             ),
         ) # type: Text
@@ -365,7 +370,7 @@ class MaxBytes(BaseFilter):
             orphaning a multibyte sequence.
         """
         # Convert to bytearray so that we get the same handling in
-        #   Python 2 and Python 3.
+        # Python 2 and Python 3.
         bytes_ = bytearray(value.encode(encoding))
 
         # Truncating the value is a bit tricky, as we have to be
@@ -431,11 +436,11 @@ class MaxBytes(BaseFilter):
                 except UnicodeDecodeError:
                     trim += 1
                 else:
-                    return truncated
+                    return binary_type(truncated)
 
                 # We should never get here, but just in case, we need
                 # to ensure the loop eventually terminates (Python
-                # won't error if `max_bytes - trim` goes negative,
+                # won't error if ``max_bytes - trim`` goes negative,
                 # since the slice operator accepts negative values).
                 if trim >= max_bytes:
                     raise ValueError(
@@ -456,10 +461,14 @@ class Regex(BaseFilter):
     IMPORTANT: This filter returns a LIST of all sequences in the
     input value that matched the regex!
 
-    IMPORTANT: This Filter uses the `regex` library, which behaves
-    slightly differently than Python's `re` library.
+    IMPORTANT: This Filter uses the ``regex`` library, which behaves
+    slightly differently than Python's ``re`` library.
 
-    :see: https://pypi.python.org/pypi/regex
+    If you've never used ``regex`` before, try it; you'll never want to
+    go back!
+
+    References:
+      - https://pypi.python.org/pypi/regex
     """
     CODE_INVALID = 'malformed'
 
@@ -476,7 +485,7 @@ class Regex(BaseFilter):
             String pattern, or pre-compiled regex.
 
             IMPORTANT:  If you specify your own compiled regex, be sure to
-            add the `UNICODE` flag for Unicode support!
+            add the ``UNICODE`` flag for Unicode support!
         """
         super(Regex, self).__init__()
 
@@ -532,14 +541,14 @@ class Split(BaseFilter):
             Regex used to split incoming string values.
 
             IMPORTANT:  If you specify your own compiled regex, be sure
-            to add the `UNICODE` flag for Unicode support!
+            to add the ``UNICODE`` flag for Unicode support!
 
         :param keys:
             If set, the resulting list will be converted into an
             OrderedDict, using the specified keys.
 
-            IMPORTANT:  If `keys` is set, the split value's length must
-            be less than or equal to `len(keys)`.
+            IMPORTANT:  If ``keys`` is set, the split value's length
+            must be less than or equal to ``len(keys)``.
         """
         super(Split, self).__init__()
 
@@ -568,7 +577,7 @@ class Split(BaseFilter):
 
         if self.keys:
             # The split value can have at most as many items as
-            # `self.keys`.
+            # ``self.keys``.
             split = self._filter(split, MaxLength(len(self.keys)))
 
             if self._has_errors:
@@ -584,15 +593,21 @@ class Strip(BaseFilter):
     """
     Strips characters (whitespace and non-printables by default) from
     the end(s) of a string.
+
+    IMPORTANT:  This Filter uses the ``regex`` library, which behaves
+    slightly differently than Python's ``re`` library.
+
+    If you've never used ``regex`` before, try it; you'll never want to
+    go back!
     """
     def __init__(self, leading=r'[\p{C}\s]+', trailing=r'[\p{C}\s]+'):
         # type: (Text, Text) -> None
         """
-        :param leading: Regex to match at the start of the string.
-        :param trailing: Regex to match at the end of the string.
-
-        IMPORTANT:  This Filter uses the `regex` library, which behaves
-        slightly differently than Python's `re` library.
+        :param leading:
+            Regex to match at the start of the string.
+            
+        :param trailing:
+            Regex to match at the end of the string.
         """
         super(Strip, self).__init__()
 
@@ -643,9 +658,8 @@ class Unicode(BaseFilter):
     resulting value.  See the initializer docstring for more info.
 
     References:
-
-        - https://docs.python.org/2/howto/unicode.html
-        - https://en.wikipedia.org/wiki/Unicode_equivalence
+      - https://docs.python.org/2/howto/unicode.html
+      - https://en.wikipedia.org/wiki/Unicode_equivalence
     """
     CODE_DECODE_ERROR = 'wrong_encoding'
 
@@ -656,7 +670,8 @@ class Unicode(BaseFilter):
     def __init__(self, encoding='utf-8', normalize=True):
         # type: (Text, bool) -> None
         """
-        :param encoding: Used to decode non-unicode values.
+        :param encoding:
+            Used to decode non-unicode values.
 
         :param normalize:
             Whether to normalize the resulting value:
@@ -673,11 +688,11 @@ class Unicode(BaseFilter):
             #
             # Compile the regex that we will use to remove non-
             # printables from the resulting unicode.
-            # :see: http://www.regular-expressions.info/unicode.html#category
+            # http://www.regular-expressions.info/unicode.html#category
             #
             # Note: using a double negative so that we can exclude
             # newlines, which are technically considered control chars.
-            # :see: http://stackoverflow.com/a/3469155
+            # http://stackoverflow.com/a/3469155
             #
             self.npr = regex.compile(r'[^\P{C}\s]+', regex.UNICODE)
 
@@ -698,8 +713,8 @@ class Unicode(BaseFilter):
             elif isinstance(value, bool):
                 decoded = text_type(int(value))
 
-            # :kludge: In Python 3, bytes(<int>) does weird things.
-            # :see: https://www.python.org/dev/peps/pep-0467/
+            # In Python 3, ``bytes(<int>)`` does weird things.
+            # https://www.python.org/dev/peps/pep-0467/
             elif isinstance(value, (int, float)):
                 decoded = text_type(value)
 
@@ -707,8 +722,8 @@ class Unicode(BaseFilter):
                 decoded = format(value, 'f')
 
             elif isinstance(value, Element):
-                # :kludge: There's no way (that I know of) to get
-                # `ElementTree.tostring` to return a unicode.
+                # There's no way (that I know of) to get
+                # :py:meth:`ElementTree.tostring` to return a unicode.
                 decoded = tostring(value, 'utf-8').decode('utf-8')
 
             elif (
@@ -733,13 +748,13 @@ class Unicode(BaseFilter):
         if self.normalize:
             return (
                 # Return the final string in composed form.
-                # :see: :see: https://en.wikipedia.org/wiki/Unicode_equivalence
+                # https://en.wikipedia.org/wiki/Unicode_equivalence
                 unicodedata.normalize('NFC',
                     # Remove non-printables.
                     self.npr.sub('', decoded)
                 )
                     # Normalize line endings.
-                    # :see: http://stackoverflow.com/a/1749887
+                    # http://stackoverflow.com/a/1749887
                     .replace('\r\n', '\n')
                     .replace('\r', '\n')
             )
@@ -756,7 +771,8 @@ class ByteString(Unicode):
     def __init__(self, encoding='utf-8', normalize=False):
         # type: (Text, bool) -> None
         """
-        :param encoding: Used to decode non-unicode values.
+        :param encoding:
+            Used to decode non-unicode values.
 
         :param normalize:
             Whether to normalize the unicode value before converting
@@ -766,8 +782,9 @@ class ByteString(Unicode):
                 - Remove non-printable characters.
                 - Convert all line endings to unix-style ('\n').
 
-            Note that ``normalize`` is False by default for Bytes, but
-            ``True`` by default for Unicode.
+            Note that ``normalize`` is ``False`` by default for
+            :py:class:`ByteString`, but ``True`` by default for
+            :py:class:`Unicode`.
         """
         super(ByteString, self).__init__(encoding, normalize)
 
@@ -800,14 +817,16 @@ class ByteString(Unicode):
         #   - https://hg.python.org/cpython/raw-file/99d03261c1ba/Misc/NEWS
         #
 
-        # Normally we return `None` if we get any errors, but in this
+        # Normally we return ``None`` if we get any errors, but in this
         # case, we'll let the superclass method decide.
         return decoded if self._has_errors else decoded.encode('utf-8')
 
 
 @python_2_unicode_compatible
 class Uuid(BaseFilter):
-    """Validates an incoming value as a UUID."""
+    """
+    Interprets an incoming value as a UUID.
+    """
     CODE_INVALID        = 'not_uuid'
     CODE_WRONG_VERSION  = 'wrong_version'
 
@@ -826,8 +845,7 @@ class Uuid(BaseFilter):
             specified version.
 
         References:
-
-            - https://en.wikipedia.org/wiki/Uuid#RFC_4122_Variant
+          - https://en.wikipedia.org/wiki/Uuid#RFC_4122_Variant
         """
         super(Uuid, self).__init__()
 
@@ -840,7 +858,7 @@ class Uuid(BaseFilter):
         )
 
     def _apply(self, value):
-        value = self._filter(value, Type((text_type, UUID))) # type: Union[Text, UUID]
+        value = self._filter(value, Type((text_type, UUID,))) # type: Union[Text, UUID]
 
         if self._has_errors:
             return None

@@ -20,7 +20,9 @@ __all__ = [
 
 @python_2_unicode_compatible
 class Decimal(BaseFilter):
-    """Interprets the value as a Decimal object."""
+    """
+    Interprets the value as a :py:class:`decimal.Decimal` object.
+    """
     CODE_INVALID    = 'not_numeric'
     CODE_NON_FINITE = 'not_finite'
 
@@ -73,7 +75,7 @@ class Decimal(BaseFilter):
         allowed_types = (text_type, int, float, DecimalType,)
         if self.allow_tuples:
             # Python's Decimal type supports both tuples and lists.
-            # :see: decimal.Decimal.__init__
+            # :py:meth:`decimal.Decimal.__init__`
             allowed_types += (list, tuple,)
 
         value = self._filter(value, Type(allowed_types))
@@ -113,8 +115,7 @@ class Int(BaseFilter):
     transparently, so you don't need to worry about overflow.
 
     References:
-
-        - http://stackoverflow.com/a/538583
+      - http://stackoverflow.com/a/538583
     """
     CODE_DECIMAL = 'not_int'
 
@@ -129,10 +130,13 @@ class Int(BaseFilter):
             return None
 
         # Do not allow floats.
-        # :see: http://stackoverflow.com/a/19965088
+        # http://stackoverflow.com/a/19965088
         if decimal % 1:
             return self._invalid_value(value, self.CODE_DECIMAL)
 
+        # Once we get to this point, we're pretty confident that we've
+        # got something that can be converted into an int.
+        # noinspection PyTypeChecker
         return int(decimal)
 
 
@@ -250,7 +254,7 @@ class Min(BaseFilter):
     def _apply(self, value):
         # Note that this will yield weird results for string values.
         # We could add better unicode support, if we ever need it.
-        # :see: http://stackoverflow.com/q/1097908
+        # http://stackoverflow.com/q/1097908
         if (
                 (value < self.min_value)
             or  (self.exclusive and (value == self.min_value))
@@ -259,9 +263,9 @@ class Min(BaseFilter):
                 value   = value,
                 reason  = self.CODE_TOO_SMALL,
 
-                # This only makes sense if `self.exclusive` is False.
+                # This only makes sense if ``self.exclusive`` is False.
                 # Better to be consistent and replace all invalid
-                # values with `None`.
+                # values with ``None``.
                 # replacement = self.min_value,
 
                 template_vars = {
@@ -274,7 +278,9 @@ class Min(BaseFilter):
 
 
 class Round(BaseFilter):
-    """Rounds incoming values to whole numbers or decimals."""
+    """
+    Rounds incoming values to whole numbers or decimals.
+    """
     def __init__(self,
             to_nearest  = 1,
             rounding    = ROUND_HALF_UP,
@@ -291,9 +297,11 @@ class Round(BaseFilter):
             that you provide it as a string or Decimal, to avoid
             floating point problems.
 
-        :param rounding: Controls how to round values.
+        :param rounding:
+            Controls how to round values.
 
-        :param result_type: The type of result to return.
+        :param result_type:
+            The type of result to return.
         """
         super(Round, self).__init__()
 
@@ -315,9 +323,9 @@ class Round(BaseFilter):
         one = DecimalType('1')
 
         # Scale, round, unscale.
-        # Note that we use `DecimalType.quantize` instead of `round` to
-        # avoid floating-point precision errors.
-        # :see: http://stackoverflow.com/a/4340355
+        # Note that we use :py:meth:`decimal.Decimal.quantize` instead
+        # of :py:func:`round` to avoid floating-point precision errors.
+        # http://stackoverflow.com/a/4340355
         return self.result_type(
                 (value * one / self.to_nearest)
                     .quantize(one, rounding=self.rounding)

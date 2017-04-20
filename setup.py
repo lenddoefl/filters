@@ -25,13 +25,13 @@ dependencies = [
     'pytz',
     'regex',
     'six',
-    'typing',
 ]
 
 if version_info[0] < 3:
     # noinspection SpellCheckingInspection
     dependencies.extend([
         'py2casefold',
+        'typing',
     ])
 
 
@@ -42,7 +42,7 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.1.6',
+    version = '1.1.7',
 
     packages = ['filters'],
 

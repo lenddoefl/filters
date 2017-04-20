@@ -4,25 +4,12 @@ from __future__ import absolute_import, division, print_function, \
 
 from abc import ABCMeta, abstractmethod as abstract_method
 from copy import copy
-from six import (
-    binary_type,
-    python_2_unicode_compatible,
-    with_metaclass,
-    text_type,
-)
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Text,
-    Tuple,
-    Union,
-)
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Text, \
+    Tuple, Union
 from weakref import ProxyTypes, proxy
+
+from six import binary_type, python_2_unicode_compatible, text_type, \
+    with_metaclass
 
 from filters import FilterCompatible
 
@@ -35,7 +22,9 @@ __all__ = [
 
 
 class FilterMeta(ABCMeta):
-    """Metaclass for Filters."""
+    """
+    Metaclass for filters.
+    """
     # noinspection PyShadowingBuiltins
     def __init__(cls, what, bases=None, dict=None):
         super(FilterMeta, cls).__init__(what, bases, dict)
@@ -44,8 +33,8 @@ class FilterMeta(ABCMeta):
             cls.templates = {}
 
         # Copy error templates from base class to derived class, but
-        #   in the event of a conflict, preserve the derived class'
-        #   template.
+        # in the event of a conflict, preserve the derived class'
+        # template.
         templates = {}
         for base in bases:
             if isinstance(base, FilterMeta):
@@ -67,15 +56,16 @@ class FilterMeta(ABCMeta):
             Int() | Max(32) # Filter.__or__
 
         References:
-
-            - http://stackoverflow.com/a/10773232
+          - http://stackoverflow.com/a/10773232
         """
         return FilterChain(self) | next_filter
 
 
 @python_2_unicode_compatible
 class BaseFilter(with_metaclass(FilterMeta)):
-    """Base functionality for all Filters, macros, etc."""
+    """
+    Base functionality for all Filters, macros, etc.
+    """
     CODE_EXCEPTION = 'exception'
 
     templates = {
@@ -97,14 +87,18 @@ class BaseFilter(with_metaclass(FilterMeta)):
         # external code should instead interact with invalid value
         # handlers such as LogHandler and MemoryHandler.
         #
-        # :see: importer.core.filters.handlers
+        # References:
+        #   - :py:mod:`importer.core.filters.handlers`
         #
         self._has_errors = False
 
+    # noinspection PyProtectedMember
     @classmethod
     def __copy__(cls, the_filter):
         # type: (BaseFilter) -> BaseFilter
-        """Creates a shallow copy of the object."""
+        """
+        Creates a shallow copy of the object.
+        """
         new_filter = type(the_filter)() # type: BaseFilter
 
         new_filter._parent  = the_filter._parent
@@ -115,13 +109,15 @@ class BaseFilter(with_metaclass(FilterMeta)):
 
     def __or__(self, next_filter):
         # type: (FilterCompatible) -> FilterChain
-        """Chains another filter with this one."""
+        """
+        Chains another filter with this one.
+        """
         normalized = self.resolve_filter(next_filter)
 
         if normalized:
             #
             # Officially, we should do this:
-            # return FilterChain(self) | next_filter
+            # return ``FilterChain(self) | next_filter``
             #
             # But that wastes some CPU cycles by creating an extra
             # FilterChain instance that gets thrown away almost
@@ -131,7 +127,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
             # noinspection PyProtectedMember
             return FilterChain(self)._add(next_filter)
         else:
-            return self
+            return self if isinstance(self, FilterChain) else FilterChain(self)
 
     def __str__(self):
         """
@@ -150,7 +146,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
     @property
     def parent(self):
         # type: () -> Optional[BaseFilter]
-        """Returns the parent Filter."""
+        """
+        Returns the parent Filter.
+        """
         # Make sure `self._parent` hasn't gone away.
         try:
             self._parent.__class__
@@ -162,7 +160,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
     @parent.setter
     def parent(self, parent):
         # type: (BaseFilter) -> None
-        """Sets the parent Filter."""
+        """
+        Sets the parent Filter.
+        """
         # Create a weakref to the parent Filter to prevent annoying the
         # garbage collector.
         self._parent = (
@@ -174,13 +174,17 @@ class BaseFilter(with_metaclass(FilterMeta)):
     @property
     def key(self):
         # type: () -> Text
-        """Returns the key associated with this filter."""
+        """
+        Returns the key associated with this filter.
+        """
         return self._make_key(self._key_parts)
 
     @key.setter
     def key(self, key):
         # type: (Text) -> None
-        """Sets the key associated with this filter."""
+        """
+        Sets the key associated with this filter.
+        """
         self._key = key
 
     def sub_key(self, sub_key):
@@ -194,11 +198,13 @@ class BaseFilter(with_metaclass(FilterMeta)):
     @property
     def _key_parts(self):
         # type: () -> List[Text]
-        """Assembles each key part in the filter hierarchy."""
+        """
+        Assembles each key part in the filter hierarchy.
+        """
         key_parts = []
 
         # Iterate up the parent chain and collect key parts.
-        # Alternatively, we could just get `self.parent._key_parts`,
+        # Alternatively, we could just get ``self.parent._key_parts``,
         # but that is way less efficient.
         parent = self
         while parent:
@@ -213,7 +219,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
     @property
     def handler(self):
         # type: () -> BaseInvalidValueHandler
-        """Returns the invalid value handler for the filter."""
+        """
+        Returns the invalid value handler for the filter.
+        """
         if self._handler is None:
             # Attempt to return the parent filter's handler...
             try:
@@ -234,7 +242,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
     @handler.setter
     def handler(self, handler):
         # type: (BaseInvalidValueHandler) -> None
-        """Sets the invalid value handler for the filter."""
+        """
+        Sets the invalid value handler for the filter.
+        """
         self._handler = handler
 
     def set_handler(self, handler):
@@ -247,7 +257,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
         return self
 
     def apply(self, value):
-        """Applies the filter to a value."""
+        """
+        Applies the filter to a value.
+        """
         self._has_errors = False
 
         try:
@@ -268,7 +280,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
         )
 
     def _apply_none(self):
-        """Applies filter-specific logic when the value is `None`."""
+        """
+        Applies filter-specific logic when the value is ``None``.
+        """
         return None
 
     def _filter(self, value, filter_chain, sub_key=None):
@@ -283,8 +297,8 @@ class BaseFilter(with_metaclass(FilterMeta)):
         """
         filter_chain = self.resolve_filter(filter_chain, parent=self, key=sub_key)
 
-        # In rare cases, `filter_chain` may be `None`.
-        # :see: importer.core.filters.complex.FilterMapper#__init__
+        # In rare cases, ``filter_chain`` may be ``None``.
+        # :py:meth:`filters.complex.FilterMapper.__init__`
         if filter_chain:
             try:
                 filtered = filter_chain.apply(value)
@@ -313,14 +327,16 @@ class BaseFilter(with_metaclass(FilterMeta)):
         This method works as both a logging method and an exception
         handler.
 
-        :param replacement: The replacement value to use instead.
+        :param replacement:
+            The replacement value to use instead.
 
         :param sub_key:
             Appended to the ``key`` value in the error message context
             (used by complex filters).
 
         :return:
-            Replacement value to use instead of the invalid value.
+            Replacement value to use instead of the invalid value
+            (usually ``None``).
         """
         handler = self.handler
 
@@ -390,7 +406,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
 
     def _format_message(self, key, template_vars):
         # type: (Text, Dict[Text, Text]) -> Text
-        """Formats a message for the invalid value handler."""
+        """
+        Formats a message for the invalid value handler.
+        """
         return self.templates[key].format(**template_vars)
 
     @classmethod
@@ -428,7 +446,9 @@ class BaseFilter(with_metaclass(FilterMeta)):
     @staticmethod
     def _make_key(key_parts):
         # type: (Iterable[Text]) -> Text
-        """Assembles a dotted key value from its component parts."""
+        """
+        Assembles a dotted key value from its component parts.
+        """
         return '.'.join(filter(None, key_parts))
 
 
@@ -469,17 +489,22 @@ class FilterChain(BaseFilter):
         else:
             return self
 
+    # noinspection PyProtectedMember
     @classmethod
     def __copy__(cls, the_filter):
         # type: (FilterChain) -> FilterChain
-        """Creates a shallow copy of the object."""
+        """
+        Creates a shallow copy of the object.
+        """
         new_filter = super(FilterChain, cls).__copy__(the_filter) # type: FilterChain
         new_filter._filters = the_filter._filters[:]
         return new_filter
 
     def _add(self, next_filter):
         # type: (FilterCompatible) -> FilterChain
-        """Adds a Filter to the collection directly."""
+        """
+        Adds a Filter to the collection directly.
+        """
         resolved = self.resolve_filter(next_filter, parent=self)
         if resolved:
             self._filters.append(resolved)
@@ -504,16 +529,23 @@ class FilterChain(BaseFilter):
 
 
 class BaseInvalidValueHandler(with_metaclass(ABCMeta)):
-    """Base functionality for classes that handle invalid values."""
+    """
+    Base functionality for classes that handle invalid values.
+    """
     @abstract_method
     def handle_invalid_value(self, message, exc_info, context):
         # type: (Text, bool, dict) -> Any
         """
         Handles an invalid value.
 
-        :param message: Error message.
-        :param exc_info: Whether to use `sys.exc_info()`.
-        :param context: Additional context values about the error.
+        :param message:
+            Error message.
+
+        :param exc_info:
+            Whether to include output from :py:func:``sys.exc_info``.
+
+        :param context:
+            Additional context values for the error.
         """
         raise NotImplementedError(
             'Not implemented in {cls}.'.format(cls=type(self).__name__),
@@ -521,7 +553,9 @@ class BaseInvalidValueHandler(with_metaclass(ABCMeta)):
 
     def handle_exception(self, message, exc):
         # type: (Text, Exception) -> Any
-        """Handles an uncaught exception."""
+        """
+        Handles an uncaught exception.
+        """
         return self.handle_invalid_value(
             message     = message,
             exc_info    = True,
@@ -535,26 +569,29 @@ class FilterError(ValueError):
     value was invalid.
     """
     def __init__(self, *args, **kwargs):
-        self.context = {}
         """
         Provides a container to include additional variables and other
         information to help troubleshoot errors.
         """
-
+        # Exception kwargs are deprecated in Python 3, but keeping them
+        # around for compatibility with Python 2.
+        # noinspection PyArgumentList
         super(FilterError, self).__init__(*args, **kwargs)
+        self.context = {}
 
 
 class ExceptionHandler(BaseInvalidValueHandler):
-    """Invalid value handler that raises an exception."""
+    """
+    Invalid value handler that raises an exception.
+    """
     def handle_invalid_value(self, message, exc_info, context):
         error = FilterError(message)
         error.context = context
         raise error
 
 
-# Used by Type to use JSON data types instead of Python type names in
-# error messages.
-# :see: Type.__init__
+# Used by :py:meth:`Type.__init__` to inject JSON data types in place of
+# Python type names in error messages.
 JSON_ALIASES = {
     # Builtins
     bool:           'Boolean',
@@ -577,7 +614,9 @@ JSON_ALIASES = {
 # the base module.
 @python_2_unicode_compatible
 class Type(BaseFilter):
-    """Checks the type of a value."""
+    """
+    Checks the type of a value.
+    """
     CODE_WRONG_TYPE = 'wrong_type'
 
     templates = {
@@ -645,9 +684,11 @@ class Type(BaseFilter):
 
     def get_allowed_type_names(self, aliased=True):
         # type: (bool) -> Text
-        """Returns a string with all the allowed types."""
+        """
+        Returns a string with all the allowed types.
+        """
         # Note that we cast as a set in the middle, to ferret out
-        #   duplicates.
+        # duplicates.
         return ', '.join(sorted({
             self.get_type_name(t, aliased)
                 for t in self.allowed_types
@@ -655,7 +696,9 @@ class Type(BaseFilter):
 
     def get_type_name(self, type_, aliased=True):
         # type: (type, bool) -> Text
-        """Returns the name of the specified type."""
+        """
+        Returns the name of the specified type.
+        """
         return (
             (self.aliases.get(type_) or type_.__name__)
                 if aliased
