@@ -25,13 +25,13 @@ dependencies = [
     'pytz',
     'regex',
     'six',
-    'typing',
 ]
 
 if version_info[0] < 3:
     # noinspection SpellCheckingInspection
     dependencies.extend([
         'py2casefold',
+        'typing',
     ])
 
 
