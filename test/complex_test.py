@@ -543,6 +543,41 @@ class FilterMapperTestCase(BaseFilterTestCase):
             }
         )
 
+    def test_extra_keys_ordered(self):
+        """
+        When the filter map is an OrderedDict, extra keys are
+        alphabetized.
+        """
+        # Note that we pass an OrderedDict to the filter initializer.
+        self.filter_type = lambda: f.FilterMapper(OrderedDict((
+            ('subject', f.NotEmpty | f.MaxLength(16)),
+            ('id', f.Required | f.Int | f.Min(1)),
+        )))
+
+        filter_ = self._filter({
+            'id':       '42',
+            'subject':  'Hello, world!',
+            'cat':      'felix',
+            'bird':     'phoenix',
+            'fox':      'fennecs',
+        })
+
+        self.assertFilterPasses(
+            filter_,
+
+            OrderedDict((
+                # The filtered keys are always listed first.
+                ('subject', 'Hello, world!'),
+                ('id', 42),
+
+                # Extra keys are listed afterward, in alphabetical
+                # order.
+                ('bird', 'phoenix'),
+                ('cat', 'felix'),
+                ('fox', 'fennecs'),
+            )),
+        )
+
     def test_extra_keys_disallowed(self):
         """
         FilterMappers can be configured to treat any extra key as an

@@ -304,7 +304,13 @@ class FilterMapper(BaseFilter):
                     )
 
             # Extra values go last.
-            for key in (set(iterkeys(value)) - set(iterkeys(self._filters))):
+            # Note that we iterate in sorted order, in case the result
+            # type preserves ordering.
+            # https://github.com/eflglobal/filters/issues/13
+            for key in sorted(
+                            set(iterkeys(value))
+                        -   set(iterkeys(self._filters))
+            ):
                 if self._extra_key_allowed(key):
                     yield key, value[key]
                 else:
