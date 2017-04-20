@@ -191,8 +191,6 @@ class FilterMapper(BaseFilter):
         CODE_MISSING_KEY:   '{key} is required.',
     }
 
-    result_type = OrderedDict
-
     def __init__(
             self,
             filter_map,
@@ -253,6 +251,15 @@ class FilterMapper(BaseFilter):
                 #
                 self._filters[key] =\
                     self.resolve_filter(filter_chain, parent=self, key=key)
+
+        # If the filter map is an OrderedDict, we should try to
+        # preserve order when applying the filter.  Otherwise use a
+        # plain ol' dict to improve readability.
+        self.result_type = (
+            OrderedDict
+                if isinstance(filter_map, OrderedDict)
+                else dict
+        )
 
 
     def __str__(self):

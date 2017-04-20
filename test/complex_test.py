@@ -2,6 +2,8 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
+from collections import OrderedDict
+
 import filters as f
 from filters.test import BaseFilterTestCase
 
@@ -446,17 +448,50 @@ class FilterMapperTestCase(BaseFilterTestCase):
             'subject':  f.NotEmpty | f.MaxLength(16),
         })
 
+        filter_ = self._filter({
+            'id':       '42',
+            'subject':  'Hello, world!',
+        })
+
         self.assertFilterPasses(
-            {
-                'id':       '42',
-                'subject':  'Hello, world!',
-            },
+            filter_,
 
             {
                 'id':       42,
                 'subject':  'Hello, world!',
             },
         )
+
+        # The result is a dict, to match the type of the filter map.
+        self.assertIs(type(filter_.cleaned_data), dict)
+
+    def test_pass_ordered_mapping(self):
+        """
+        Configuring the FilterRepeater to return an OrderedDict.
+        """
+        # Note that we pass an OrderedDict to the filter initializer.
+        self.filter_type = lambda: f.FilterMapper(OrderedDict((
+            ('subject', f.NotEmpty | f.MaxLength(16)),
+            ('id', f.Required | f.Int | f.Min(1)),
+        )))
+
+        filter_ = self._filter({
+            'id':       '42',
+            'subject':  'Hello, world!',
+        })
+
+        self.assertFilterPasses(
+            filter_,
+
+            OrderedDict((
+                ('subject', 'Hello, world!'),
+                ('id', 42),
+            )),
+        )
+
+        # The result is an OrderedDict, to match the type of the filter
+        # map.
+        self.assertIs(type(filter_.cleaned_data), OrderedDict)
 
     def test_fail_mapping(self):
         """
