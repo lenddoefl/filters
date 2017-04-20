@@ -187,7 +187,7 @@ class FilterMapper(BaseFilter):
     CODE_MISSING_KEY    = 'missing'
 
     templates = {
-        CODE_EXTRA_KEY:     'Unexpected key "{key}".',
+        CODE_EXTRA_KEY:     'Unexpected key "{actual_key}".',
         CODE_MISSING_KEY:   '{key} is required.',
     }
 
@@ -314,13 +314,20 @@ class FilterMapper(BaseFilter):
                 if self._extra_key_allowed(key):
                     yield key, value[key]
                 else:
+                    unicode_key = self.unicodify_key(key)
+
                     # Handle the extra value just like any other
                     # invalid value, but do not include it in the
                     # result (note that there is no ``yield`` here).
                     self._invalid_value(
                         value   = value[key],
                         reason  = self.CODE_EXTRA_KEY,
-                        sub_key = self.unicodify_key(key),
+                        sub_key = unicode_key,
+
+                        # https://github.com/eflglobal/filters/issues/15
+                        template_vars = {
+                            'actual_key': unicode_key,
+                        },
                     )
 
     def _apply_item(self, key, value, filter_chain):
