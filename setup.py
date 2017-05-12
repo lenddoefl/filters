@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function
 
 from codecs import StreamReader, open
 from os.path import dirname, join, realpath
-from sys import version_info
 
 from setuptools import setup
 
@@ -18,24 +17,8 @@ with open(join(cwd, 'README.rst'), 'r', 'utf-8') as f: # type: StreamReader
 
 
 ##
-# Certain dependencies are optional depending on Python version.
-dependencies = [
-    'python-dateutil',
-    'pytz',
-    'regex',
-    'six',
-]
-
-if version_info[0] < 3:
-    # noinspection SpellCheckingInspection
-    dependencies.extend([
-        'py2casefold',
-        'typing',
-    ])
-
-
-##
 # Off we go!
+# noinspection SpellCheckingInspection
 setup(
     name        = 'filters',
     description = 'Validation and data pipelines made easy!',
@@ -47,7 +30,16 @@ setup(
 
     long_description = long_description,
 
-    install_requires = dependencies,
+    install_requires = [
+        'py2casefold; python_version < "3.0"',
+        'python-dateutil',
+        'pytz',
+        'regex',
+        'six',
+
+        # https://github.com/python/typing/issues/266
+        'typing; python_version < "3.5.3"',
+    ],
 
     # Coming soon!
     # extras_require = {
