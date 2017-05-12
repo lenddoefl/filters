@@ -8,8 +8,7 @@ from typing import Any, Dict, Generator, Iterable, Mapping, Optional, \
 
 from six import iteritems, iterkeys, python_2_unicode_compatible
 
-from filters.base import BaseFilter, FilterError, Type
-from filters.types import FilterCompatible
+from filters.base import BaseFilter, FilterCompatible, FilterError, Type
 from filters.string import Unicode
 
 __all__ = [
@@ -157,7 +156,7 @@ class FilterRepeater(BaseFilter):
 
     @staticmethod
     def unicodify_key(key):
-        # type: (Text) -> Text
+        # type: (Any) -> Text
         """
         Converts a key value into a unicode so that it can be
         represented in e.g., error message contexts.

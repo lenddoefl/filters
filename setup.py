@@ -30,17 +30,12 @@ dependencies = [
 
 ]
 
-if version_info[0:3] < (3, 5, 3):
+if version_info[0] < 3:
+    # noinspection SpellCheckingInspection
     dependencies.extend([
-        # https://github.com/python/typing/issues/266
-        'typing', # 'typing; python_version < "3.5.3"',
+        'py2casefold', # 'py2casefold; python_version < "3.0"',
+        'typing', # 'typing; python_version < "3.0"',
     ])
-
-    if version_info[0] < 3:
-        # noinspection SpellCheckingInspection
-        dependencies.extend([
-            'py2casefold', # 'py2casefold; python_version < "3.0"',
-        ])
 
 
 ##

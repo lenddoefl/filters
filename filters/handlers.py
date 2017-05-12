@@ -3,20 +3,15 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import sys
-from logging import Logger, LoggerAdapter, ERROR
+from collections import OrderedDict
+from logging import ERROR, Logger, LoggerAdapter
 from traceback import format_exc
+from types import TracebackType
 from typing import Any, Dict, List, Text, Tuple, Union
 
-from collections import OrderedDict
-from six import (
-    iteritems,
-    python_2_unicode_compatible,
-    text_type,
-)
-from types import TracebackType
+from six import iteritems, python_2_unicode_compatible, text_type
 
-from filters.base import BaseFilter, BaseInvalidValueHandler
-from filters.types import FilterCompatible
+from filters.base import BaseFilter, BaseInvalidValueHandler, FilterCompatible
 
 __all__ = [
     'FilterMessage',
