@@ -4,14 +4,14 @@ from __future__ import absolute_import, division, print_function, \
 
 from abc import ABCMeta, abstractmethod as abstract_method
 from copy import copy
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Text, \
-    Tuple, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, \
+    Text, Tuple, Union
 from weakref import ProxyTypes, proxy
 
 from six import binary_type, python_2_unicode_compatible, text_type, \
     with_metaclass
 
-from filters import FilterCompatible
+from filters.types import FilterCompatible
 
 __all__ = [
     'BaseFilter',

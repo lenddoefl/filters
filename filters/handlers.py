@@ -15,7 +15,8 @@ from six import (
 )
 from types import TracebackType
 
-from filters.base import BaseFilter, BaseInvalidValueHandler, FilterCompatible
+from filters.base import BaseFilter, BaseInvalidValueHandler
+from filters.types import FilterCompatible
 
 __all__ = [
     'FilterMessage',

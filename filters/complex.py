@@ -8,7 +8,8 @@ from typing import Any, Dict, Generator, Iterable, Mapping, Optional, \
 
 from six import iteritems, iterkeys, python_2_unicode_compatible
 
-from filters.base import BaseFilter, FilterCompatible, FilterError, Type
+from filters.base import BaseFilter, FilterError, Type
+from filters.types import FilterCompatible
 from filters.string import Unicode
 
 __all__ = [
