@@ -43,21 +43,6 @@ string filters only accept unicode strings, unless otherwise noted.
    Note that the comparison is case sensitive; chain this filter with
    :py:class:`filters.CaseFold` for case-insensitive comparison.
 
-:py:class:`filters.Country`
-   Interprets the incoming value as an
-   `ISO 3166-1 alpha-2 or alpha-3 <https://en.wikipedia.org/wiki/ISO_3166-1>`_
-   country code.
-
-   The resulting value is a :py:class:`iso3166.Country` object (provided by the
-   `iso3166 <https://pypi.python.org/pypi/iso3166>`_ library).
-
-:py:class:`filters.Currency`
-   Interprets the incoming value as an
-   `ISO 4217 <https://en.wikipedia.org/wiki/ISO_4217>`_ currency code.
-
-   The resulting value is a :py:class:`moneyed.Currency` object (provided by
-   the `py-moneyed <https://pypi.python.org/pypi/py-moneyed>`_ library).
-
 :py:class:`filters.Date`
    Interprets a string as a date.  The result is a ``datetime.date`` instance.
 
@@ -85,15 +70,6 @@ string filters only accept unicode strings, unless otherwise noted.
    Note that this filter can be chained with other filters.  For example, you
    can use ``f.JsonDecode | f.FilterMapper(...)`` to apply filters to a JSON-
    encoded dict.
-
-:py:class:`filters.Locale`
-   Interprets the incoming value as an
-   `IETF Language Tag <https://en.wikipedia.org/wiki/IETF_language_tag>`_
-   (also known as BCP 47).
-
-   The resulting value is a :py:class:`language_tags.Tag.Tag` object (provided
-   by the `language_tags <https://pypi.python.org/pypi/language-tags>`_
-   library).
 
 :py:class:`filters.MaxBytes`
    Truncates a string to a max number of bytes, with support for multibyte
@@ -314,3 +290,53 @@ These filters are covered in more detail in :doc:`/complex_filters`.
 
    ``FilterRepeater`` can also process mappings (e.g., ``dict``); it will apply
    the filters to every value in the mapping, preserving the keys.
+
+----------
+Extensions
+----------
+The following filters are provided by the
+:doc:`Extensions framework </extensions>`.
+
+Note that extension filters are located in a different namespace; use
+``filters.ext`` to use them instead of ``filters``.  For example:
+
+.. code:: python
+
+   import filters as f
+
+   # Standard filter
+   f.Unicode().apply('foo')
+
+   # Extension filter - note `f.ext`.
+   f.ext.Country().apply('pe')
+
+ISO Filters
+-----------
+Adds filters for interpreting standard codes and identifiers.  To install this
+extension::
+
+   pip install filters[iso]
+
+:py:class:`filters.ext.Country`
+   Interprets the incoming value as an
+   `ISO 3166-1 alpha-2 or alpha-3 <https://en.wikipedia.org/wiki/ISO_3166-1>`_
+   country code.
+
+   The resulting value is a :py:class:`iso3166.Country` object (provided by the
+   `iso3166 <https://pypi.python.org/pypi/iso3166>`_ library).
+
+:py:class:`filters.ext.Currency`
+   Interprets the incoming value as an
+   `ISO 4217 <https://en.wikipedia.org/wiki/ISO_4217>`_ currency code.
+
+   The resulting value is a :py:class:`moneyed.Currency` object (provided by
+   the `py-moneyed <https://pypi.python.org/pypi/py-moneyed>`_ library).
+
+:py:class:`filters.ext.Locale`
+   Interprets the incoming value as an
+   `IETF Language Tag <https://en.wikipedia.org/wiki/IETF_language_tag>`_
+   (also known as BCP 47).
+
+   The resulting value is a :py:class:`language_tags.Tag.Tag` object (provided
+   by the `language_tags <https://pypi.python.org/pypi/language-tags>`_
+   library).

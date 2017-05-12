@@ -45,7 +45,7 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.2.0',
+    version = '1.2.1',
 
     packages = ['filters'],
 
@@ -53,10 +53,9 @@ setup(
 
     install_requires = dependencies,
 
-    # Coming soon!
-    # extras_require = {
-    #     'iso': ['filters-iso'],
-    # },
+    extras_require = {
+        'iso': ['filters-iso'],
+    },
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',
