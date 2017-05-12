@@ -4,34 +4,37 @@
 from __future__ import absolute_import, division, print_function
 
 from codecs import StreamReader, open
+from os.path import dirname, join, realpath
 from sys import version_info
 
 from setuptools import setup
 
+cwd = dirname(realpath(__file__))
 
 ##
 # Load long description for PyPi.
-with open('README.rst', 'r', 'utf-8') as f: # type: StreamReader
+with open(join(cwd, 'README.rst'), 'r', 'utf-8') as f: # type: StreamReader
     long_description = f.read()
 
 
 ##
-# Certain dependencies are optional depending on Python version.
+# For compatibility with versions of pip < 9, we will determine
+# dependencies at runtime.
+# Maybe once Travis upgrades their containers to use a newer version,
+# we'll switch to the newer syntax (:
 dependencies = [
-    'iso3166',
-    'language_tags',
-    'py-moneyed',
     'python-dateutil',
     'pytz',
     'regex',
     'six',
+
 ]
 
 if version_info[0] < 3:
     # noinspection SpellCheckingInspection
     dependencies.extend([
-        'py2casefold',
-        'typing',
+        'py2casefold', # 'py2casefold; python_version < "3.0"',
+        'typing', # 'typing; python_version < "3.0"',
     ])
 
 
@@ -42,13 +45,18 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.1.7',
+    version = '1.2.0',
 
     packages = ['filters'],
 
     long_description = long_description,
 
     install_requires = dependencies,
+
+    # Coming soon!
+    # extras_require = {
+    #     'iso': ['filters-iso'],
+    # },
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',
@@ -70,6 +78,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Filters',
     ],

@@ -156,7 +156,7 @@ class FilterRepeater(BaseFilter):
 
     @staticmethod
     def unicodify_key(key):
-        # type: (Text) -> Text
+        # type: (Any) -> Text
         """
         Converts a key value into a unicode so that it can be
         represented in e.g., error message contexts.
