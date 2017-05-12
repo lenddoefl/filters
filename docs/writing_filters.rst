@@ -179,3 +179,15 @@ Here's a starter test case for ``Pkcs7Pad``:
          u'Hello, world!',
          [Pkcs7Pad.CODE_INVALID_TYPE],
        )
+
+
+===================================
+Registering Your Filters (Optional)
+===================================
+Once you've packaged up your filters, you can register them with the Extensions
+framework to add them to the (nearly) top-level ``filters.ext`` namespace.
+
+This is an optional step; it may make your filters easier to use, though there
+are some trade-offs.
+
+See `Extensions Framework </extensions>`_ for more information.

@@ -23,7 +23,6 @@ pipelines.
 
 Examples
 ========
-
 Validate a latitude position and round to manageable precision:
 
 .. code:: python
@@ -91,9 +90,14 @@ Install the latest stable version via pip::
 
     pip install filters
 
-Install the latest development version::
+Extensions
+==========
+The following extensions are available:
 
-    pip install https://github.com/eflglobal/filters/archive/develop.zip
+- `ISO Filters`_: Adds filters for interpreting standard codes and identifiers.
+  To install::
 
+     pip install filters[iso]
 
+.. _ISO Filters: https://pypi.python.org/pypi/filters-iso
 .. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence
