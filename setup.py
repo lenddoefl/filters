@@ -54,6 +54,7 @@ setup(
     install_requires = dependencies,
 
     extras_require = {
+        'django':['filters-django'],
         'iso': ['filters-iso'],
     },
 
