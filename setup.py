@@ -45,7 +45,7 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.2.2',
+    version = '1.2.3',
 
     packages = ['filters'],
 
@@ -54,6 +54,7 @@ setup(
     install_requires = dependencies,
 
     extras_require = {
+        'django':['filters-django'],
         'iso': ['filters-iso'],
     },
 

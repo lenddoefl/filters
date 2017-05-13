@@ -310,6 +310,46 @@ Note that extension filters are located in a different namespace; use
    # Extension filter - note `f.ext`.
    f.ext.Country().apply('pe')
 
+Django Filters
+--------------
+Adds filters for Django-specific features.  To install this extension::
+
+   pip install filters[django]
+
+:py:class:`filters.ext.Model`
+   Attempts to find a database record that matches the incoming value.
+
+   The filter initializer accepts a few arguments:
+
+   - ``model`` (required) The Django model that will be queried.
+   - ``field`` (optional) The name of the field that will be matched against.
+      If not provided, the default is ``pk``.
+
+   You may also provide "predicates" to the initializer that will allow you to
+   further filter/customize the query as desired.
+
+   Here's an example:
+
+   .. code:: python
+
+      filter_ = f.ext.Model(
+        # Find a Post record with a ``slug`` that matches the input.
+        model = Post,
+        field = 'slug',
+
+        # Predicates
+        filter={'published': True},
+        exclude={'comments__isnull': True'},
+        select_related=('author', 'comments'),
+      )
+
+      post = filter_.apply('introducing-filters-library')
+
+   Any method in ``QueryString`` can be used as a predicate so long as that
+   method returns a ``QueryString`` object (e.g., ``filter`` and
+   ``select_related`` are valid predicates, but ``count`` and ``update`` are
+   not).
+
 ISO Filters
 -----------
 Adds filters for interpreting standard codes and identifiers.  To install this
