@@ -38,7 +38,7 @@ it gives IDEs a heart attack).
 
 logger = getLogger(__name__)
 
-class FilterExtensionRegistry(dict):
+class FilterExtensionRegistry(object):
     """
     Creates a registry that can be used to dynamically load 3rd-party
     filters into the (nearly) top-level namespace.
@@ -55,13 +55,18 @@ class FilterExtensionRegistry(dict):
             If you want to initialize a completely empty registry,
             set ``filters`` to an empty dict.
         """
-        if filters is None:
-            filters = discover_filters()
+        super(FilterExtensionRegistry, self).__init__()
 
-        super(FilterExtensionRegistry, self).__init__(filters)
+        self._filters = filters
 
     def __getattr__(self, item):
         return self[item]
+
+    def __getitem__(self, item):
+        if self._filters is None:
+            self._filters = discover_filters()
+
+        return self._filters.get(item)
 
     def __missing__(self, key):
         raise KeyError('Extension filter "{key}" not found!'.format(key=key))
@@ -86,7 +91,7 @@ def discover_filters():
             ),
         )
 
-        filters.update(iter_filters_in(entry_point.load()))
+        filters.update(iter_filters_in(entry_point.resolve()))
 
     return filters
 
