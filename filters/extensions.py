@@ -4,10 +4,11 @@ from __future__ import absolute_import, division, print_function, \
 
 from inspect import getmembers as get_members, isabstract as is_abstract, \
     isclass as is_class, ismodule as is_module
+from logging import getLogger
 from typing import Any, Dict, Generator, Optional, Text, Tuple, Type, Union
 
-from logging import getLogger
 from pkg_resources import EntryPoint, iter_entry_points
+from six import iterkeys, python_2_unicode_compatible, text_type
 
 from filters.base import BaseFilter
 
@@ -38,6 +39,7 @@ it gives IDEs a heart attack).
 
 logger = getLogger(__name__)
 
+@python_2_unicode_compatible
 class FilterExtensionRegistry(object):
     """
     Creates a registry that can be used to dynamically load 3rd-party
@@ -59,17 +61,38 @@ class FilterExtensionRegistry(object):
 
         self._filters = filters
 
+    def __dir__(self):
+        self.__autoload()
+        return list(iterkeys(self._filters))
+
     def __getattr__(self, item):
         return self[item]
 
     def __getitem__(self, item):
-        if self._filters is None:
-            self._filters = discover_filters()
-
+        self.__autoload()
         return self._filters.get(item)
+
+    def __iter__(self):
+        self.__autoload()
+        return iter(self._filters)
 
     def __missing__(self, key):
         raise KeyError('Extension filter "{key}" not found!'.format(key=key))
+
+    def __repr__(self):
+        self.__autoload()
+        return repr(self._filters)
+
+    def __str__(self):
+        self.__autoload()
+        return text_type(self._filters)
+
+    def __autoload(self):
+        """
+        Automatically loads registered extension filters, if necessary.
+        """
+        if self._filters is None:
+            self._filters = discover_filters()
 
 
 def discover_filters():
