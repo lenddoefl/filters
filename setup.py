@@ -64,10 +64,6 @@ setup(
         'nose',
     ],
 
-    data_files = [
-        ('', ['LICENSE']),
-    ],
-
     license = 'MIT',
 
     classifiers = [
