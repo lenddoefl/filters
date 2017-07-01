@@ -1,3 +1,16 @@
+Contents
+========
+
+.. toctree::
+   :maxdepth: 1
+
+   getting_started
+   complex_filters
+   List of Filters <filters_list>
+   writing_filters
+   extensions
+
+
 =======
 Filters
 =======
@@ -90,17 +103,5 @@ Install the latest development version::
 
     pip install https://github.com/eflglobal/filters/archive/develop.zip
 
-
-Contents
-========
-
-.. toctree::
-   :maxdepth: 1
-
-   getting_started
-   complex_filters
-   List of Filters <filters_list>
-   writing_filters
-   extensions
 
 .. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence

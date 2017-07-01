@@ -94,10 +94,16 @@ Extensions
 ==========
 The following extensions are available:
 
+- `Django Filters`_: Adds filters designed to work with Django applications.
+  To install::
+
+      pip install filters[django]
+
 - `ISO Filters`_: Adds filters for interpreting standard codes and identifiers.
   To install::
 
-     pip install filters[iso]
+      pip install filters[iso]
 
+.. _Django Filters: https://pypi.python.org/pypi/filters-django
 .. _ISO Filters: https://pypi.python.org/pypi/filters-iso
 .. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence

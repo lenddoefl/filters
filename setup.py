@@ -27,7 +27,6 @@ dependencies = [
     'pytz',
     'regex',
     'six',
-
 ]
 
 if version_info[0] < 3:
