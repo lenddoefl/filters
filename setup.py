@@ -23,6 +23,7 @@ with open(join(cwd, 'README.rst'), 'r', 'utf-8') as f: # type: StreamReader
 # Maybe once Travis upgrades their containers to use a newer version,
 # we'll switch to the newer syntax (:
 dependencies = [
+    'class-registry',
     'python-dateutil',
     'pytz',
     'regex',

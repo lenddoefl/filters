@@ -5,14 +5,19 @@ from __future__ import absolute_import, division, print_function, \
 from inspect import getmembers as get_members, isabstract as is_abstract, \
     isclass as is_class, ismodule as is_module
 from logging import getLogger
-from typing import Any, Dict, Generator, Optional, Text, Tuple, Type, Union
+from typing import Any, Dict, Generator, Text, Tuple, Type, Union
 
+from class_registry import EntryPointClassRegistry
 from pkg_resources import EntryPoint, iter_entry_points
-from six import iterkeys, python_2_unicode_compatible, text_type
 
 from filters.base import BaseFilter
 
-ENTRY_POINT_KEY = 'filters.extensions'
+__all__ = [
+    'FilterExtensionRegistry',
+    'GROUP_NAME',
+]
+
+GROUP_NAME = 'filters.extensions'
 """
 The key to use when declaring entry points in your library's
 ``setup.py`` file.
@@ -23,11 +28,9 @@ Example::
      ...
      entry_points = {
        'filters.extensions': [
-         # Load all filters from a single module.
-         'iso = filters_iso',
-
-         # Load a single class.
-         'currency = filters_iso:Currency',
+         # Declare each filter with its own entry point.
+         'Country=filters_iso:Country',
+         'Currency=filters_iso:Currency',
        ],
      },
    )
@@ -39,84 +42,67 @@ it gives IDEs a heart attack).
 
 logger = getLogger(__name__)
 
-@python_2_unicode_compatible
-class FilterExtensionRegistry(object):
+class FilterExtensionRegistry(EntryPointClassRegistry):
     """
     Creates a registry that can be used to dynamically load 3rd-party
     filters into the (nearly) top-level namespace.
     """
-    def __init__(self, filters=None):
-        # type: (Optional[Dict[Text, Type[BaseFilter]]]) -> None
+    def __init__(self, group=GROUP_NAME):
+        # type: (Text) -> None
         """
-        :param filters:
-            Used to preload the registry.
-
-            If ``None``, filters will be automatically loaded from
-            3rd-party libraries.
-
-            If you want to initialize a completely empty registry,
-            set ``filters`` to an empty dict.
+        :param group:
+            The name of the entry point group that will be used to load
+            new classes.
         """
-        super(FilterExtensionRegistry, self).__init__()
-
-        self._filters = filters
-
-    def __dir__(self):
-        self.__autoload()
-        return list(iterkeys(self._filters))
+        super(FilterExtensionRegistry, self).__init__(group)
 
     def __getattr__(self, item):
+        # type: (Text) -> Type[BaseFilter]
         return self[item]
 
-    def __getitem__(self, item):
-        self.__autoload()
-        return self._filters.get(item)
+    def _get_cache(self):
+        # type: () -> Dict[Text, Type[BaseFilter]]
+        if self._cache is None:
+            self._cache = {}
 
-    def __iter__(self):
-        self.__autoload()
-        return iter(self._filters)
+            for target in iter_entry_points(self.group): # type: EntryPoint
+                filter_ = target.load()
 
-    def __missing__(self, key):
-        raise KeyError('Extension filter "{key}" not found!'.format(key=key))
+                ift_result = is_filter_type(filter_)
 
-    def __repr__(self):
-        self.__autoload()
-        return repr(self._filters)
+                if ift_result is True:
+                    logger.debug(
+                        'Registering extension filter '
+                        '{cls.__module__}.{cls.__name__} as {name}.'.format(
+                            cls     = filter_,
+                            name    = target.name,
+                        ),
+                    )
 
-    def __str__(self):
-        self.__autoload()
-        return text_type(self._filters)
+                    self._cache[target.name] = filter_
 
-    def __autoload(self):
-        """
-        Automatically loads registered extension filters, if necessary.
-        """
-        if self._filters is None:
-            self._filters = discover_filters()
+                else:
+                    logger.debug(
+                        'Using legacy extension loader for '
+                        '{target.name} ({reason}).'.format(
+                            reason  = ift_result,
+                            target  = target,
+                        ),
+                    )
 
+                    self._cache.update(iter_filters_in(filter_))
 
-def discover_filters():
-    # type: () -> Dict[Text, Type[BaseFilter]]
-    """
-    Returns all registered filters, in no particular order.
+        # noinspection PyTypeChecker
+        return self._cache
 
-    If two filters have the same name, the one that gets loaded second
-    will replace the first one.  Note that the order that filters are
-    loaded is not defined.
-    """
-    filters = {} # type: Dict[Text, Type[BaseFilter]]
+    @staticmethod
+    def create_instance(class_, *args, **kwargs):
+        # type: (type, ...) -> Any
+        if args or kwargs:
+            return class_(*args, **kwargs)
 
-    for entry_point in iter_entry_points(ENTRY_POINT_KEY): # type: EntryPoint
-        logger.debug(
-            'Looking for extension filters in {name} (`{target}`).'.format(
-                name    = entry_point.name,
-                target  = entry_point.module_name,
-            ),
-        )
+        return class_
 
-        filters.update(iter_filters_in(entry_point.resolve()))
-
-    return filters
 
 
 def is_filter_type(target):
