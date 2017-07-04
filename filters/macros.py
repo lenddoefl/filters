@@ -15,7 +15,23 @@ __all__ = [
 
 class FilterMacroType(with_metaclass(ABCMeta, BaseFilter)):
     """
-    Base type for filter macros, useful for ``isinstance`` checks.
+    Base type for filter macros.  Doesn't do anything on its own, but
+    it is useful for identifying filter macros when paired with an
+    ``issubclass`` check.
+
+    Important:  Use ``issubclass``, not ``isinstance``!
+
+    .. code:: python
+
+       @filter_macro
+       def MyMacro():
+         return f.NoOp
+
+       # ``MyMacro`` is now a *subclass* of ``FilterMacroType``!
+       assert issubclass(MyMacro, FilterMacroType)
+
+       # It is *not* an *instance* of ``FilterMacroType``!
+       assert not isinstance(MyMacro, FilterMacroType)
     """
     pass
 
