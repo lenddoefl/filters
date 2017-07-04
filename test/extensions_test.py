@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, \
 
 from os.path import dirname
 from unittest import TestCase
+from warnings import catch_warnings, simplefilter
 
 from pkg_resources import working_set
 
@@ -68,27 +69,35 @@ class FilterExtensionRegistryTestCase(TestCase):
           - /test/_support/filter_extension_legacy.egg-info/entry_points.txt
           - :py:func:`setUpModule`
         """
-        # For this test, we will use a different entry point key, to
-        # minimize the potential for side effects.
-        registry = FilterExtensionRegistry('filters.extensions_test_legacy')
+        with catch_warnings():
+            simplefilter('error', DeprecationWarning)
 
-        # When using the legacy importer, the filter name must always
-        # match the class name.
-        alpha = registry.TestFilterAlpha
-        self.assertIs(alpha, TestFilterAlpha)
+            # For this test, we will use a different entry point key,
+            # to minimize the potential for side effects.
+            registry = FilterExtensionRegistry('filters.extensions_test_legacy')
 
-        # You can also instantiate filters using parameters.
-        bravo = registry.TestFilterBravo(name='Batman')
-        self.assertIsInstance(bravo, TestFilterBravo)
-        self.assertEqual(bravo.name, 'Batman')
+            # The legacy extensions loader will issue a warning the
+            # first time it runs.
+            with self.assertRaises(DeprecationWarning):
+                dir(registry)
 
-        # I couldn't find any Batman characters whose name begins with
-        # C... and "Commissioner Gordon" doesn't count!
-        charlie = registry.TestFilterCharlie
-        # Note that :py:data:`test.TestFilterCharlie` is a filter
-        # macro.
-        self.assertTrue(issubclass(charlie, FilterMacroType))
+            # When using the legacy loader, the filter name must always
+            # match the class name.
+            alpha = registry.TestFilterAlpha
+            self.assertIs(alpha, TestFilterAlpha)
 
-        # Check that the correct number of extension filters were
-        # registered.
-        self.assertEqual(len(registry), 3)
+            # You can also instantiate filters using parameters.
+            bravo = registry.TestFilterBravo(name='Batman')
+            self.assertIsInstance(bravo, TestFilterBravo)
+            self.assertEqual(bravo.name, 'Batman')
+
+            # I couldn't find any Batman characters whose name begins with
+            # C... and "Commissioner Gordon" doesn't count!
+            charlie = registry.TestFilterCharlie
+            # Note that :py:data:`test.TestFilterCharlie` is a filter
+            # macro.
+            self.assertTrue(issubclass(charlie, FilterMacroType))
+
+            # Check that the correct number of extension filters were
+            # registered.
+            self.assertEqual(len(registry), 3)
