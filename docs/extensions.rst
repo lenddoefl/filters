@@ -1,8 +1,8 @@
 ===============================
 Extending the Filters Namespace
 ===============================
-Once you've :doc:`written your own filters </writing_filters>`, you can start using
-them right away!
+Once you've :doc:`written your own filters </writing_filters>`, you can start
+using them right away!
 
 .. code:: python
 
@@ -32,7 +32,9 @@ have to use namespaces in order to keep them all straight:
        'username': f.Unicode | f.Strip | api_filters.User | f.Required,
      })
 
-And so on.  Some developers don't mind this; others can't stand it.
+And so on.
+
+Some developers don't mind this; others can't stand it.
 
 For those of you who fall into the latter group, the Filters library provides an
 extensions framework that allows you to add your filters to the (nearly)
@@ -85,35 +87,43 @@ Here's an example:
      ...
      entry_points = {
        'filters.extensions': [
-         # Load all filters from a single module.
-         'iso = filters_iso',
-
-         # Load a single class.
-         'currency = filters_iso:Currency',
+         'Country = filters_iso:Country',
+         'Currency = filters_iso:Currency',
+         'Locale = filters_iso:Locale',
        ],
      },
    )
 
-Note in the example above that you can register as many filters as you want, and
-you can provide entire modules and/or individual classes.
+Note in the example above that you can register as many filters as you want.
 
-The name that you assign to each entry point is currently ignored.  The
-following configuration has the same effect as the previous one:
+.. tip::
+   The name that you assign to each entry point is used as the attribute name
+   when the corresponding filter is registered.
 
-.. code:: python
+   To use an absurd example, if you register a filter like this:
 
-   setup(
-     ...
-     entry_points = {
-       'filters.extensions': [
-         'foobie = filters_iso',
-         'bletch = filters_iso:Currency',
-       ],
-     },
-   )
+   .. code:: python
 
-This may be used in the future to help resolve conflicts (see below), so we
-recommend that you choose a meaningful name for each entry point anyway.
+      setup(
+        ...
+        entry_points = {
+          'filters.extensions': [
+            'HelloWorld = filters_iso:Currency',
+          ],
+        },
+      )
+
+   Then it will be registered like this:
+
+   .. code:: python
+
+      In [1]: import filters as f
+
+      In [1]: f.ext.HelloWorld().apply('NZD')
+      Out[1]: NZD
+
+   This feature may be useful to resolve conflicts, in the event that two
+   filter classes have the same name (see below).
 
 ---------
 Conflicts
@@ -124,3 +134,73 @@ defined, so it is not predictable which filter will "win".
 
 Future versions of the Filters library may provide more elegant ways to resolve
 these conflicts.
+
+---------------
+Troubleshooting
+---------------
+Remember to ``pip install -e .`` each time you modify your entry points; this is
+required in order to install the new entry points into your project's
+``egg-info`` directory.
+
+If your filter is still not showing up in ``f.ext``, try turning on debug
+logging.  You will see log messages as the Filters library searches for
+extension filters to load:
+
+.. code:: python
+
+   In [1]: import logging, sys
+
+   In [2]: logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
+
+   In [3]: import filters as f
+
+   In [4]: dir(f.ext)
+   DEBUG:filters.extensions:Registering extension filter filters_iso.Country as Country.
+   DEBUG:filters.extensions:Registering extension filter filters_iso.Currency as Currency.
+   DEBUG:filters.extensions:Registering extension filter filters_iso.Locale as Locale.
+   Out[4]: ['Country', 'Currency', 'Locale']
+
+------------------------
+Legacy Extensions Loader
+------------------------
+In a previous version of the Filters library, you could register an entire
+module in a single entry point.
+
+This behavior is now deprecated, and it will be removed in Filters v1.4.  To
+ensure that your package remains compatible with future releases of the Filters
+library, it is recommended that you modify your package's entry points so that
+it specifies one filter per entry point.
+
+For example, change this:
+
+.. code:: python
+
+   from setuptools import setup
+
+   setup(
+     ...
+     entry_points = {
+       'filters.extensions': [
+         # Legacy behavior; registering an entire module.
+         'iso = filters_iso',
+       ],
+     },
+   )
+
+to this:
+
+.. code:: python
+
+   from setuptools import setup
+
+   setup(
+     ...
+     entry_points = {
+       'filters.extensions': [
+         # New behavior; each entry point registers one filter.
+         'Country = filters_iso:Country',
+         'Currency = filters_iso:Currency',
+         'Locale = filters_iso:Locale',
+       ],
+     },
+   )

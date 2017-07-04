@@ -8,7 +8,7 @@ from unittest import TestCase
 from pytz import utc
 
 import filters as f
-from filters.macros import filter_macro
+from filters.macros import filter_macro, FilterMacroType
 
 
 class FilterMacroTestCase(TestCase):
@@ -24,9 +24,16 @@ class FilterMacroTestCase(TestCase):
         def MyFilter():
             return f.Unicode | f.Strip | f.MinLength(12)
 
+        # You can use :py:class:`FilterMacroType` to detect a filter
+        # macro.
+        self.assertTrue(issubclass(MyFilter, FilterMacroType))
+
         # As you would expect, invoking the macro returns a
         # FilterChain.
         the_filter = MyFilter()
+
+        self.assertNotIsInstance(the_filter, FilterMacroType)
+        self.assertIsInstance(the_filter, f.FilterChain)
 
         self.assertEqual(
             the_filter.apply('  Hello, world!  '),

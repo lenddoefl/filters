@@ -23,11 +23,11 @@ with open(join(cwd, 'README.rst'), 'r', 'utf-8') as f: # type: StreamReader
 # Maybe once Travis upgrades their containers to use a newer version,
 # we'll switch to the newer syntax (:
 dependencies = [
+    'class-registry',
     'python-dateutil',
     'pytz',
     'regex',
     'six',
-
 ]
 
 if version_info[0] < 3:
@@ -45,7 +45,7 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.2.3',
+    version = '1.3.0',
 
     packages = ['filters'],
 
@@ -62,10 +62,6 @@ setup(
     test_loader   = 'nose.loader:TestLoader',
     tests_require = [
         'nose',
-    ],
-
-    data_files = [
-        ('', ['LICENSE']),
     ],
 
     license = 'MIT',

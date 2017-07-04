@@ -1,0 +1,4 @@
+[filters.extensions_test]
+Alfred=test:TestFilterAlpha
+Bruce=test:TestFilterBravo
+Catwoman=test:TestFilterCharlie

@@ -5,14 +5,20 @@ from __future__ import absolute_import, division, print_function, \
 from inspect import getmembers as get_members, isabstract as is_abstract, \
     isclass as is_class, ismodule as is_module
 from logging import getLogger
-from typing import Any, Dict, Generator, Optional, Text, Tuple, Type, Union
+from typing import Any, Dict, Generator, Text, Tuple, Type, Union
+from warnings import warn
 
+from class_registry import EntryPointClassRegistry
 from pkg_resources import EntryPoint, iter_entry_points
-from six import iterkeys, python_2_unicode_compatible, text_type
 
 from filters.base import BaseFilter
 
-ENTRY_POINT_KEY = 'filters.extensions'
+__all__ = [
+    'FilterExtensionRegistry',
+    'GROUP_NAME',
+]
+
+GROUP_NAME = 'filters.extensions'
 """
 The key to use when declaring entry points in your library's
 ``setup.py`` file.
@@ -23,11 +29,9 @@ Example::
      ...
      entry_points = {
        'filters.extensions': [
-         # Load all filters from a single module.
-         'iso = filters_iso',
-
-         # Load a single class.
-         'currency = filters_iso:Currency',
+         # Declare each filter with its own entry point.
+         'Country=filters_iso:Country',
+         'Currency=filters_iso:Currency',
        ],
      },
    )
@@ -39,84 +43,79 @@ it gives IDEs a heart attack).
 
 logger = getLogger(__name__)
 
-@python_2_unicode_compatible
-class FilterExtensionRegistry(object):
+legacy_warned = False
+"""
+Ensures the legacy extensions loader warning is only shown once.
+
+References:
+  - :py:func:`iter_filters_in`
+"""
+
+class FilterExtensionRegistry(EntryPointClassRegistry):
     """
     Creates a registry that can be used to dynamically load 3rd-party
     filters into the (nearly) top-level namespace.
     """
-    def __init__(self, filters=None):
-        # type: (Optional[Dict[Text, Type[BaseFilter]]]) -> None
-        """
-        :param filters:
-            Used to preload the registry.
-
-            If ``None``, filters will be automatically loaded from
-            3rd-party libraries.
-
-            If you want to initialize a completely empty registry,
-            set ``filters`` to an empty dict.
-        """
-        super(FilterExtensionRegistry, self).__init__()
-
-        self._filters = filters
-
-    def __dir__(self):
-        self.__autoload()
-        return list(iterkeys(self._filters))
+    def __init__(self, group=GROUP_NAME):
+        super(FilterExtensionRegistry, self).__init__(group)
 
     def __getattr__(self, item):
+        # type: (Text) -> Type[BaseFilter]
         return self[item]
 
-    def __getitem__(self, item):
-        self.__autoload()
-        return self._filters.get(item)
-
-    def __iter__(self):
-        self.__autoload()
-        return iter(self._filters)
-
-    def __missing__(self, key):
-        raise KeyError('Extension filter "{key}" not found!'.format(key=key))
-
     def __repr__(self):
-        self.__autoload()
-        return repr(self._filters)
+        return repr(self._get_cache())
 
-    def __str__(self):
-        self.__autoload()
-        return text_type(self._filters)
+    def _get_cache(self):
+        # type: () -> Dict[Text, Type[BaseFilter]]
+        if self._cache is None:
+            self._cache = {}
 
-    def __autoload(self):
-        """
-        Automatically loads registered extension filters, if necessary.
-        """
-        if self._filters is None:
-            self._filters = discover_filters()
+            try:
+                for target in iter_entry_points(self.group): # type: EntryPoint
+                    filter_ = target.load()
 
+                    ift_result = is_filter_type(filter_)
 
-def discover_filters():
-    # type: () -> Dict[Text, Type[BaseFilter]]
-    """
-    Returns all registered filters, in no particular order.
+                    if ift_result is True:
+                        logger.debug(
+                            'Registering extension filter '
+                            '{cls.__module__}.{cls.__name__} as {name}.'.format(
+                                cls     = filter_,
+                                name    = target.name,
+                            ),
+                        )
 
-    If two filters have the same name, the one that gets loaded second
-    will replace the first one.  Note that the order that filters are
-    loaded is not defined.
-    """
-    filters = {} # type: Dict[Text, Type[BaseFilter]]
+                        self._cache[target.name] = filter_
 
-    for entry_point in iter_entry_points(ENTRY_POINT_KEY): # type: EntryPoint
-        logger.debug(
-            'Looking for extension filters in {name} (`{target}`).'.format(
-                name    = entry_point.name,
-                target  = entry_point.module_name,
-            ),
-        )
+                    else:
+                        logger.debug(
+                            'Using legacy extension loader for '
+                            '{target.name} ({reason}).'.format(
+                                reason  = ift_result,
+                                target  = target,
+                            ),
+                        )
 
-        filters.update(iter_filters_in(entry_point.resolve()))
+                        self._cache.update(iter_filters_in(filter_))
+            except DeprecationWarning:
+                # The user has ``simplefilter('error')`` set; reset the
+                # cache so that the next time we try to load extension
+                # filters, we don't miss anything.
+                self._cache = None
+                raise
 
-    return filters
+        # noinspection PyTypeChecker
+        return self._cache
+
+    @staticmethod
+    def create_instance(class_, *args, **kwargs):
+        # type: (type, ...) -> Any
+        if args or kwargs:
+            return class_(*args, **kwargs)
+
+        return class_
+
 
 
 def is_filter_type(target):
@@ -145,6 +144,21 @@ def iter_filters_in(target):
     """
     Iterates over all filters in the specified module/class.
     """
+    global legacy_warned
+    if not legacy_warned:
+        # Set the global flag to ``True`` first, in case the user has
+        # ``simplefilter('error')`` set.
+        legacy_warned = True
+
+        warn(
+            'Legacy extension loader is deprecated and will be removed in '
+                'Filters v1.4.  '
+                'See http://filters.readthedocs.io/en/latest/extensions.html#legacy-extensions-loader '
+                'for more information.',
+
+            DeprecationWarning,
+        )
+
     ift_result = is_filter_type(target)
 
     if ift_result is True:

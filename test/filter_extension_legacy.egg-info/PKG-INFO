@@ -1,0 +1,11 @@
+Metadata-Version: 1.1
+Name: filter_extension_legacy
+Version: 1.0.0
+Summary: Dummy package loaded during unit tests for FilterExtensionRegistry.
+Home-page: https://filters.readthedocs.io/
+Author: Phoenix Zerin
+Author-email: phoenix.zerin@eflglobal.com
+License: MIT
+Description: Dummy package loaded during unit tests for FilterExtensionRegistry.
+Keywords: test
+Platform: UNKNOWN
