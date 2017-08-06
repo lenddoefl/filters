@@ -1,3 +1,4 @@
+dist: trusty
 language: python
 python:
   - '2.7'
@@ -9,7 +10,7 @@ deploy:
   on:
     branch: master
   provider: pypi
-  distributions: "sdist bdist_wheel"
+  distributions: "bdist_wheel sdist"
   user: efl_phx
   password:
     secure: NIIkixHOpanll4TAjcjXAH3CiChZRnXrRd4uRHEAlcJbYnOve4WI7Diu0VZiAj8AHnhyy4P0dM56BMoqG6YtZiNrwJgeKiGWTYr4q1CEGdi421Mj7rLl+dAkL420IALLiCaGyhDbHctLwZYag6l/R8FIVMnT1PqWRGYmsWcJOmnh4HNeLBa0oQ2ICW2HOM3mOnHCE7qvvsKDnUDpAejNig4n7Xelx17nLCzjJdVWqCqEh21ZhSYmV/lHvBicS9TVzGso0vrzVEC8hHjRwMXrxDb391l/XH0BlOxDXwxuSfRoZRWrjRwvLbYj4Zntv+qr1uyqB41JF5mEBN6V7i8tBcJx4JfEiVLk9oyRM+N9pUOYOc23BIJsxxJDJoWUO8/XObyp6Uz+bQ0h9FuA/L0fQOKbZbfR8u2Erw08VjvGWJ+/oT3UQKz6vOzTCQtnV5VEmSmE1K2Owb/kvG9q+CFCNACmiJ83WuRB08VExEFTlpWw0LQpEwUXwANJhEx0bLrTFAmc7pgb++dpFrl6llQr9hVUipnEd/A+7aLbVkuwJqr4b6LPT4I9kFxOKRdUbeb3RupyjwVuf720cLz2o+Rx6ER5Nss8J+VqfhsTbspUUNUvByun2flZxv3MYqqKE+71MIu/aBD0LNMMezxAl6T6UQD8SXHhiXZvyKpOptTXT6M=
