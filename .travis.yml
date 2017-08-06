@@ -4,9 +4,7 @@ python:
   - '2.7'
   - '3.5'
   - '3.6'
-install:
-  - pip install --upgrade pip
-  - pip install .
+install: pip install .
 script: python setup.py test
 deploy:
   on:

@@ -34,7 +34,7 @@ setup(
         'class-registry',
         'python-dateutil',
         'pytz',
-        'py2casefold; python_version < "3.0"'
+        'py2casefold; python_version < "3.0"',
         'regex',
         'six',
         'typing; python_version < "3.0"',
