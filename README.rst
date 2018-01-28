@@ -107,6 +107,11 @@ The following extensions are available:
 
       pip install filters[iso]
 
+.. tip::
+   To install multiple extensions, separate them with commas, e.g.::
+
+      pip install filters[django,iso]
+
 
 Running Unit Tests
 ------------------
