@@ -41,8 +41,13 @@ setup(
     ],
 
     extras_require = {
+        # Extensions
         'django':['filters-django'],
         'iso': ['filters-iso'],
+
+        # Utilities for Project Maintainers
+        'docs-builder': ['sphinx', 'sphinx_rtd_theme'],
+        'test-runner': ['detox'],
     },
 
     test_suite    = 'test',

@@ -3,6 +3,7 @@
 .. image:: https://readthedocs.org/projects/filters/badge/?version=latest
    :target: http://filters.readthedocs.io/
 
+
 =======
 Filters
 =======
@@ -21,11 +22,12 @@ The output from one filter can be "piped" into the input of another, enabling
 you to "chain" filters together to quickly and easily create complex data
 pipelines.
 
+
 Examples
-========
+--------
 Validate a latitude position and round to manageable precision:
 
-.. code:: python
+.. code-block:: python
 
    (
        f.Required
@@ -37,7 +39,7 @@ Validate a latitude position and round to manageable precision:
 
 Parse an incoming value as a datetime, convert to UTC and strip tzinfo:
 
-.. code:: python
+.. code-block:: python
 
    f.Datetime(naive=True).apply('2015-04-08T15:11:22-05:00')
 
@@ -46,7 +48,7 @@ leading/trailing whitespace.
 This also applies `Unicode normalization`_, strips unprintable characters and
 normalizes line endings automatically.
 
-.. code:: python
+.. code-block:: python
 
    f.FilterRepeater(f.Unicode | f.Strip).apply([
      b'\xe2\x99\xaa ',
@@ -57,7 +59,7 @@ normalizes line endings automatically.
 
 Parse a JSON string and check that it has correct structure:
 
-.. code:: python
+.. code-block:: python
 
    (
        f.JsonDecode
@@ -78,20 +80,21 @@ Parse a JSON string and check that it has correct structure:
        )
    ).apply('{"birthday":"1879-03-14", "gender":"M", "utcOffset":"1"}')
 
-============
+
 Requirements
-============
+------------
 Filters is compatible with Python versions 3.6, 3.5 and 2.7.
 
-============
+
 Installation
-============
+------------
 Install the latest stable version via pip::
 
     pip install filters
 
+
 Extensions
-==========
+~~~~~~~~~~
 The following extensions are available:
 
 - `Django Filters`_: Adds filters designed to work with Django applications.
@@ -104,6 +107,49 @@ The following extensions are available:
 
       pip install filters[iso]
 
+
+Running Unit Tests
+------------------
+To run unit tests after installing from source::
+
+  python setup.py test
+
+This project is also compatible with `tox`_, which will run the unit tests in
+different virtual environments (one for each supported version of Python).
+
+To run the unit tests, it is recommended that you use the `detox`_ library.
+detox speeds up the tests by running them in parallel.
+
+Install the package with the ``test-runner`` extra to set up the necessary
+dependencies, and then you can run the tests with the ``detox`` command::
+
+  pip install -e .[test-runner]
+  detox -v
+
+
+Documentation
+-------------
+Documentation is available on `ReadTheDocs`_.
+
+If you are installing from source (see above), you can also build the
+documentation locally:
+
+#. Install extra dependencies (you only have to do this once)::
+
+      pip install '.[docs-builder]'
+
+#. Switch to the ``docs`` directory::
+
+      cd docs
+
+#. Build the documentation::
+
+      make html
+
+
 .. _Django Filters: https://pypi.python.org/pypi/filters-django
 .. _ISO Filters: https://pypi.python.org/pypi/filters-iso
+.. _ReadTheDocs: https://filters.readthedocs.io/
 .. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence
+.. _detox: https://pypi.python.org/pypi/detox
+.. _tox: https://tox.readthedocs.io/
