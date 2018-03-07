@@ -16,6 +16,12 @@ with open(join(cwd, 'README.rst'), 'r', 'utf-8') as f: # type: StreamReader
     long_description = f.read()
 
 
+tests_require = [
+    'detox',
+    'nose',
+]
+
+
 ##
 # Off we go!
 # noinspection SpellCheckingInspection
@@ -47,14 +53,12 @@ setup(
 
         # Utilities for Project Maintainers
         'docs-builder': ['sphinx', 'sphinx_rtd_theme'],
-        'test-runner': ['detox'],
+        'test-runner': tests_require,
     },
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',
-    tests_require = [
-        'nose',
-    ],
+    tests_require = tests_require,
 
     license = 'MIT',
 
