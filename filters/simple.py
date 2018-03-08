@@ -517,10 +517,11 @@ class NamedTuple(BaseFilter):
                 # Prevent circular import.
                 from filters.complex import FilterMapper
 
+                # Check that the incoming value has exactly the right
+                # keys.
                 # noinspection PyProtectedMember
                 value = self._filter(value, FilterMapper(
-                    {key: None for key in self.type._fields},
-
+                    dict.fromkeys(self.type._fields),
                     allow_extra_keys=False,
                     allow_missing_keys=False,
                 ))
@@ -530,6 +531,8 @@ class NamedTuple(BaseFilter):
 
                 value = self.type(**value)
             else:
+                # Check that the incoming value has exactly the right
+                # number of values.
                 # noinspection PyProtectedMember
                 value = self._filter(value, Length(len(self.type._fields)))
 
