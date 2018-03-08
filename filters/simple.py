@@ -468,13 +468,6 @@ class NamedTuple(BaseFilter):
     Attempts to convert the incoming value into a namedtuple.
     """
 
-    CODE_WRONG_NAMEDTUPLE = "wrong_namedtuple"
-
-    templates = {
-        CODE_WRONG_NAMEDTUPLE:
-            "{incoming_type} is not valid (expected {expected_type})",
-    }
-
     def __init__(self, type_, filter_map=None):
         # type: (Type[NamedTupleType], Optional[Dict[Text, FilterCompatible]]) -> None
         """
