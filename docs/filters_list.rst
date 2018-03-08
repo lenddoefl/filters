@@ -75,6 +75,27 @@ string filters only accept unicode strings, unless otherwise noted.
    Truncates a string to a max number of bytes, with support for multibyte
    encodings.
 
+:py:class:`filters.NamedTuple`
+   Converts the incoming value into a named tuple
+
+   Initialize this filter with the type of named tuple that you want to use for
+   conversions.
+
+   You can also provide an optional filter map, which will be applied to the
+   values in the resulting named tuple.
+
+   Example:
+
+   .. code-block:: python
+
+      Color = namedtuple('Color', ('r', 'g', 'b'))
+
+      filter_chain = f.NamedTuple(Color, {
+          'r': f.Required | f.Int | f.Min(0) | f.Max(255),
+          'g': f.Required | f.Int | f.Min(0) | f.Max(255),
+          'b': f.Required | f.Int | f.Min(0) | f.Max(255),
+      })
+
 :py:class:`filters.Regex`
    Executes a regular expression against a string value.  The regex must match
    in order for the string to be considered valid.
