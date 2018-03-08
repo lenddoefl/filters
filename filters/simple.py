@@ -3,17 +3,16 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import json
-from collections import namedtuple
 from datetime import date, datetime, time, tzinfo
-from typing import Hashable, Iterable, Mapping, Optional, Sequence, Sized, Text, \
-    Union
+from typing import Dict, Hashable, Iterable, Mapping, \
+    NamedTuple as NamedTupleType, Optional, Sequence, Sized, Text, Union
 
 from dateutil.parser import parse as dateutil_parse
 from dateutil.tz import tzoffset
 from pytz import utc
 from six import binary_type, python_2_unicode_compatible, text_type
 
-from filters.base import BaseFilter, Type
+from filters.base import BaseFilter, FilterCompatible, Type
 from filters.number import Int, Max, Min
 
 __all__ = [
@@ -476,11 +475,42 @@ class NamedTuple(BaseFilter):
             "{incoming_type} is not valid (expected {expected_type})",
     }
 
-    def __init__(self, type_):
-        # type: (namedtuple) -> None
+    def __init__(self, type_, filter_map=None):
+        # type: (Type[NamedTupleType], Optional[Dict[Text, FilterCompatible]]) -> None
+        """
+        :param type_:
+            The type of namedtuple into which the filter will attempt to
+            convert incoming values.
+
+        :param filter_map:
+            Specifies additional filters that should be applied to each
+            attribute in the resulting namedtuple object.
+
+            For example::
+
+                >>> import filters as f
+                >>> from collections import namedtuple
+                >>> Color = namedtuple('Color', ('r', 'g', 'b'))
+
+                >>> filter_chain = f.NamedTuple(Color, {
+                ...     'r': f.Required | f.Int | f.Min(0) | f.Max(255),
+                ...     'g': f.Required | f.Int | f.Min(0) | f.Max(255),
+                ...     'b': f.Required | f.Int | f.Min(0) | f.Max(255),
+                ... })
+
+                >>> filter_chain.apply(['64', '128', '192'])
+                Color(r=64, g=128, b=192)
+        """
         super(NamedTuple, self).__init__()
 
         self.type = type_
+
+        if filter_map:
+            # Prevent circular import.
+            from filters.complex import FilterMapper
+            self.filter_mapper = FilterMapper(filter_map)
+        else:
+            self.filter_mapper = None
 
     def _apply(self, value):
         # noinspection PyTypeChecker
@@ -489,34 +519,47 @@ class NamedTuple(BaseFilter):
         if self._has_errors:
             return None
 
-        if isinstance(value, self.type):
+        if not isinstance(value, self.type):
+            if isinstance(value, Mapping):
+                # Prevent circular import.
+                from filters.complex import FilterMapper
+
+                # noinspection PyProtectedMember
+                value = self._filter(value, FilterMapper(
+                    {key: None for key in self.type._fields},
+
+                    allow_extra_keys=False,
+                    allow_missing_keys=False,
+                ))
+
+                if self._has_errors:
+                    return None
+
+                value = self.type(**value)
+            else:
+                # noinspection PyProtectedMember
+                value = self._filter(value, Length(len(self.type._fields)))
+
+                if self._has_errors:
+                    return None
+
+                value = self.type(*value)
+
+        # At this point, ``value`` is an instance of :py:attr:`type`.
+        # Now we just need to figure out whether additional filtering is
+        # necessary.
+        if self.filter_mapper:
+            # noinspection PyProtectedMember
+            filtered = self._filter(value._asdict(), self.filter_mapper)
+
+            if self._has_errors:
+                return None
+
+            return self.type(**filtered)
+        else:
             return value
 
-        if isinstance(value, Mapping):
-            # Prevent circular import.
-            from filters.complex import FilterMapper
 
-            # noinspection PyProtectedMember
-            value = self._filter(value, FilterMapper(
-                {key: None for key in self.type._fields},
-
-                allow_extra_keys=False,
-                allow_missing_keys=False,
-            ))
-
-            if self._has_errors:
-                return None
-
-            return self.type(**value)
-
-        else:
-            # noinspection PyProtectedMember
-            value = self._filter(value, Length(len(self.type._fields)))
-
-            if self._has_errors:
-                return None
-
-            return self.type(*value)
 
 
 class NoOp(BaseFilter):

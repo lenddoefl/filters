@@ -906,13 +906,13 @@ class MinLengthTestCase(BaseFilterTestCase):
         # etc.
 
 
-Constraint = namedtuple("Constraint", ("type", "parameters"))
+Color = namedtuple('Color', ('r', 'g', 'b'))
 
 
 class NamedTupleTestCase(BaseFilterTestCase):
     @staticmethod
     def filter_type():
-        return f.NamedTuple(Constraint)
+        return f.NamedTuple(Color)
 
     def test_success_none(self):
         """
@@ -927,9 +927,7 @@ class NamedTupleTestCase(BaseFilterTestCase):
         """
         Incoming value is already a namedtuple of the expected type.
         """
-        self.assertFilterPasses(
-            Constraint("temperature", {"min": -1, "max": 4}),
-        )
+        self.assertFilterPasses(Color(64, 128, 192))
 
     def test_success_namedtuple_different_type(self):
         """
@@ -941,28 +939,34 @@ class NamedTupleTestCase(BaseFilterTestCase):
         """
         # Just to be tricky, we'll make it look very close to the
         # expected type.
-        AltConstraint = namedtuple("AltConstraint", ("type", "parameters"))
+        AltColor = namedtuple('AltColor', Color._fields)
 
         self.assertFilterPasses(
-            AltConstraint("temperature", {"min": -1, "max": 4}),
-            Constraint("temperature", {"min": -1, "max": 4}),
+            AltColor(64, 128, 192),
+            Color(64, 128, 192),
         )
 
     def test_success_iterable(self):
         """
         Incoming value is an iterable with correct values.
         """
-        value = ["temperature", {"min": -1, "max": 4}]
+        value = [64, 128, 192]
+        self.assertFilterPasses(value, Color(*value))
 
-        self.assertFilterPasses(value, Constraint(*value))
+    def test_success_iterable_compat(self):
+        """
+        Incoming value is an iterable, formatted for compatibility with
+        Python < 3.6.
+        """
+        value = [('b', 192), ('g', 128), ('r', 64)]
+        self.assertFilterPasses(value, Color(*value))
 
     def test_success_mapping(self):
         """
         Incoming value is a mapping with correct keys.
         """
-        value = {"type": "temperature", "parameters": {"min": -1, "max": 4}}
-
-        self.assertFilterPasses(value, Constraint(**value))
+        value = {'r': 64, 'g': 128, 'b': 192}
+        self.assertFilterPasses(value, Color(**value))
 
     def test_fail_incompatible_type(self):
         """
@@ -975,14 +979,14 @@ class NamedTupleTestCase(BaseFilterTestCase):
         Incoming value is an iterable that is missing one or more
         values.
         """
-        self.assertFilterErrors(("temperature",), [f.MinLength.CODE_TOO_SHORT])
+        self.assertFilterErrors((64, 128,), [f.MinLength.CODE_TOO_SHORT])
 
     def test_fail_iterable_too_long(self):
         """
         Incoming value is an iterable that has too many values.
         """
         self.assertFilterErrors(
-            ("temperature", {"min": -1, "max": 4}, None),
+            (64, 128, 192, 0.5),
             [f.MaxLength.CODE_TOO_LONG],
         )
 
@@ -994,8 +998,9 @@ class NamedTupleTestCase(BaseFilterTestCase):
             {},
 
             {
-                "type": [f.FilterMapper.CODE_MISSING_KEY],
-                "parameters": [f.FilterMapper.CODE_MISSING_KEY],
+                'r': [f.FilterMapper.CODE_MISSING_KEY],
+                'g': [f.FilterMapper.CODE_MISSING_KEY],
+                'b': [f.FilterMapper.CODE_MISSING_KEY],
             },
         )
 
@@ -1006,13 +1011,50 @@ class NamedTupleTestCase(BaseFilterTestCase):
         """
         self.assertFilterErrors(
             {
-                "type": "temperature",
-                "parameters": {"min": -1, "max": 4},
-                "notes": None,
+                'r': 64,
+                'g': 128,
+                'b': 192,
+                'a': 0.5,
             },
 
             {
-                "notes": [f.FilterMapper.CODE_EXTRA_KEY],
+                'a': [f.FilterMapper.CODE_EXTRA_KEY],
+            },
+        )
+
+    def test_success_filter_map(self):
+        """
+        Applying a :py:class:`f.FilterMap` to the values in a namedtuple
+        after converting (success case).
+        """
+        self.filter_type = lambda: f.NamedTuple(Color, {
+            # For whatever reason, we decide not to filter ``r``.
+            'g': f.Required | f.Int | f.Min(0) | f.Max(255),
+            'b': f.Required | f.Int | f.Min(0) | f.Max(255),
+        })
+
+        self.assertFilterPasses(
+            ('64.0', '128', 192.0),
+            Color('64.0', 128, 192),
+        )
+
+    def test_fail_filter_map(self):
+        """
+        Applying a :py:class:`f.FilterMap` to the values in a namedtuple
+        after converting (failure case).
+        """
+        self.filter_type = lambda: f.NamedTuple(Color, {
+            # For whatever reason, we decide not to filter ``r``.
+            'g': f.Required | f.Int | f.Min(0) | f.Max(255),
+            'b': f.Required | f.Int | f.Min(0) | f.Max(255),
+        })
+
+        self.assertFilterErrors(
+            ['NaN', None, (42,)],
+
+            {
+                'g': [f.Required.CODE_EMPTY],
+                'b': [f.Decimal.CODE_INVALID],
             },
         )
 
