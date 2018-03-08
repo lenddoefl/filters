@@ -2,9 +2,9 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-from collections import Sequence
+from collections import namedtuple
 from datetime import date, datetime
-from typing import Sized
+from typing import Sequence, Sized
 
 from dateutil.tz import tzoffset
 from pytz import utc
@@ -904,6 +904,117 @@ class MinLengthTestCase(BaseFilterTestCase):
         )
 
         # etc.
+
+
+Constraint = namedtuple("Constraint", ("type", "parameters"))
+
+
+class NamedTupleTestCase(BaseFilterTestCase):
+    @staticmethod
+    def filter_type():
+        return f.NamedTuple(Constraint)
+
+    def test_success_none(self):
+        """
+        ``None`` always passes this filter.
+
+        Chain with :py:class:`f.Required` if you want to disallow null
+        values.
+        """
+        self.assertFilterPasses(None)
+
+    def test_success_namedtuple_correct_type(self):
+        """
+        Incoming value is already a namedtuple of the expected type.
+        """
+        self.assertFilterPasses(
+            Constraint("temperature", {"min": -1, "max": 4}),
+        )
+
+    def test_success_namedtuple_different_type(self):
+        """
+        Incoming value is a namedtuple instance, but of a different
+        type.
+
+        Since namedtuples are still tuples, this has the same result as
+        for any other incoming iterable.
+        """
+        # Just to be tricky, we'll make it look very close to the
+        # expected type.
+        AltConstraint = namedtuple("AltConstraint", ("type", "parameters"))
+
+        self.assertFilterPasses(
+            AltConstraint("temperature", {"min": -1, "max": 4}),
+            Constraint("temperature", {"min": -1, "max": 4}),
+        )
+
+    def test_success_iterable(self):
+        """
+        Incoming value is an iterable with correct values.
+        """
+        value = ["temperature", {"min": -1, "max": 4}]
+
+        self.assertFilterPasses(value, Constraint(*value))
+
+    def test_success_mapping(self):
+        """
+        Incoming value is a mapping with correct keys.
+        """
+        value = {"type": "temperature", "parameters": {"min": -1, "max": 4}}
+
+        self.assertFilterPasses(value, Constraint(**value))
+
+    def test_fail_incompatible_type(self):
+        """
+        Incoming value has a type that we cannot work with.
+        """
+        self.assertFilterErrors(42, [f.Type.CODE_WRONG_TYPE])
+
+    def test_fail_iterable_too_short(self):
+        """
+        Incoming value is an iterable that is missing one or more
+        values.
+        """
+        self.assertFilterErrors(("temperature",), [f.MinLength.CODE_TOO_SHORT])
+
+    def test_fail_iterable_too_long(self):
+        """
+        Incoming value is an iterable that has too many values.
+        """
+        self.assertFilterErrors(
+            ("temperature", {"min": -1, "max": 4}, None),
+            [f.MaxLength.CODE_TOO_LONG],
+        )
+
+    def test_fail_mapping_missing_keys(self):
+        """
+        Incoming value is a mapping that is missing one or more keys.
+        """
+        self.assertFilterErrors(
+            {},
+
+            {
+                "type": [f.FilterMapper.CODE_MISSING_KEY],
+                "parameters": [f.FilterMapper.CODE_MISSING_KEY],
+            },
+        )
+
+    def test_fail_mapping_extra_keys(self):
+        """
+        Incoming value is a mapping that has extra keys that we don't
+        know what to do with.
+        """
+        self.assertFilterErrors(
+            {
+                "type": "temperature",
+                "parameters": {"min": -1, "max": 4},
+                "notes": None,
+            },
+
+            {
+                "notes": [f.FilterMapper.CODE_EXTRA_KEY],
+            },
+        )
 
 
 class NoOpTestCase(BaseFilterTestCase):

@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import json
+from collections import namedtuple
 from datetime import date, datetime, time, tzinfo
 from typing import Hashable, Iterable, Mapping, Optional, Sequence, Sized, Text, \
     Union
@@ -25,6 +26,7 @@ __all__ = [
     'Length',
     'MaxLength',
     'MinLength',
+    'NamedTuple',
     'NoOp',
     'NotEmpty',
     'Optional',
@@ -460,6 +462,61 @@ class MinLength(BaseFilter):
             )
 
         return value
+
+
+class NamedTuple(BaseFilter):
+    """
+    Attempts to convert the incoming value into a namedtuple.
+    """
+
+    CODE_WRONG_NAMEDTUPLE = "wrong_namedtuple"
+
+    templates = {
+        CODE_WRONG_NAMEDTUPLE:
+            "{incoming_type} is not valid (expected {expected_type})",
+    }
+
+    def __init__(self, type_):
+        # type: (namedtuple) -> None
+        super(NamedTuple, self).__init__()
+
+        self.type = type_
+
+    def _apply(self, value):
+        # noinspection PyTypeChecker
+        value = self._filter(value, Type((Iterable, Mapping)))
+
+        if self._has_errors:
+            return None
+
+        if isinstance(value, self.type):
+            return value
+
+        if isinstance(value, Mapping):
+            # Prevent circular import.
+            from filters.complex import FilterMapper
+
+            # noinspection PyProtectedMember
+            value = self._filter(value, FilterMapper(
+                {key: None for key in self.type._fields},
+
+                allow_extra_keys=False,
+                allow_missing_keys=False,
+            ))
+
+            if self._has_errors:
+                return None
+
+            return self.type(**value)
+
+        else:
+            # noinspection PyProtectedMember
+            value = self._filter(value, Length(len(self.type._fields)))
+
+            if self._has_errors:
+                return None
+
+            return self.type(*value)
 
 
 class NoOp(BaseFilter):
