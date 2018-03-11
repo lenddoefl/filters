@@ -556,8 +556,6 @@ class NamedTuple(BaseFilter):
             return value
 
 
-
-
 class NoOp(BaseFilter):
     """
     Filter that does nothing, used when you need a placeholder Filter
