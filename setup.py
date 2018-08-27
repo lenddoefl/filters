@@ -16,6 +16,12 @@ with open(join(cwd, 'README.rst'), 'r', 'utf-8') as f: # type: StreamReader
     long_description = f.read()
 
 
+tests_require = [
+    'detox',
+    'nose',
+]
+
+
 ##
 # Off we go!
 # noinspection SpellCheckingInspection
@@ -24,7 +30,7 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.3.3',
+    version = '1.3.4',
 
     packages = ['filters'],
 
@@ -37,19 +43,22 @@ setup(
         'py2casefold; python_version < "3.0"',
         'regex >= 2018.8.17',
         'six',
-        'typing; python_version < "3.0"',
+        'typing >= 3.6.4; python_version < "3.0"',
     ],
 
     extras_require = {
+        # Extensions
         'django':['filters-django'],
         'iso': ['filters-iso'],
+
+        # Utilities for Project Maintainers
+        'docs-builder': ['sphinx', 'sphinx_rtd_theme'],
+        'test-runner': tests_require,
     },
 
     test_suite    = 'test',
     test_loader   = 'nose.loader:TestLoader',
-    tests_require = [
-        'nose',
-    ],
+    tests_require = tests_require,
 
     license = 'MIT',
 

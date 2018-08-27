@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, print_function, \
 
 import json
 from datetime import date, datetime, time, tzinfo
-from typing import Hashable, Iterable, Mapping, Optional, Sequence, Sized, Text, \
-    Union
+from typing import Hashable, Iterable, Mapping, \
+    Optional, Sequence, Sized, Text, Union
 
 from dateutil.parser import parse as dateutil_parse
 from dateutil.tz import tzoffset
