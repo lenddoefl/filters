@@ -9,7 +9,7 @@ import unicodedata
 from base64 import standard_b64decode, urlsafe_b64decode
 from collections import OrderedDict
 from decimal import Decimal as DecimalType
-from typing import Any, Callable, Optional, Sequence, Text, Union
+from typing import Any, Callable, Optional, Pattern, Sequence, Text, Union
 from uuid import UUID
 from xml.etree.ElementTree import Element, tostring
 
@@ -20,6 +20,7 @@ from six import PY2, PY3, binary_type, moves as compat, \
 
 from filters.base import BaseFilter, Type
 from filters.simple import MaxLength
+
 
 __all__ = [
     'Base64Decode',
@@ -283,7 +284,7 @@ class MaxBytes(BaseFilter):
 
         :param prefix:
             Prefix to apply to truncated values.
-            
+
             Ignored when ``truncate`` is ``False``.
 
         :param encoding:
@@ -477,9 +478,14 @@ class Regex(BaseFilter):
             'Value does not match regular expression {pattern}.',
     }
 
+    pattern_types = (
+        regex.Pattern,
+        type(re.compile('')),
+    )
+
     # noinspection PyProtectedMember
     def __init__(self, pattern):
-        # type: (Union[Text, regex._pattern_type, re._pattern_type]) -> None
+        # type: (Union[Text, Pattern]) -> None
         """
         :param pattern:
             String pattern, or pre-compiled regex.
@@ -491,7 +497,7 @@ class Regex(BaseFilter):
 
         self.regex = (
             pattern
-                if isinstance(pattern, (regex._pattern_type, re._pattern_type))
+                if isinstance(pattern, self.pattern_types)
                 else regex.compile(pattern, regex.UNICODE)
         )
 
@@ -535,7 +541,7 @@ class Split(BaseFilter):
     """
     # noinspection PyProtectedMember
     def __init__(self, pattern, keys=None):
-        # type: (Union[Text, regex._pattern_type, re._pattern_type], Optional[Sequence[Text]]) -> None
+        # type: (Union[Text, Pattern], Optional[Sequence[Text]]) -> None
         """
         :param pattern:
             Regex used to split incoming string values.
@@ -554,7 +560,7 @@ class Split(BaseFilter):
 
         self.regex = (
             pattern
-                if isinstance(pattern, (regex._pattern_type, re._pattern_type))
+                if isinstance(pattern, Regex.pattern_types)
                 else regex.compile(pattern, regex.UNICODE)
         )
 
@@ -605,7 +611,7 @@ class Strip(BaseFilter):
         """
         :param leading:
             Regex to match at the start of the string.
-            
+
         :param trailing:
             Regex to match at the end of the string.
         """
