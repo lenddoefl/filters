@@ -24,7 +24,7 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.3.2',
+    version = '1.3.3',
 
     packages = ['filters'],
 
@@ -35,7 +35,7 @@ setup(
         'python-dateutil',
         'pytz',
         'py2casefold; python_version < "3.0"',
-        'regex',
+        'regex >= 2018.8.17',
         'six',
         'typing; python_version < "3.0"',
     ],
@@ -69,5 +69,5 @@ setup(
     keywords = 'data validation',
 
     author          = 'Phoenix Zerin',
-    author_email    = 'phoenix.zerin@eflglobal.com',
+    author_email    = 'phx@phx.ph',
 )
