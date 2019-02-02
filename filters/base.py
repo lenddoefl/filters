@@ -293,7 +293,7 @@ class BaseFilter(with_metaclass(FilterMeta)):
         return None
 
     def _filter(self, value, filter_chain, sub_key=None):
-        # type: (Any, FilterCompatible) -> Any
+        # type: (Any, FilterCompatible, Optional[Text]) -> Any
         """
         Applies another filter to a value in the same context as the
         current filter.
