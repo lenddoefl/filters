@@ -706,8 +706,16 @@ class Type(BaseFilter):
         """
         Returns the name of the specified type.
         """
-        return (
-            (self.aliases.get(type_) or type_.__name__)
-                if aliased
-                else type_.__name__
-        )
+        # Depending on the type, it may require a bit of creativity to
+        # find the proper name.
+        # https://bugs.python.org/issue34422
+        possible_names = [
+            getattr(type_, '_name', None),
+            getattr(type_, '__name__', None),
+            str(type_),
+        ]
+
+        if aliased:
+            possible_names.insert(0, self.aliases.get(type_))
+
+        return next(filter(None, possible_names))
