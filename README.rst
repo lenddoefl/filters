@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/eflglobal/filters.svg?branch=master
-   :target: https://travis-ci.org/eflglobal/filters
+.. image:: https://travis-ci.org/todofixthis/filters.svg?branch=master
+   :target: https://travis-ci.org/todofixthis/filters
 .. image:: https://readthedocs.org/projects/filters/badge/?version=latest
    :target: http://filters.readthedocs.io/
 
@@ -30,11 +30,11 @@ Validate a latitude position and round to manageable precision:
 .. code-block:: python
 
    (
-       f.Required
-     | f.Decimal
-     | f.Min(Decimal(-90))
-     | f.Max(Decimal(90))
-     | f.Round(to_nearest='0.000001')
+       f.Required |
+       f.Decimal |
+       f.Min(Decimal(-90)) |
+       f.Max(Decimal(90)) |
+       f.Round(to_nearest='0.000001')
    ).apply('-12.0431842')
 
 Parse an incoming value as a datetime, convert to UTC and strip tzinfo:
@@ -51,10 +51,10 @@ normalizes line endings automatically.
 .. code-block:: python
 
    f.FilterRepeater(f.Unicode | f.Strip).apply([
-     b'\xe2\x99\xaa ',
-     b'\xe2\x94\x8f(\xc2\xb0.\xc2\xb0)\xe2\x94\x9b ',
-     b'\xe2\x94\x97(\xc2\xb0.\xc2\xb0)\xe2\x94\x93 ',
-     b'\xe2\x99\xaa ',
+       b'\xe2\x99\xaa ',
+       b'\xe2\x94\x8f(\xc2\xb0.\xc2\xb0)\xe2\x94\x9b ',
+       b'\xe2\x94\x97(\xc2\xb0.\xc2\xb0)\xe2\x94\x93 ',
+       b'\xe2\x99\xaa ',
    ])
 
 Parse a JSON string and check that it has correct structure:
@@ -62,35 +62,43 @@ Parse a JSON string and check that it has correct structure:
 .. code-block:: python
 
    (
-       f.JsonDecode
-     | f.FilterMapper(
-         {
-           'birthday':  f.Date,
-           'gender':    f.CaseFold | f.Choice(choices={'m', 'f', 'x'}),
+       f.JsonDecode |
+       f.FilterMapper(
+           {
+               'birthday':  f.Date,
+               'gender':    f.CaseFold | f.Choice(choices={'m', 'f', 'x'}),
 
-           'utcOffset':
-               f.Decimal
-             | f.Min(Decimal('-15'))
-             | f.Max(Decimal('+15'))
-             | f.Round(to_nearest='0.25'),
-         },
+               'utcOffset':
+                   f.Decimal |
+                   f.Min(Decimal('-15')) |
+                   f.Max(Decimal('+15')) |
+                   f.Round(to_nearest='0.25'),
+           },
 
-         allow_extra_keys   = False,
-         allow_missing_keys = False,
+           allow_extra_keys   = False,
+           allow_missing_keys = False,
        )
    ).apply('{"birthday":"1879-03-14", "gender":"M", "utcOffset":"1"}')
 
 
 Requirements
 ------------
-Filters is compatible with Python versions 3.6, 3.5 and 2.7.
+Filters is compatible with the following Python versions:
+
+- 3.8
+- 3.7
+- 3.6
+- 3.5
+
+.. note::
+  Filters is **not** compatible with Python 2.
 
 
 Installation
 ------------
 Install the latest stable version via pip::
 
-    pip install filters
+    pip install phx-filters
 
 
 Extensions
@@ -100,17 +108,17 @@ The following extensions are available:
 - `Django Filters`_: Adds filters designed to work with Django applications.
   To install::
 
-      pip install filters[django]
+      pip install phx-filters[django]
 
 - `ISO Filters`_: Adds filters for interpreting standard codes and identifiers.
   To install::
 
-      pip install filters[iso]
+      pip install phx-filters[iso]
 
 .. tip::
    To install multiple extensions, separate them with commas, e.g.::
 
-      pip install filters[django,iso]
+      pip install phx-filters[django,iso]
 
 
 Running Unit Tests
@@ -122,14 +130,11 @@ To run unit tests after installing from source::
 This project is also compatible with `tox`_, which will run the unit tests in
 different virtual environments (one for each supported version of Python).
 
-To run the unit tests, it is recommended that you use the `detox`_ library.
-detox speeds up the tests by running them in parallel.
-
 Install the package with the ``test-runner`` extra to set up the necessary
-dependencies, and then you can run the tests with the ``detox`` command::
+dependencies, and then you can run the tests with the ``tox`` command::
 
   pip install -e .[test-runner]
-  detox -v
+  tox -p all
 
 
 Documentation
@@ -155,6 +160,5 @@ documentation locally:
 .. _Django Filters: https://pypi.python.org/pypi/filters-django
 .. _ISO Filters: https://pypi.python.org/pypi/filters-iso
 .. _ReadTheDocs: https://filters.readthedocs.io/
-.. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence
-.. _detox: https://pypi.python.org/pypi/detox
 .. _tox: https://tox.readthedocs.io/
+.. _Unicode normalization: https://en.wikipedia.org/wiki/Unicode_equivalence

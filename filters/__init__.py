@@ -1,11 +1,6 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
-
 # http://stackoverflow.com/a/2073599/
 from pkg_resources import require
-__version__ = require('filters')[0].version
+__version__ = require('phx-filters')[0].version
 del require
 
 # Make the base filters accessible from the top level of the package.

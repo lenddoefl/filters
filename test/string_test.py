@@ -1,22 +1,14 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
+import re
+from collections import OrderedDict
 from decimal import Decimal
 from uuid import UUID
 from xml.etree.ElementTree import Element
 
-import re
-# noinspection PyCompatibility
 import regex
-from collections import OrderedDict
-
-from six import itervalues
 
 import filters as f
 from filters.test import BaseFilterTestCase
-
-from test.simple_test import Unicody, Bytesy
+from test.simple_test import Bytesy, Unicody
 
 
 class Base64DecodeTestCase(BaseFilterTestCase):
@@ -281,7 +273,7 @@ class ByteStringTestCase(BaseFilterTestCase):
 
                 # ... but this time we tell the Filter to normalize the
                 # value before encoding it.
-                normalize = True,
+                normalize=True,
             ),
 
             # U+00E9 LATIN SMALL LETTER E WITH ACUTE
@@ -310,7 +302,7 @@ class ByteStringTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 '\u0010Hell\u0000o,\u001f wor\uffffld!',
-                normalize = True,
+                normalize=True,
             ),
             b'Hello, world!',
         )
@@ -454,8 +446,8 @@ class IpAddressTestCase(BaseFilterTestCase):
 
                 # You must explicitly configure the filter to accept
                 # IPv6 addresses.
-                ipv4    = False,
-                ipv6    = True,
+                ipv4=False,
+                ipv6=True,
             ),
 
             # Note that the resulting value is automatically
@@ -471,8 +463,8 @@ class IpAddressTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 '2001:0DB8:85A3:0000:0000:8a2e:0370:7334',
-                ipv4 = False,
-                ipv6 = True,
+                ipv4=False,
+                ipv6=True,
             ),
 
             '2001:db8:85a3::8a2e:370:7334',
@@ -485,8 +477,8 @@ class IpAddressTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 '2001:db8:85a3:0:0:8a2e:370:7334',
-                ipv4 = False,
-                ipv6 = True,
+                ipv4=False,
+                ipv6=True,
             ),
 
             '2001:db8:85a3::8a2e:370:7334',
@@ -499,8 +491,8 @@ class IpAddressTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 '2001:db8:85a3::8a2e:370:7334',
-                ipv4 = False,
-                ipv6 = True,
+                ipv4=False,
+                ipv6=True,
             ),
         )
 
@@ -532,8 +524,8 @@ class IpAddressTestCase(BaseFilterTestCase):
             self._filter(
                 # Oops; one group too many!
                 '2001:0db8:85a3:0000:0000:8a2e:0370:7334:1234',
-                ipv4 = False,
-                ipv6 = True,
+                ipv4=False,
+                ipv6=True,
             ),
             [f.IpAddress.CODE_INVALID],
         )
@@ -561,8 +553,8 @@ class IpAddressTestCase(BaseFilterTestCase):
             self._filter(
                 '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
 
-                ipv4 = True,
-                ipv6 = True,
+                ipv4=True,
+                ipv6=True,
             ),
             '2001:db8:85a3::8a2e:370:7334'
         )
@@ -689,9 +681,9 @@ class MaxBytesTestCase(BaseFilterTestCase):
             # Note that the resulting value is truncated to 23 bytes
             # instead of 24, so as not to orphan a multibyte
             # sequence.
-            expected_value =
-                b'\xce\x93\xce\xb5\xce\xb9\xce\xac\xcf\x83\xce\xbf'
-                b'\xcf\x85 \xce\x9a\xcf\x8c\xcf\x83\xce\xbc',
+            expected_value=
+            b'\xce\x93\xce\xb5\xce\xb9\xce\xac\xcf\x83\xce\xbf'
+            b'\xcf\x85 \xce\x9a\xcf\x8c\xcf\x83\xce\xbc',
         )
 
     def test_fail_string_long_with_prefix(self):
@@ -705,9 +697,9 @@ class MaxBytesTestCase(BaseFilterTestCase):
 
             # Note that the prefix reduces the number of bytes
             # available when truncating the value.
-            expected_value =
-                b'\xcf\x83\xcf\x86\xce\xac\xce\xbb\xce\xbc\xce\xb1:'
-                b'\xce\x93\xce\xb5\xce\xb9\xce\xac\xcf\x83'
+            expected_value=
+            b'\xcf\x83\xcf\x86\xce\xac\xce\xbb\xce\xbc\xce\xb1:'
+            b'\xce\x93\xce\xb5\xce\xb9\xce\xac\xcf\x83'
         )
 
     def test_fail_string_long_no_truncate(self):
@@ -721,7 +713,7 @@ class MaxBytesTestCase(BaseFilterTestCase):
 
             # When the filter is configured with `truncate=False`, it
             # returns `None` instead of truncating too-long values.
-            expected_value = None,
+            expected_value=None,
         )
 
     def test_fail_string_tiny_max_bytes(self):
@@ -735,7 +727,7 @@ class MaxBytesTestCase(BaseFilterTestCase):
             [f.MaxBytes.CODE_TOO_LONG],
 
             # The filter returns an empty string, not `None`.
-            expected_value = b'',
+            expected_value=b'',
         )
 
     def test_pass_string_alt_encoding(self):
@@ -747,8 +739,8 @@ class MaxBytesTestCase(BaseFilterTestCase):
             self._filter(
                 'Γειάσου Κόσμε',
 
-                max_bytes   = 13,
-                encoding    = 'iso-8859-7',
+                max_bytes=13,
+                encoding='iso-8859-7',
             ),
 
             # The resulting value is encoded using ISO-8859-7 (Latin-1
@@ -765,8 +757,8 @@ class MaxBytesTestCase(BaseFilterTestCase):
             self._filter(
                 'Γειάσου Κόσμε',
 
-                max_bytes   = 13,
-                encoding    = 'utf-16',
+                max_bytes=13,
+                encoding='utf-16',
             ),
             [f.MaxBytes.CODE_TOO_LONG],
 
@@ -775,8 +767,8 @@ class MaxBytesTestCase(BaseFilterTestCase):
             #
             # Technically, it's only 10 bytes if you don't count the
             # BOM.
-            expected_value =
-                b'\xff\xfe\x93\x03\xb5\x03\xb9\x03\xac\x03\xc3\x03',
+            expected_value=
+            b'\xff\xfe\x93\x03\xb5\x03\xb9\x03\xac\x03\xc3\x03',
         )
 
     def test_fail_string_alt_encoding_with_prefix(self):
@@ -788,21 +780,21 @@ class MaxBytesTestCase(BaseFilterTestCase):
             self._filter(
                 'Γειάσου Κόσμε',
 
-                max_bytes   = 18,
-                prefix      = 'σφάλμα:',
-                encoding    = 'utf-16',
+                max_bytes=18,
+                prefix='σφάλμα:',
+                encoding='utf-16',
             ),
             [f.MaxBytes.CODE_TOO_LONG],
 
             # Note that the BOM is only applied once.
-            expected_value =
-                # BOM:
-                b'\xff\xfe'
-                # Prefix:
-                b'\xc3\x03\xc6\x03\xac\x03\xbb'
-                b'\x03\xbc\x03\xb1\x03:\x00'
-                # Truncated string:
-                b'\x93\x03',
+            expected_value=
+            # BOM:
+            b'\xff\xfe'
+            # Prefix:
+            b'\xc3\x03\xc6\x03\xac\x03\xbb'
+            b'\x03\xbc\x03\xb1\x03:\x00'
+            # Truncated string:
+            b'\x93\x03',
         )
 
     def test_pass_bytes_short(self):
@@ -814,7 +806,7 @@ class MaxBytesTestCase(BaseFilterTestCase):
                 b'\xe4\xbd\xa0\xe5\xa5\xbd\xef\xbc\x8c'
                 b'\xe4\xb8\x96\xe7\x95\x8c\xef\xbc\x81',
 
-                max_bytes = 18,
+                max_bytes=18,
             ),
         )
 
@@ -827,16 +819,16 @@ class MaxBytesTestCase(BaseFilterTestCase):
                 b'\xe4\xbd\xa0\xe5\xa5\xbd\xef\xbc\x8c'
                 b'\xe4\xb8\x96\xe7\x95\x8c\xef\xbc\x81',
 
-                max_bytes   = 17,
+                max_bytes=17,
             ),
             [f.MaxBytes.CODE_TOO_LONG],
 
             # Note that the resulting value is truncated to 15 bytes
             # instead of 17, so as not to orphan a multibyte
             # sequence.
-            expected_value =
-                b'\xe4\xbd\xa0\xe5\xa5\xbd\xef'
-                b'\xbc\x8c\xe4\xb8\x96\xe7\x95\x8c',
+            expected_value=
+            b'\xe4\xbd\xa0\xe5\xa5\xbd\xef'
+            b'\xbc\x8c\xe4\xb8\x96\xe7\x95\x8c',
         )
 
     def test_fail_wrong_type(self):
@@ -869,7 +861,7 @@ class RegexTestCase(BaseFilterTestCase):
             # Note:  Regexes are case-sensitive by default.
             self._filter(
                 'test march of the TEST penguins',
-                pattern = r'\btest\b',
+                pattern=r'\btest\b',
             ),
 
             ['test'],
@@ -1021,8 +1013,8 @@ class SplitTestCase(BaseFilterTestCase):
         """
         filtered = self._filter(
             'foo:bar:baz',
-                pattern = ':',
-                keys    = ('a', 'b', 'c',),
+            pattern=':',
+            keys=('a', 'b', 'c',),
         )
 
         self.assertFilterPasses(filtered, self.skip_value_check)
@@ -1031,15 +1023,15 @@ class SplitTestCase(BaseFilterTestCase):
         self.assertIsInstance(cleaned, OrderedDict)
 
         self.assertDictEqual(cleaned, {
-            'a':    'foo',
-            'b':    'bar',
-            'c':    'baz',
+            'a': 'foo',
+            'b': 'bar',
+            'c': 'baz',
         })
 
         # Because the result is an OrderedDict, the order is preserved
         # as well.
         self.assertListEqual(
-            list(itervalues(cleaned)),
+            list(cleaned.values()),
             ['foo', 'bar', 'baz'],
         )
 
@@ -1100,15 +1092,15 @@ class SplitTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 'foo:bar:baz',
-                    pattern = ':',
-                    keys    = ('a', 'b', 'c', 'd',),
+                pattern=':',
+                keys=('a', 'b', 'c', 'd',),
             ),
 
             {
-                'a':    'foo',
-                'b':    'bar',
-                'c':    'baz',
-                'd':    None,
+                'a': 'foo',
+                'b': 'bar',
+                'c': 'baz',
+                'd': None,
             },
         )
 
@@ -1160,7 +1152,7 @@ class StripTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 '  \r  \t \x00 Hello, world! \x00 \t  \n  ',
-                    trailing = None,
+                trailing=None,
             ),
 
             'Hello, world! \x00 \t  \n  ',
@@ -1173,7 +1165,7 @@ class StripTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 '  \r  \t \x00 Hello, world! \x00 \t  \n  ',
-                    leading = None,
+                leading=None,
             ),
             '  \r  \t \x00 Hello, world!',
         )
@@ -1197,9 +1189,9 @@ class StripTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 "54321 Hello, world! "
-                        "i think you ought to know i'm feeling very depressed ",
-                    leading     = r'\d',
-                    trailing    = r"['a-z ]+"
+                "i think you ought to know i'm feeling very depressed ",
+                leading=r'\d',
+                trailing=r"['a-z ]+"
             ),
 
             '4321 Hello, world!',
@@ -1374,7 +1366,7 @@ class UnicodeTestCase(BaseFilterTestCase):
         """
         The incoming value is a unicode.
         """
-        self.assertFilterPasses('┻━┻︵ \(°□°)/ ︵ ┻━┻ ') # RAWR!
+        self.assertFilterPasses('┻━┻︵ \(°□°)/ ︵ ┻━┻ ')  # RAWR!
 
     def test_pass_bytes_utf8(self):
         """
@@ -1425,7 +1417,7 @@ class UnicodeTestCase(BaseFilterTestCase):
         """
         The incoming value is an object that can be cast as a string.
         """
-        value = '／人 ⌒ ‿‿ ⌒ 人＼' # Squee!
+        value = '／人 ⌒ ‿‿ ⌒ 人＼'  # Squee!
 
         self.assertFilterPasses(
             Unicody(value),
@@ -1482,11 +1474,11 @@ class UnicodeTestCase(BaseFilterTestCase):
         #   U+0065 LATIN SMALL LETTER E
         # + U+0301 COMBINING ACUTE ACCENT
         # (2 code points)
-        decomposed  = 'Ame\u0301lie'
+        decomposed = 'Ame\u0301lie'
 
         # U+00E9 LATIN SMALL LETTER E WITH ACUTE
         # (1 code point)
-        composed    = 'Am\xe9lie'
+        composed = 'Am\xe9lie'
 
         self.assertFilterPasses(decomposed, composed)
 
@@ -1494,7 +1486,7 @@ class UnicodeTestCase(BaseFilterTestCase):
         """
         You can force the Filter not to perform normalization.
         """
-        decomposed  = 'Ame\u0301lie'
+        decomposed = 'Ame\u0301lie'
 
         self.assertFilterPasses(
             self._filter(decomposed, normalize=False),
@@ -1522,7 +1514,7 @@ class UnicodeTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 b'\x10Hell\x00o,\x1f wor\xef\xbf\xbfld!',
-                normalize = False,
+                normalize=False,
             ),
 
             '\u0010Hell\u0000o,\u001f wor\uffffld!',
@@ -1545,7 +1537,7 @@ class UnicodeTestCase(BaseFilterTestCase):
         self.assertFilterPasses(
             self._filter(
                 b'unix\n - windows\r\n - weird\r\r\n',
-                normalize = False,
+                normalize=False,
             ),
 
             'unix\n - windows\r\n - weird\r\r\n',

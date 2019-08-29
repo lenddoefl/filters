@@ -1,7 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 from decimal import Decimal, ROUND_CEILING
 
 import filters as f
@@ -87,7 +83,7 @@ class DecimalTestCase(BaseFilterTestCase):
         Non-finite values like 'NaN' and 'Inf' are considered invalid,
         even though they are technically parseable.
         """
-        self.assertFilterErrors( 'NaN', [f.Decimal.CODE_NON_FINITE])
+        self.assertFilterErrors('NaN', [f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('+Inf', [f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('-Inf', [f.Decimal.CODE_NON_FINITE])
         # There are a few other possible non-finite values out there,
@@ -107,7 +103,7 @@ class DecimalTestCase(BaseFilterTestCase):
         it right!
         """
         self.assertFilterErrors(('1', '2', '3'), [
-          f.Decimal.CODE_INVALID])
+            f.Decimal.CODE_INVALID])
 
     def test_fail_tuple_disallowed(self):
         """
@@ -214,7 +210,7 @@ class IntTestCase(BaseFilterTestCase):
         """
         The incoming value is a non-finite value.
         """
-        self.assertFilterErrors( 'NaN', [f.Decimal.CODE_NON_FINITE])
+        self.assertFilterErrors('NaN', [f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('+Inf', [f.Decimal.CODE_NON_FINITE])
         self.assertFilterErrors('-Inf', [f.Decimal.CODE_NON_FINITE])
         # There are a few other possible non-finite values out there,
@@ -225,6 +221,7 @@ class IntTestCase(BaseFilterTestCase):
         The incoming value is already an int object.
         """
         self.assertFilterPasses(777)
+
 
 class MaxTestCase(BaseFilterTestCase):
     filter_type = f.Max

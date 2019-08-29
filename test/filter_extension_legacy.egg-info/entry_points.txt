@@ -1,2 +1,0 @@
-[filters.extensions_test_legacy]
-Test=test

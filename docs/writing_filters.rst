@@ -1,4 +1,3 @@
-========================
 Writing Your Own Filters
 ========================
 Although the Filters library comes with
@@ -11,7 +10,6 @@ There are three ways that you can create new filters:
 - Partials
 - Custom Filters
 
-------
 Macros
 ------
 If you find yourself using a particular filter chain over and over, you can
@@ -40,7 +38,7 @@ You can now use your filter macro just like any other filter:
    assert input.is_valid() is True
    assert input.cleaned_data == 'Hello, world!'
 
---------
+
 Partials
 --------
 A partial is a special kind of macro.  Instead of returning a filter chain,
@@ -84,7 +82,7 @@ can invoke them with different parameters if you want:
    assert input.is_valid() is True
    assert input.cleaned_data == datetime(2016, 12, 11, 2, 0, 0, tzinfo=utc)
 
---------------
+
 Custom Filters
 --------------
 Sometimes you just can't get what you want by assembling existing filters, and
@@ -136,6 +134,7 @@ Here's the ``Pkcs7Pad`` filter with a little bit of validation logic:
         extra_bytes = self.block_size - (len(value) % self.block_size)
         return value + (chr(extra_bytes) * extra_bytes)
 
+
 Unit Tests
 ----------
 To help you unit test your custom filters, the Filters library provides a helper
@@ -181,7 +180,6 @@ Here's a starter test case for ``Pkcs7Pad``:
        )
 
 
------------------------------------
 Registering Your Filters (Optional)
 -----------------------------------
 Once you've packaged up your filters, you can register them with the Extensions

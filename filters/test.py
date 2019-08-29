@@ -1,15 +1,10 @@
-# coding=utf-8
-from __future__ import absolute_import, unicode_literals
-
 import json
+import typing
+from collections import OrderedDict
 from itertools import starmap
 from pprint import pformat
 from traceback import format_exception
-from typing import Any, Callable, Mapping, Sequence
 from unittest import TestCase
-
-from collections import OrderedDict
-from six import iterkeys, string_types
 
 from filters.base import BaseFilter
 from filters.handlers import FilterRunner
@@ -19,19 +14,18 @@ __all__ = [
 ]
 
 
-def sorted_dict(value):
-    # type: (Mapping) -> Any
+def sorted_dict(value: typing.Mapping) -> typing.Any:
     """
     Sorts a dict's keys to avoid leaking information about the
     backend's handling of unordered dicts.
     """
-    if isinstance(value, Mapping):
+    if isinstance(value, typing.Mapping):
         return OrderedDict(
             (key, sorted_dict(value[key]))
-                for key in sorted(iterkeys(value))
+                for key in sorted(value.keys())
         )
 
-    elif isinstance(value, Sequence) and not isinstance(value, string_types):
+    elif isinstance(value, typing.Sequence) and not isinstance(value, str):
         return list(map(sorted_dict, value))
 
     else:
@@ -48,7 +42,7 @@ class BaseFilterTestCase(TestCase):
     ``assertFilterPasses`` and ``assertFilterErrors`` to check use
     cases.
     """
-    filter_type = None # type: Callable[[...], BaseFilter]
+    filter_type = None  # type: typing.Callable[[...], BaseFilter]
 
     class unmodified(object):
         """
@@ -97,12 +91,15 @@ class BaseFilterTestCase(TestCase):
             test value itself if you want (it will automatically be
             run through `_filter`).
 
+        :param expected_codes:
+            Expected error codes.
+
         :param expected_value:
             Expected value for ``runner.cleaned_data`` (usually
             ``None``).
         """
         if not isinstance(runner, FilterRunner):
-            runner = self._filter(runner) # type: FilterRunner
+            runner = self._filter(runner)  # type: FilterRunner
 
         # First check to make sure no unhandled exceptions occurred.
         if runner.has_exceptions:
@@ -111,9 +108,9 @@ class BaseFilterTestCase(TestCase):
                 'Unhandled exceptions occurred while filtering the '
                 'request payload:\n\n{tracebacks}\n\n'
                 'Filter Messages:\n\n{messages}'.format(
-                    messages = pformat(dict(runner.filter_messages)),
+                    messages=pformat(dict(runner.filter_messages)),
 
-                    tracebacks = pformat(list(
+                    tracebacks=pformat(list(
                         starmap(format_exception, runner.exc_info)
                     )),
                 )
@@ -127,26 +124,25 @@ class BaseFilterTestCase(TestCase):
             self.fail(
                 'Filter generated unexpected error codes (expected '
                 '{expected}):\n\n{messages}'.format(
-                    expected    = json.dumps(sorted_dict(expected_codes)),
-                    messages    = pformat(dict(runner.filter_messages)),
+                    expected=json.dumps(sorted_dict(expected_codes)),
+                    messages=pformat(dict(runner.filter_messages)),
                 ),
             )
 
         check_value = (
                 (self.skip_value_check is not True)
-            and (expected_value is not self.skip_value_check)
+                and (expected_value is not self.skip_value_check)
         )
 
         if check_value:
             self._check_filter_value(
                 runner.cleaned_data,
                 runner.data
-                    if expected_value is self.unmodified
-                    else expected_value
+                if expected_value is self.unmodified
+                else expected_value
             )
 
-    def _filter(self, *args, **kwargs):
-        # type: (...) -> FilterRunner
+    def _filter(self, *args, **kwargs) -> FilterRunner:
         """
         Applies the Filter to the specified value.
 
@@ -171,21 +167,21 @@ class BaseFilterTestCase(TestCase):
         """
         if not callable(self.filter_type):
             self.fail('{cls}.filter_type is not callable.'.format(
-                cls = type(self).__name__,
+                cls=type(self).__name__,
             ))
 
         if not args:
             self.fail(
                 'First argument to {cls}._filter '
                 'must be the filtered value.'.format(
-                    cls = type(self).__name__,
+                    cls=type(self).__name__,
                 ),
             )
 
         return FilterRunner(
-            starting_filter     = self.filter_type(*args[1:], **kwargs),
-            incoming_data       = args[0],
-            capture_exc_info    = True,
+            starting_filter=self.filter_type(*args[1:], **kwargs),
+            incoming_data=args[0],
+            capture_exc_info=True,
         )
 
     def _check_filter_value(self, cleaned_data, expected):

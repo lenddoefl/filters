@@ -1,24 +1,24 @@
-dist: trusty
 language: python
 python:
-  - '2.7'
   - '3.5'
   - '3.6'
+  - '3.7'
+  - '3.8-dev'
 
 install:
   - pip install .
-  - pip install docutils pygments  # Used to check package metadata.
+  - pip install docutils pygments # Used to check package metadata.
 
 script:
   - python setup.py check --strict --metadata --restructuredtext
   - python setup.py test
 
 deploy:
-  - on:
-      python: '3.6'
-      tags: true
-    provider: pypi
-    distributions: 'bdist_wheel sdist'
-    user: efl_phx
-    password:
-      secure: NIIkixHOpanll4TAjcjXAH3CiChZRnXrRd4uRHEAlcJbYnOve4WI7Diu0VZiAj8AHnhyy4P0dM56BMoqG6YtZiNrwJgeKiGWTYr4q1CEGdi421Mj7rLl+dAkL420IALLiCaGyhDbHctLwZYag6l/R8FIVMnT1PqWRGYmsWcJOmnh4HNeLBa0oQ2ICW2HOM3mOnHCE7qvvsKDnUDpAejNig4n7Xelx17nLCzjJdVWqCqEh21ZhSYmV/lHvBicS9TVzGso0vrzVEC8hHjRwMXrxDb391l/XH0BlOxDXwxuSfRoZRWrjRwvLbYj4Zntv+qr1uyqB41JF5mEBN6V7i8tBcJx4JfEiVLk9oyRM+N9pUOYOc23BIJsxxJDJoWUO8/XObyp6Uz+bQ0h9FuA/L0fQOKbZbfR8u2Erw08VjvGWJ+/oT3UQKz6vOzTCQtnV5VEmSmE1K2Owb/kvG9q+CFCNACmiJ83WuRB08VExEFTlpWw0LQpEwUXwANJhEx0bLrTFAmc7pgb++dpFrl6llQr9hVUipnEd/A+7aLbVkuwJqr4b6LPT4I9kFxOKRdUbeb3RupyjwVuf720cLz2o+Rx6ER5Nss8J+VqfhsTbspUUNUvByun2flZxv3MYqqKE+71MIu/aBD0LNMMezxAl6T6UQD8SXHhiXZvyKpOptTXT6M=
+  on:
+    python: '3.7'
+    tags: true
+  provider: pypi
+  user: phx
+  password:
+    secure: ShidCEWi+jk8bXTMIrg7UVoRskiJ9JLuwiLGD6V/8N/C53hJ3dnQ5nMrf3Ecg965k0ENeeNU1c6l0zMk2R0up08AgK6sGXSw3MIVySPechtdIc671f9J8RbwgE3KIq7eciuqFzbsCmkBpthhWHnJQ3cimPkBylTzGoFrpcI0jQGzaobFNKq8BStXA3kfnJCl01lBbTwxyiFErD3FegDJmvv1k0rYSCJ/LzIT9QvacbYZJXFqg3dO6pshx2V7/r7pqs1y0/FbbfaMJ8nUwPh4WLe7EBGxtQTABhKnM0JNAzNUEIfQ9UtMbrmdDA76Srijo+p1FZKCBmqtpcF4JO3HqW3gIccqPRwTluTf/Gvjm2SON99HKh2f99PB5eHc124ifADTWXy5AnebXIXipZjv6/QdnIktIk4pFB+lWUqW/kas14e23dHMHKGIKOeANcEsBTpySy0RNk3bvt0q+ppghRvCadjzURAItZLRMnL54XJCwnvvmWGjKlzgwvVTRgrDpM9Zmmrt/ox53a29nHTrZprFWnRRPGHIY0tpe/h3XAwtg02HokGnoSKW08i5qdkevWGP2RsD63/HwEZcV0wp8QGptHhEFb9x+3/TuV8k4rgy7zqAuyxGoP75KMWNKHkNH6C5R3tKcuxSl73chIyFVsOHqW6z1iFzHYdDfT73IQk=
+  distributions: bdist_wheel sdist

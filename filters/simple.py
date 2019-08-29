@@ -1,16 +1,10 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 import json
+import typing
 from datetime import date, datetime, time, tzinfo
-from typing import Hashable, Iterable, Mapping, \
-    Optional, Sequence, Sized, Text, Union
 
 from dateutil.parser import parse as dateutil_parse
 from dateutil.tz import tzoffset
 from pytz import utc
-from six import binary_type, python_2_unicode_compatible, text_type
 
 from filters.base import BaseFilter, Type
 from filters.number import Int, Max, Min
@@ -36,22 +30,25 @@ class Array(Type):
     """
     Validates that the incoming value is a non-string sequence.
     """
-    def __init__(self, aliases=None):
-        # type: (Optional[Mapping[type, Text]]) -> None
-        super(Array, self).__init__(Sequence, True, aliases)
+
+    def __init__(
+            self,
+            aliases: typing.Optional[typing.Mapping[type, str]] = None,
+    ) -> None:
+        super(Array, self).__init__(typing.Sequence, True, aliases)
 
     def _apply(self, value):
-        value = super(Array, self)._apply(value) # type: Sequence
+        value = super(Array, self)._apply(value)  # type: typing.Sequence
 
         if self._has_errors:
             return None
 
-        if isinstance(value, (binary_type, text_type)):
+        if isinstance(value, (bytes, str)):
             return self._invalid_value(
-                value   = value,
-                reason  = self.CODE_WRONG_TYPE,
+                value=value,
+                reason=self.CODE_WRONG_TYPE,
 
-                template_vars = {
+                template_vars={
                     'incoming': self.get_type_name(type(value)),
                     'allowed':  self.get_allowed_type_names(),
                 },
@@ -71,8 +68,7 @@ class ByteArray(BaseFilter):
             'Unable to encode this value using {encoding}.',
     }
 
-    def __init__(self, encoding='utf-8'):
-        # type: (Text) -> None
+    def __init__(self, encoding: str = 'utf-8') -> None:
         """
         :param encoding:
             The encoding to use when decoding strings into bytes.
@@ -82,7 +78,7 @@ class ByteArray(BaseFilter):
         self.encoding = encoding
 
     def _apply(self, value):
-        value = self._filter(value, Type(Iterable))
+        value = self._filter(value, Type(typing.Iterable))
 
         if self._has_errors:
             return None
@@ -90,33 +86,33 @@ class ByteArray(BaseFilter):
         if isinstance(value, bytearray):
             return value
 
-        if isinstance(value, binary_type):
+        if isinstance(value, bytes):
             return bytearray(value)
 
-        if isinstance(value, text_type):
+        if isinstance(value, str):
             try:
                 return bytearray(value, encoding=self.encoding)
             except UnicodeEncodeError:
                 return self._invalid_value(
-                    value   = value,
-                    reason  = self.CODE_BAD_ENCODING,
+                    value=value,
+                    reason=self.CODE_BAD_ENCODING,
 
-                    template_vars = {
+                    template_vars={
                         'encoding': self.encoding,
                     },
                 )
 
         from filters.complex import FilterRepeater
         filtered = self._filter(value, FilterRepeater(
-                # Only allow ints and booleans.
-                Type(int)
-                  # Convert booleans to int (Min and Max require an
-                  # exact type match).
-                | Int
-                  # Min value for each byte is 2^0-1.
-                | Min(0)
-                  # Max value for each byte is 2^8-1.
-                | Max(255)
+            # Only allow ints and booleans.
+            Type(int) |
+            # Convert booleans to int (Min and Max require an
+            # exact type match).
+            Int |
+            # Min value for each byte is 2^0-1.
+            Min(0) |
+            # Max value for each byte is 2^8-1.
+            Max(255)
         ))
 
         if self._has_errors:
@@ -125,7 +121,6 @@ class ByteArray(BaseFilter):
         return bytearray(filtered)
 
 
-@python_2_unicode_compatible
 class Choice(BaseFilter):
     """
     Expects the value to match one of the items in a set.
@@ -140,30 +135,25 @@ class Choice(BaseFilter):
         CODE_INVALID: 'Valid options are: {choices}',
     }
 
-    def __init__(self, choices):
-        # type: (Iterable[Hashable]) -> None
+    def __init__(self, choices: typing.Iterable[typing.Hashable]) -> None:
         super(Choice, self).__init__()
 
         self.choices = set(choices)
 
     def __str__(self):
         return '{type}({choices!r})'.format(
-            type = type(self).__name__,
-
-            # Use JSON to mask Python syntax (e.g., remove "u" prefix
-            # on unicode strings in Python 2).
-            # :py:meth:`Type.__init__`
-            choices = json.dumps(sorted(self.choices)),
+            type=type(self).__name__,
+            choices=json.dumps(sorted(self.choices)),
         )
 
     def _apply(self, value):
         if value not in self.choices:
             return self._invalid_value(
-                value       = value,
-                reason      = self.CODE_INVALID,
-                exc_info    = True,
+                value=value,
+                reason=self.CODE_INVALID,
+                exc_info=True,
 
-                template_vars = {
+                template_vars={
                     'choices': sorted(self.choices),
                 },
             )
@@ -171,7 +161,6 @@ class Choice(BaseFilter):
         return value
 
 
-@python_2_unicode_compatible
 class Datetime(BaseFilter):
     """
     Interprets the value as a UTC datetime.
@@ -183,8 +172,11 @@ class Datetime(BaseFilter):
             'This value does not appear to be a datetime.',
     }
 
-    def __init__(self, timezone=None, naive=False):
-        # type: (Optional[Union[tzinfo, int, float]], bool) -> None
+    def __init__(
+            self,
+            timezone: typing.Optional[typing.Union[tzinfo, int, float]] = None,
+            naive: bool = False,
+    ) -> None:
         """
         :param timezone:
             Specifies the timezone to use when the *incoming* value is
@@ -214,18 +206,18 @@ class Datetime(BaseFilter):
             else:
                 # Assume that we got an int/float instead.
                 timezone = tzoffset(
-                    name    = 'UTC{offset:+}'.format(offset=timezone),
-                    offset  = float(timezone) * 3600.0,
+                    name='UTC{offset:+}'.format(offset=timezone),
+                    offset=float(timezone) * 3600.0,
                 )
 
-        self.timezone   = timezone
-        self.naive      = naive
+        self.timezone = timezone
+        self.naive = naive
 
     def __str__(self):
         return '{type}(timezone={timezone!r}, naive={naive!r})'.format(
-            type        = type(self).__name__,
-            timezone    = self.timezone,
-            naive       = self.naive,
+            type=type(self).__name__,
+            timezone=self.timezone,
+            naive=self.naive,
         )
 
     def _apply(self, value):
@@ -247,9 +239,9 @@ class Datetime(BaseFilter):
                 parsed = dateutil_parse(value)
             except ValueError:
                 return self._invalid_value(
-                    value       = value,
-                    reason      = self.CODE_INVALID,
-                    exc_info    = True,
+                    value=value,
+                    reason=self.CODE_INVALID,
+                    exc_info=True,
                 )
 
         if not parsed.tzinfo:
@@ -260,8 +252,8 @@ class Datetime(BaseFilter):
 
         return (
             aware_result.replace(tzinfo=None)
-                if self.naive
-                else aware_result
+            if self.naive
+            else aware_result
         )
 
 
@@ -284,7 +276,7 @@ class Date(Datetime):
         if isinstance(value, date) and not isinstance(value, datetime):
             return value
 
-        filtered = super(Date, self)._apply(value) # type: datetime
+        filtered = super(Date, self)._apply(value)  # type: datetime
 
         # Normally we return `None` if we get any errors, but in this
         # case, we'll let the superclass method decide.
@@ -314,18 +306,17 @@ class Empty(BaseFilter):
 
         return (
             self._invalid_value(value, self.CODE_NOT_EMPTY)
-                if length
-                else value
+            if length
+            else value
         )
 
 
-@python_2_unicode_compatible
 class Length(BaseFilter):
     """
     Ensures incoming values have exactly the right length.
     """
-    CODE_TOO_LONG   = 'too_long'
-    CODE_TOO_SHORT  = 'too_short'
+    CODE_TOO_LONG = 'too_long'
+    CODE_TOO_SHORT = 'too_short'
 
     templates = {
         CODE_TOO_LONG:
@@ -334,39 +325,38 @@ class Length(BaseFilter):
             'Value is too short (length must be exactly {expected}).',
     }
 
-    def __init__(self, length):
-        # type: (int) -> None
+    def __init__(self, length: int) -> None:
         super(Length, self).__init__()
 
         self.length = length
 
     def __str__(self):
         return '{type}(length={length!r})'.format(
-            type    = type(self).__name__,
-            length  = self.length,
+            type=type(self).__name__,
+            length=self.length,
         )
 
     def _apply(self, value):
-        value = self._filter(value, Type(Sized))
+        value = self._filter(value, Type(typing.Sized))
 
         if self._has_errors:
             return None
 
         if len(value) > self.length:
             return self._invalid_value(
-                value   = value,
-                reason  = self.CODE_TOO_LONG,
+                value=value,
+                reason=self.CODE_TOO_LONG,
 
-                template_vars = {
+                template_vars={
                     'expected': self.length,
                 },
             )
         elif len(value) < self.length:
             return self._invalid_value(
-                value   = value,
-                reason  = self.CODE_TOO_SHORT,
+                value=value,
+                reason=self.CODE_TOO_SHORT,
 
-                template_vars = {
+                template_vars={
                     'expected': self.length,
                 },
             )
@@ -374,7 +364,6 @@ class Length(BaseFilter):
         return value
 
 
-@python_2_unicode_compatible
 class MaxLength(BaseFilter):
     """
     Enforces a maximum length on the value.
@@ -385,16 +374,15 @@ class MaxLength(BaseFilter):
         CODE_TOO_LONG: 'Value is too long (length must be < {max}).',
     }
 
-    def __init__(self, max_length):
-        # type: (int) -> None
+    def __init__(self, max_length: int) -> None:
         super(MaxLength, self).__init__()
 
         self.max_length = max_length
 
     def __str__(self):
         return '{type}({max_length!r})'.format(
-            type        = type(self).__name__,
-            max_length  = self.max_length,
+            type=type(self).__name__,
+            max_length=self.max_length,
         )
 
     def _apply(self, value):
@@ -405,12 +393,12 @@ class MaxLength(BaseFilter):
             #   - We should keep this filter's behavior consistent with
             #     that of MinLength.
             return self._invalid_value(
-                value   = value,
-                reason  = self.CODE_TOO_LONG,
+                value=value,
+                reason=self.CODE_TOO_LONG,
 
-                template_vars = {
-                    'length':   len(value),
-                    'max':      self.max_length,
+                template_vars={
+                    'length': len(value),
+                    'max':    self.max_length,
                 },
             )
 
@@ -427,16 +415,15 @@ class MinLength(BaseFilter):
         CODE_TOO_SHORT: 'Value is too short (length must be > {min}).',
     }
 
-    def __init__(self, min_length):
-        # type: (int) -> None
+    def __init__(self, min_length: int) -> None:
         super(MinLength, self).__init__()
 
         self.min_length = min_length
 
     def __str__(self):
         return '{type}({min_length!r})'.format(
-            type        = type(self).__name__,
-            min_length  = self.min_length,
+            type=type(self).__name__,
+            min_length=self.min_length,
         )
 
     def _apply(self, value):
@@ -450,12 +437,12 @@ class MinLength(BaseFilter):
             #     that of MaxLength.
             #
             return self._invalid_value(
-                value   = value,
-                reason  = self.CODE_TOO_SHORT,
+                value=value,
+                reason=self.CODE_TOO_SHORT,
 
-                template_vars = {
-                    'length':       len(value),
-                    'min':          self.min_length,
+                template_vars={
+                    'length': len(value),
+                    'min':    self.min_length,
                 },
             )
 
@@ -467,11 +454,11 @@ class NoOp(BaseFilter):
     Filter that does nothing, used when you need a placeholder Filter
     in a FilterChain.
     """
+
     def _apply(self, value):
         return value
 
 
-@python_2_unicode_compatible
 class NotEmpty(BaseFilter):
     """
     Expects the value not to be empty.
@@ -491,8 +478,7 @@ class NotEmpty(BaseFilter):
         CODE_EMPTY: 'Non-empty value expected.',
     }
 
-    def __init__(self, allow_none=True):
-        # type: (bool) -> None
+    def __init__(self, allow_none: bool = True) -> None:
         """
         :param allow_none:
             Whether to allow ``None``.
@@ -503,8 +489,8 @@ class NotEmpty(BaseFilter):
 
     def __str__(self):
         return '{type}(allow_none={allow_none!r})'.format(
-            type        = type(self).__name__,
-            allow_none  = self.allow_none,
+            type=type(self).__name__,
+            allow_none=self.allow_none,
         )
 
     def _apply(self, value):
@@ -537,7 +523,6 @@ class Required(NotEmpty):
         super(Required, self).__init__(allow_none=False)
 
 
-@python_2_unicode_compatible
 class Optional(BaseFilter):
     """
     Changes empty and null values into a default value.
@@ -547,6 +532,7 @@ class Optional(BaseFilter):
     not empty (in particular, False and 0 are not considered empty
     here).
     """
+
     def __init__(self, default=None):
         """
         :param default:
@@ -558,8 +544,8 @@ class Optional(BaseFilter):
 
     def __str__(self):
         return '{type}(default={default!r})'.format(
-            type    = type(self).__name__,
-            default = self.default,
+            type=type(self).__name__,
+            default=self.default,
         )
 
     def _apply(self, value):

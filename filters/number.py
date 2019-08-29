@@ -1,11 +1,5 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
+import typing
 from decimal import Decimal as DecimalType, InvalidOperation, ROUND_HALF_UP
-
-from six import python_2_unicode_compatible, text_type
-from typing import Any, Text, Union
 
 from filters.base import BaseFilter, Type
 
@@ -18,21 +12,24 @@ __all__ = [
 ]
 
 
-@python_2_unicode_compatible
 class Decimal(BaseFilter):
     """
     Interprets the value as a :py:class:`decimal.Decimal` object.
     """
-    CODE_INVALID    = 'not_numeric'
+    CODE_INVALID = 'not_numeric'
     CODE_NON_FINITE = 'not_finite'
 
     templates = {
-        CODE_INVALID:       'Numeric value expected.',
-        CODE_NON_FINITE:    'Numeric value expected.',
+        CODE_INVALID:    'Numeric value expected.',
+        CODE_NON_FINITE: 'Numeric value expected.',
     }
 
-    def __init__(self, max_precision=None, allow_tuples=True):
-        # type: (Union[int, DecimalType], bool) -> None
+    def __init__(
+            self,
+            max_precision: typing.Optional[
+                typing.Union[int, DecimalType]] = None,
+            allow_tuples: bool = True,
+    ) -> None:
         """
         :param max_precision:
             Max number of decimal places the resulting value is allowed
@@ -57,22 +54,22 @@ class Decimal(BaseFilter):
 
         # Convert e.g., 3 => DecimalType('.001').
         if not (
-                    (max_precision is None)
-                or  isinstance(max_precision, DecimalType)
+                (max_precision is None)
+                or isinstance(max_precision, DecimalType)
         ):
             max_precision = DecimalType('.1') ** max_precision
 
-        self.max_precision  = max_precision
-        self.allow_tuples   = allow_tuples
+        self.max_precision = max_precision
+        self.allow_tuples = allow_tuples
 
     def __str__(self):
         return '{type}(max_precision={max_precision!r})'.format(
-            type            = type(self).__name__,
-            max_precision   = self.max_precision,
+            type=type(self).__name__,
+            max_precision=self.max_precision,
         )
 
     def _apply(self, value):
-        allowed_types = (text_type, int, float, DecimalType,)
+        allowed_types = (str, int, float, DecimalType,)
         if self.allow_tuples:
             # Python's Decimal type supports both tuples and lists.
             # :py:meth:`decimal.Decimal.__init__`
@@ -93,9 +90,9 @@ class Decimal(BaseFilter):
         # :see: decimal.Decimal._parser
         if not d.is_finite():
             return self._invalid_value(
-                value       = value,
-                reason      = self.CODE_NON_FINITE,
-                exc_info    = True,
+                value=value,
+                reason=self.CODE_NON_FINITE,
+                exc_info=True,
             )
 
         if self.max_precision is not None:
@@ -124,7 +121,7 @@ class Int(BaseFilter):
     }
 
     def _apply(self, value):
-        decimal = self._filter(value, Decimal) # type: DecimalType
+        decimal = self._filter(value, Decimal)  # type: DecimalType
 
         if self._has_errors:
             return None
@@ -140,7 +137,6 @@ class Int(BaseFilter):
         return int(decimal)
 
 
-@python_2_unicode_compatible
 class Max(BaseFilter):
     """
     Enforces a maximum value.
@@ -155,8 +151,7 @@ class Max(BaseFilter):
         CODE_TOO_BIG: 'Value is too large (must be {operator} {max}).',
     }
 
-    def __init__(self, max_value, exclusive=False):
-        # type: (Any, bool) -> None
+    def __init__(self, max_value: typing.Any, exclusive: bool = False) -> None:
         """
         :param max_value:
             The max value that the Filter will accept.
@@ -170,15 +165,15 @@ class Max(BaseFilter):
         """
         super(Max, self).__init__()
 
-        self.max_value  = max_value
-        self.exclusive  = exclusive
+        self.max_value = max_value
+        self.exclusive = exclusive
 
     def __str__(self):
         return (
             '{type}({max_value!r}, exclusive={exclusive!r})'.format(
-                type        = type(self).__name__,
-                max_value   = self.max_value,
-                exclusive   = self.exclusive,
+                type=type(self).__name__,
+                max_value=self.max_value,
+                exclusive=self.exclusive,
             )
         )
 
@@ -188,18 +183,18 @@ class Max(BaseFilter):
         # http://stackoverflow.com/q/1097908
         if (
                 (value > self.max_value)
-            or  (self.exclusive and (value == self.max_value))
+                or (self.exclusive and (value == self.max_value))
         ):
             return self._invalid_value(
-                value   = value,
-                reason  = self.CODE_TOO_BIG,
+                value=value,
+                reason=self.CODE_TOO_BIG,
 
                 # This only makes sense if `self.exclusive` is False.
                 # Better to be consistent and replace all invalid
                 # values with `None`.
                 # replacement = self.max_value,
 
-                template_vars = {
+                template_vars={
                     'operator': '<' if self.exclusive else '<=',
                     'max':      self.max_value,
                 },
@@ -208,7 +203,6 @@ class Max(BaseFilter):
         return value
 
 
-@python_2_unicode_compatible
 class Min(BaseFilter):
     """
     Enforces a minimum value.
@@ -217,14 +211,13 @@ class Min(BaseFilter):
     supports comparison, but it tends to be used exclusively with
     numeric types.
     """
-    CODE_TOO_SMALL  = 'too_small'
+    CODE_TOO_SMALL = 'too_small'
 
     templates = {
         CODE_TOO_SMALL: 'Value is too small (must be {operator} {min}).',
     }
 
-    def __init__(self, min_value, exclusive=False):
-        # type: (Any, bool) -> None
+    def __init__(self, min_value: typing.Any, exclusive: bool = False) -> None:
         """
         :param min_value:
             The min value that the Filter will accept.
@@ -239,15 +232,15 @@ class Min(BaseFilter):
         """
         super(Min, self).__init__()
 
-        self.min_value  = min_value
-        self.exclusive  = exclusive
+        self.min_value = min_value
+        self.exclusive = exclusive
 
     def __str__(self):
         return (
             '{type}({min_value!r}, exclusive={exclusive!r})'.format(
-                type        = type(self).__name__,
-                min_value   = self.min_value,
-                exclusive   = self.exclusive,
+                type=type(self).__name__,
+                min_value=self.min_value,
+                exclusive=self.exclusive,
             )
         )
 
@@ -257,18 +250,18 @@ class Min(BaseFilter):
         # http://stackoverflow.com/q/1097908
         if (
                 (value < self.min_value)
-            or  (self.exclusive and (value == self.min_value))
+                or (self.exclusive and (value == self.min_value))
         ):
             return self._invalid_value(
-                value   = value,
-                reason  = self.CODE_TOO_SMALL,
+                value=value,
+                reason=self.CODE_TOO_SMALL,
 
                 # This only makes sense if ``self.exclusive`` is False.
                 # Better to be consistent and replace all invalid
                 # values with ``None``.
                 # replacement = self.min_value,
 
-                template_vars = {
+                template_vars={
                     'operator': '>' if self.exclusive else '>=',
                     'min':      self.min_value,
                 },
@@ -281,12 +274,12 @@ class Round(BaseFilter):
     """
     Rounds incoming values to whole numbers or decimals.
     """
+
     def __init__(self,
-            to_nearest  = 1,
-            rounding    = ROUND_HALF_UP,
-            result_type = DecimalType,
+            to_nearest: typing.Union[int, str, DecimalType] = 1,
+            rounding: str = ROUND_HALF_UP,
+            result_type: type = DecimalType,
     ):
-        # type: (Union[int, Text, DecimalType], Text, type) -> None
         """
         :param to_nearest:
             The value that the filter should round to.
@@ -311,11 +304,11 @@ class Round(BaseFilter):
         # I'm not even sure if that concept is valid.
         Min(DecimalType('0')).apply(self.to_nearest)
 
-        self.result_type    = result_type
-        self.rounding       = rounding
+        self.result_type = result_type
+        self.rounding = rounding
 
     def _apply(self, value):
-        value = self._filter(value, Decimal) # type: DecimalType
+        value = self._filter(value, Decimal)  # type: DecimalType
 
         if self._has_errors:
             return None
@@ -327,8 +320,8 @@ class Round(BaseFilter):
         # of :py:func:`round` to avoid floating-point precision errors.
         # http://stackoverflow.com/a/4340355
         return self.result_type(
-                (value * one / self.to_nearest)
-                    .quantize(one, rounding=self.rounding)
+            (value * one / self.to_nearest)
+                .quantize(one, rounding=self.rounding)
 
-            *   self.to_nearest
+            * self.to_nearest
         )

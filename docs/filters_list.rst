@@ -1,10 +1,8 @@
-=================
 Available Filters
 =================
 These filters are included in the Filters library.
 You can also :doc:`write your own filters </writing_filters>`.
 
---------------
 Simple Filters
 --------------
 Simple filters operate on one value at a time.
@@ -288,7 +286,6 @@ These filters do various things that defy categorization.
 
 .. _complex-filters:
 
----------------
 Complex Filters
 ---------------
 Complex filters are used to apply other filters to collections of values.
@@ -312,9 +309,8 @@ These filters are covered in more detail in :doc:`/complex_filters`.
    ``FilterRepeater`` can also process mappings (e.g., ``dict``); it will apply
    the filters to every value in the mapping, preserving the keys.
 
-----------
 Extensions
-----------
+==========
 The following filters are provided by the
 :doc:`Extensions framework </extensions>`.
 

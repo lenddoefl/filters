@@ -1,7 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 from collections import OrderedDict, namedtuple
 
 import filters as f
@@ -50,7 +46,7 @@ class FilterChainTestCase(BaseFilterTestCase):
         """
         # This FilterChain will pretty much reject anything that you
         # throw at it.
-        self.filter_type =\
+        self.filter_type = \
             lambda: f.MaxLength(3) | f.MinLength(8) | f.Required
 
         # Note that the value 'foobar' fails both the MaxLength and the
@@ -94,13 +90,13 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             [4, 'NaN', 3.14, 'FOO', ''],
 
             {
-                '1':    [f.Decimal.CODE_NON_FINITE],
-                '2':    [f.Int.CODE_DECIMAL],
-                '3':    [f.Decimal.CODE_INVALID],
-                '4':    [f.NotEmpty.CODE_EMPTY],
+                '1': [f.Decimal.CODE_NON_FINITE],
+                '2': [f.Int.CODE_DECIMAL],
+                '3': [f.Decimal.CODE_INVALID],
+                '4': [f.NotEmpty.CODE_EMPTY],
             },
 
-            expected_value = [4, None, None, None, None],
+            expected_value=[4, None, None, None, None],
         )
 
     def test_pass_mapping(self):
@@ -152,7 +148,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
 
             # Just as with collections, the invalid values in the
             # filtered value are replaced with `None`.
-            expected_value = {
+            expected_value={
                 'foo':      4,
                 'bar':      None,
                 'baz':      None,
@@ -166,8 +162,8 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         mapping.
         """
         self.filter_type = lambda: f.FilterRepeater(
-            filter_chain    =f.Int,
-            restrict_keys   = {'ducks', 'sea otters'},
+            filter_chain=f.Int,
+            restrict_keys={'ducks', 'sea otters'},
         )
 
         # As long as you stick to the expected keys, everything's
@@ -184,13 +180,13 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             {'ducks': '3', 'hawks': '4'},
 
             {
-                'hawks':    [f.FilterRepeater.CODE_EXTRA_KEY],
+                'hawks': [f.FilterRepeater.CODE_EXTRA_KEY],
             },
 
             # Invalid keys are not included in the filtered value.
             # This is very similar to how FilterMapper works.
-            expected_value = {
-                'ducks':    3,
+            expected_value={
+                'ducks': 3,
             }
         )
 
@@ -212,8 +208,8 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         #
         # noinspection PyTypeChecker
         self.filter_type = lambda: f.FilterRepeater(
-            filter_chain    =f.Int,
-            restrict_keys   = {0, 1, 3, 4},
+            filter_chain=f.Int,
+            restrict_keys={0, 1, 3, 4},
         )
 
         self.assertFilterPasses(['4', '3'], [4, 3])
@@ -231,7 +227,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             # (indexes) ARE included in the filtered value.  This is
             # because, unlike in mappings, it is not possible to
             # identify "missing" indexes.
-            expected_value = [50, 40, None, 20, 10]
+            expected_value=[50, 40, None, 20, 10]
         )
 
         # The moral of the story is, don't use `restrict_keys` when
@@ -262,9 +258,9 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         should you ever come across a situation where you need to
         apply two FilterRepeaters in sequence, you can do so.
         """
-        self.filter_type =\
+        self.filter_type = \
             lambda: f.FilterRepeater(f.NotEmpty) | f.FilterRepeater(
-              f.Int)
+                f.Int)
 
         # The values in this list pass through both FilterRepeaters
         # successfully.
@@ -291,7 +287,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
 
             # The result is the same as if we only ran the value
             # through the first FilterRepeater.
-            expected_value = [
+            expected_value=[
                 None, 'NaN', 0, None, 'FOO'
             ]
         )
@@ -306,7 +302,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
                 '4': [f.Decimal.CODE_INVALID],
             },
 
-            expected_value = [1, None, 0, None, None],
+            expected_value=[1, None, 0, None, None],
         )
 
     def test_repeater_chained_with_filter(self):
@@ -317,7 +313,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
         # This chain will apply NotEmpty to every item in the
         # collection, and then apply MaxLength to the collection as a
         # whole.
-        self.filter_type =\
+        self.filter_type = \
             lambda: f.FilterRepeater(f.NotEmpty) | f.MaxLength(2)
 
         # The collection has a length of 2, so it passes the MaxLength
@@ -341,14 +337,14 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
             # value:
             f.FilterRepeater(
 
-                    # 1. It must be a list.
-                    f.Type(list)
+                # 1. It must be a list.
+                f.Type(list)
 
-                    # 2. Apply the Int filter to each of its items.
-                |   f.FilterRepeater(f.Int)
+                # 2. Apply the Int filter to each of its items.
+                | f.FilterRepeater(f.Int)
 
-                    # 3. It must have a length <= 3.
-                |   f.MaxLength(3)
+                # 3. It must have a length <= 3.
+                | f.MaxLength(3)
             )
         )
 
@@ -386,7 +382,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
                 '1': [f.Type.CODE_WRONG_TYPE],
             },
 
-            expected_value = [[42], None],
+            expected_value=[[42], None],
         )
 
         # The 1st item in this value contains invalid ints.
@@ -405,12 +401,12 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
                 # This way, we don't have to deal with nested dicts
                 # when processing error codes.
                 #
-                '1.0':  [f.Decimal.CODE_NON_FINITE],
-                '1.1':  [f.Int.CODE_DECIMAL],
-                '1.2':  [f.Decimal.CODE_INVALID],
+                '1.0': [f.Decimal.CODE_NON_FINITE],
+                '1.1': [f.Int.CODE_DECIMAL],
+                '1.2': [f.Decimal.CODE_INVALID],
             },
 
-            expected_value = [[42], [None, None, None]],
+            expected_value=[[42], [None, None, None]],
         )
 
         # The 1st item in this value is too long.
@@ -424,7 +420,7 @@ class FilterRepeaterTestCase(BaseFilterTestCase):
                 '1': [f.MaxLength.CODE_TOO_LONG],
             },
 
-            expected_value = [[42], None]
+            expected_value=[[42], None]
         )
 
 
@@ -444,21 +440,21 @@ class FilterMapperTestCase(BaseFilterTestCase):
         A FilterRepeater is applied to a dict containing valid values.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
-            'subject':  f.NotEmpty | f.MaxLength(16),
+            'id':      f.Required | f.Int | f.Min(1),
+            'subject': f.NotEmpty | f.MaxLength(16),
         })
 
         filter_ = self._filter({
-            'id':       '42',
-            'subject':  'Hello, world!',
+            'id':      '42',
+            'subject': 'Hello, world!',
         })
 
         self.assertFilterPasses(
             filter_,
 
             {
-                'id':       42,
-                'subject':  'Hello, world!',
+                'id':      42,
+                'subject': 'Hello, world!',
             },
         )
 
@@ -476,8 +472,8 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )))
 
         filter_ = self._filter({
-            'id':       '42',
-            'subject':  'Hello, world!',
+            'id':      '42',
+            'subject': 'Hello, world!',
         })
 
         self.assertFilterPasses(
@@ -499,24 +495,24 @@ class FilterMapperTestCase(BaseFilterTestCase):
         values.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
-            'subject':  f.NotEmpty | f.MaxLength(16),
+            'id':      f.Required | f.Int | f.Min(1),
+            'subject': f.NotEmpty | f.MaxLength(16),
         })
 
         self.assertFilterErrors(
             {
-                'id':       None,
-                'subject':  'Antidisestablishmentarianism',
+                'id':      None,
+                'subject': 'Antidisestablishmentarianism',
             },
 
             {
-                'id':       [f.Required.CODE_EMPTY],
-                'subject':  [f.MaxLength.CODE_TOO_LONG],
+                'id':      [f.Required.CODE_EMPTY],
+                'subject': [f.MaxLength.CODE_TOO_LONG],
             },
 
-            expected_value = {
-                'id':       None,
-                'subject':  None,
+            expected_value={
+                'id':      None,
+                'subject': None,
             }
         )
 
@@ -525,21 +521,21 @@ class FilterMapperTestCase(BaseFilterTestCase):
         By default, FilterMappers passthru extra keys.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
-            'subject':  f.NotEmpty | f.MaxLength(16),
+            'id':      f.Required | f.Int | f.Min(1),
+            'subject': f.NotEmpty | f.MaxLength(16),
         })
 
         self.assertFilterPasses(
             {
-                'id':       '42',
-                'subject':  'Hello, world!',
-                'extra':    'ignored',
+                'id':      '42',
+                'subject': 'Hello, world!',
+                'extra':   'ignored',
             },
 
             {
-                'id':       42,
-                'subject':  'Hello, world!',
-                'extra':    'ignored',
+                'id':      42,
+                'subject': 'Hello, world!',
+                'extra':   'ignored',
             }
         )
 
@@ -555,11 +551,11 @@ class FilterMapperTestCase(BaseFilterTestCase):
         )))
 
         filter_ = self._filter({
-            'id':       '42',
-            'subject':  'Hello, world!',
-            'cat':      'felix',
-            'bird':     'phoenix',
-            'fox':      'fennecs',
+            'id':      '42',
+            'subject': 'Hello, world!',
+            'cat':     'felix',
+            'bird':    'phoenix',
+            'fox':     'fennecs',
         })
 
         self.assertFilterPasses(
@@ -570,8 +566,8 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 ('subject', 'Hello, world!'),
                 ('id', 42),
 
-                # Extra keys are listed afterward, in alphabetical
-                # order.
+                    # Extra keys are listed afterward, in alphabetical
+                    # order.
                 ('bird', 'phoenix'),
                 ('cat', 'felix'),
                 ('fox', 'fennecs'),
@@ -585,19 +581,19 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
-                'subject':  f.NotEmpty | f.MaxLength(16),
+                'id':      f.Required | f.Int | f.Min(1),
+                'subject': f.NotEmpty | f.MaxLength(16),
             },
 
             # Treat all extra keys as invalid values.s
-            allow_extra_keys = False,
+            allow_extra_keys=False,
         )
 
         self.assertFilterErrors(
             {
-                'id':       '42',
-                'subject':  'Hello, world!',
-                'extra':    'ignored',
+                'id':      '42',
+                'subject': 'Hello, world!',
+                'extra':   'ignored',
             },
 
             {
@@ -606,9 +602,9 @@ class FilterMapperTestCase(BaseFilterTestCase):
 
             # The valid fields were still included in the return value,
             # but the invalid field was removed.
-            expected_value = {
-                'id':       42,
-                'subject':  'Hello, world!',
+            expected_value={
+                'id':      42,
+                'subject': 'Hello, world!',
             }
         )
 
@@ -619,26 +615,26 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
-                'subject':  f.NotEmpty | f.MaxLength(16),
+                'id':      f.Required | f.Int | f.Min(1),
+                'subject': f.NotEmpty | f.MaxLength(16),
             },
 
-            allow_extra_keys = {'message', 'extra'},
+            allow_extra_keys={'message', 'extra'},
         )
 
         # As long as the extra keys are in the FilterMapper's
         # ``allow_extra_keys`` setting, everything is fine.
         self.assertFilterPasses(
             {
-                'id':       '42',
-                'subject':  'Hello, world!',
-                'extra':    'ignored',
+                'id':      '42',
+                'subject': 'Hello, world!',
+                'extra':   'ignored',
             },
 
             {
-                'id':       42,
-                'subject':  'Hello, world!',
-                'extra':    'ignored',
+                'id':      42,
+                'subject': 'Hello, world!',
+                'extra':   'ignored',
             },
         )
 
@@ -646,11 +642,11 @@ class FilterMapperTestCase(BaseFilterTestCase):
         # got a problem.
         self.assertFilterErrors(
             {
-                'id':           '42',
-                'subject':      'Hello, world!',
-                'attachment':   {
-                    'type':         'image/jpeg',
-                    'data':         '...',
+                'id':         '42',
+                'subject':    'Hello, world!',
+                'attachment': {
+                    'type': 'image/jpeg',
+                    'data': '...',
                 },
             },
 
@@ -658,9 +654,9 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 'attachment': [f.FilterMapper.CODE_EXTRA_KEY],
             },
 
-            expected_value = {
-                'id':       42,
-                'subject':  'Hello, world!',
+            expected_value={
+                'id':      42,
+                'subject': 'Hello, world!',
             }
         )
 
@@ -669,19 +665,19 @@ class FilterMapperTestCase(BaseFilterTestCase):
         By default, FilterMappers treat missing keys as `None`.
         """
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
-            'subject':  f.NotEmpty | f.MaxLength(16),
+            'id':      f.Required | f.Int | f.Min(1),
+            'subject': f.NotEmpty | f.MaxLength(16),
         })
 
         # 'subject' allows null values, so no errors are generated.
         self.assertFilterPasses(
             {
-                'id':   '42',
+                'id': '42',
             },
 
             {
-                'id':       42,
-                'subject':  None,
+                'id':      42,
+                'subject': None,
             },
         )
 
@@ -696,9 +692,9 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 'id': [f.Required.CODE_EMPTY],
             },
 
-            expected_value = {
-                'id':       None,
-                'subject':  'Hello, world!',
+            expected_value={
+                'id':      None,
+                'subject': 'Hello, world!',
             },
         )
 
@@ -709,25 +705,25 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
-                'subject':  f.NotEmpty | f.MaxLength(16),
+                'id':      f.Required | f.Int | f.Min(1),
+                'subject': f.NotEmpty | f.MaxLength(16),
             },
 
             # Treat missing keys as invalid values.
-            allow_missing_keys = False,
+            allow_missing_keys=False,
         )
 
         self.assertFilterErrors(
             {},
 
             {
-                'id':       [f.FilterMapper.CODE_MISSING_KEY],
-                'subject':  [f.FilterMapper.CODE_MISSING_KEY],
+                'id':      [f.FilterMapper.CODE_MISSING_KEY],
+                'subject': [f.FilterMapper.CODE_MISSING_KEY],
             },
 
-            expected_value = {
-                'id':       None,
-                'subject':  None,
+            expected_value={
+                'id':      None,
+                'subject': None,
             },
         )
 
@@ -738,11 +734,11 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
-                'subject':  f.NotEmpty | f.MaxLength(16),
+                'id':      f.Required | f.Int | f.Min(1),
+                'subject': f.NotEmpty | f.MaxLength(16),
             },
 
-            allow_missing_keys = {'subject'},
+            allow_missing_keys={'subject'},
         )
 
         # The FilterMapper is configured to treat missing 'subject' as
@@ -753,24 +749,24 @@ class FilterMapperTestCase(BaseFilterTestCase):
             },
 
             {
-                'id':       42,
-                'subject':  None,
+                'id':      42,
+                'subject': None,
             },
         )
 
         # However, 'id' is still required.
         self.assertFilterErrors(
             {
-                'subject':  'Hello, world!',
+                'subject': 'Hello, world!',
             },
 
             {
                 'id': [f.FilterMapper.CODE_MISSING_KEY],
             },
 
-            expected_value = {
-                'id':       None,
-                'subject':  'Hello, world!',
+            expected_value={
+                'id':      None,
+                'subject': 'Hello, world!',
             }
         )
 
@@ -781,36 +777,36 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':       f.Required | f.Int | f.Min(1),
-                'subject':  None,
+                'id':      f.Required | f.Int | f.Min(1),
+                'subject': None,
             },
 
             # If you configure a FilterMapper with passthru keys(s),
             # you generally also want to disallow missing keys.
-            allow_missing_keys = False,
+            allow_missing_keys=False,
         )
 
         self.assertFilterPasses(
             {
-                'id':       '42',
-                'subject':  'Hello, world!',
+                'id':      '42',
+                'subject': 'Hello, world!',
             },
 
             {
-                'id':       42,
-                'subject':  'Hello, world!',
+                'id':      42,
+                'subject': 'Hello, world!',
             },
         )
 
         self.assertFilterPasses(
             {
-                'id':       '42',
-                'subject':  None,
+                'id':      '42',
+                'subject': None,
             },
 
             {
-                'id':       42,
-                'subject':  None,
+                'id':      42,
+                'subject': None,
             },
         )
 
@@ -823,17 +819,17 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 'subject': [f.FilterMapper.CODE_MISSING_KEY],
             },
 
-            expected_value = {
-                'id':       42,
-                'subject':  None,
+            expected_value={
+                'id':      42,
+                'subject': None,
             },
         )
 
     def test_fail_non_mapping(self):
         """The incoming value is not a mapping."""
         self.filter_type = lambda: f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
-            'subject':  f.NotEmpty | f.MaxLength(16),
+            'id':      f.Required | f.Int | f.Min(1),
+            'subject': f.NotEmpty | f.MaxLength(16),
         })
 
         self.assertFilterErrors(
@@ -858,31 +854,31 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 'id': f.Int | f.Min(1),
             },
 
-            allow_missing_keys  = True,
-            allow_extra_keys    = True,
+            allow_missing_keys=True,
+            allow_extra_keys=True,
         )
 
         fm2 = f.FilterMapper(
             {
-                'id':       f.Required | f.Max(256),
-                'subject':  f.NotEmpty | f.MaxLength(16),
+                'id':      f.Required | f.Max(256),
+                'subject': f.NotEmpty | f.MaxLength(16),
             },
 
-            allow_missing_keys  = False,
-            allow_extra_keys    = False,
+            allow_missing_keys=False,
+            allow_extra_keys=False,
         )
 
         self.filter_type = lambda: fm1 | fm2
 
         self.assertFilterPasses(
             {
-                'id':       '42',
-                'subject':  'Hello, world!',
+                'id':      '42',
+                'subject': 'Hello, world!',
             },
 
             {
-                'id':       42,
-                'subject':  'Hello, world!',
+                'id':      42,
+                'subject': 'Hello, world!',
             },
         )
 
@@ -894,16 +890,16 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 # ``None``.
                 # However, ``fm2`` does not allow ``None`` for 'id'
                 # (because of the ``Required`` filter).
-                'id':       [f.Required.CODE_EMPTY],
+                'id':      [f.Required.CODE_EMPTY],
 
                 # `fm1` does not care about `subject`, but `fm2`
                 # expects it to be there.
-                'subject':  [f.FilterMapper.CODE_MISSING_KEY],
+                'subject': [f.FilterMapper.CODE_MISSING_KEY],
             },
 
-            expected_value = {
-                'id':       None,
-                'subject':  None,
+            expected_value={
+                'id':      None,
+                'subject': None,
             },
         )
 
@@ -913,32 +909,32 @@ class FilterMapperTestCase(BaseFilterTestCase):
         to operate on the entire mapping.
         """
         fm = f.FilterMapper({
-            'id':       f.Required | f.Int | f.Min(1),
-            'subject':  f.NotEmpty | f.MaxLength(16),
+            'id':      f.Required | f.Int | f.Min(1),
+            'subject': f.NotEmpty | f.MaxLength(16),
         })
 
         self.filter_type = lambda: fm | f.MaxLength(3)
 
         self.assertFilterPasses(
             {
-                'id':       '42',
-                'subject':  'Hello, world!',
-                'extra':    'ignored',
+                'id':      '42',
+                'subject': 'Hello, world!',
+                'extra':   'ignored',
             },
 
             {
-                'id':       42,
-                'subject':  'Hello, world!',
-                'extra':    'ignored',
+                'id':      42,
+                'subject': 'Hello, world!',
+                'extra':   'ignored',
             },
         )
 
         self.assertFilterErrors(
             {
-                'id':           '42',
-                'subject':      'Hello, world!',
-                'extra':        'ignored',
-                'attachment':   None,
+                'id':         '42',
+                'subject':    'Hello, world!',
+                'extra':      'ignored',
+                'attachment': None,
             },
 
             # The incoming value has 4 items, which fails the MaxLength
@@ -954,56 +950,57 @@ class FilterMapperTestCase(BaseFilterTestCase):
         """
         self.filter_type = lambda: f.FilterMapper(
             {
-                'id':           f.Required | f.Int | f.Min(1),
-                'subject':      f.NotEmpty | f.MaxLength(16),
-                'attachment':   f.FilterMapper(
+                'id':         f.Required | f.Int | f.Min(1),
+                'subject':    f.NotEmpty | f.MaxLength(16),
+                'attachment': f.FilterMapper(
                     {
                         'type':
                                 f.Required
-                            |   f.Choice(choices={'image/jpeg', 'image/png'}),
+                                | f.Choice(
+                                    choices={'image/jpeg', 'image/png'}),
 
                         'data': f.Required | f.Base64Decode,
                     },
 
-                    allow_extra_keys    = False,
-                    allow_missing_keys  = False,
+                    allow_extra_keys=False,
+                    allow_missing_keys=False,
                 )
             },
 
-            allow_extra_keys    = False,
-            allow_missing_keys  = False,
+            allow_extra_keys=False,
+            allow_missing_keys=False,
         )
 
         # Valid mapping is valid.
         self.assertFilterPasses(
             {
-                'id':      '42',
-                'subject': 'Hello, world!',
+                'id':         '42',
+                'subject':    'Hello, world!',
 
                 'attachment': {
                     'type': 'image/jpeg',
 
                     'data':
-                        b'R0lGODlhDwAPAKECAAAAzMzM/////wAAACwAAAAAD'
-                        b'wAPAAACIISPeQHsrZ5ModrLlN48CXF8m2iQ3YmmKq'
-                        b'VlRtW4MLwWACH+EVRIRSBDQUtFIElTIEEgTElFOw==',
+                            b'R0lGODlhDwAPAKECAAAAzMzM/////wAAACwAAAAAD'
+                            b'wAPAAACIISPeQHsrZ5ModrLlN48CXF8m2iQ3YmmKq'
+                            b'VlRtW4MLwWACH+EVRIRSBDQUtFIElTIEEgTElFOw==',
                 },
             },
 
             {
-                'id':       42,
-                'subject':  'Hello, world!',
+                'id':         42,
+                'subject':    'Hello, world!',
 
                 'attachment': {
                     'type': 'image/jpeg',
 
                     'data':
-                        b'GIF89a\x0f\x00\x0f\x00\xa1\x02\x00\x00\x00'
-                        b'\xcc\xcc\xcc\xff\xff\xff\xff\x00\x00\x00,\x00'
-                        b'\x00\x00\x00\x0f\x00\x0f\x00\x00\x02 \x84\x8f'
-                        b'y\x01\xec\xad\x9eL\xa1\xda\xcb\x94\xde<\tq|'
-                        b'\x9bh\x90\xdd\x89\xa6*\xa5eF\xd5\xb80\xbc\x16'
-                        b'\x00!\xfe\x11THE CAKE IS A LIE;'
+                            b'GIF89a\x0f\x00\x0f\x00\xa1\x02\x00\x00\x00'
+                            b'\xcc\xcc\xcc\xff\xff\xff\xff\x00\x00\x00,\x00'
+                            b'\x00\x00\x00\x0f\x00\x0f\x00\x00\x02 \x84\x8f'
+                            b'y\x01\xec\xad\x9eL\xa1\xda\xcb\x94\xde<\tq|'
+                            b'\x9bh\x90\xdd\x89\xa6*\xa5eF\xd5\xb80\xbc\x16'
+                            b'\x00!\xfe\x11THE CAKE IS A LIE;'
                 },
             },
         )
@@ -1011,7 +1008,7 @@ class FilterMapperTestCase(BaseFilterTestCase):
         # Invalid mapping... not so much.
         self.assertFilterErrors(
             {
-                'id': 'NaN',
+                'id':         'NaN',
 
                 'attachment': {
                     'type': 'foo',
@@ -1024,17 +1021,17 @@ class FilterMapperTestCase(BaseFilterTestCase):
                 # values.
                 # This way, we don't have to deal with nested dicts
                 # when processing error codes.
-                'id':               [f.Decimal.CODE_NON_FINITE],
-                'subject':          [f.FilterMapper.CODE_MISSING_KEY],
-                'attachment.type':  [f.Choice.CODE_INVALID],
-                'attachment.data':  [f.Type.CODE_WRONG_TYPE],
+                'id':              [f.Decimal.CODE_NON_FINITE],
+                'subject':         [f.FilterMapper.CODE_MISSING_KEY],
+                'attachment.type': [f.Choice.CODE_INVALID],
+                'attachment.data': [f.Type.CODE_WRONG_TYPE],
             },
 
             # The resulting value has the expected structure, but it's
             # a ghost town.
-            expected_value = {
-                'id':       None,
-                'subject':  None,
+            expected_value={
+                'id':         None,
+                'subject':    None,
 
                 'attachment': {
                     'type': None,
