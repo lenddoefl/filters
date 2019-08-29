@@ -21,7 +21,7 @@ tests_require = [
 # Off we go!
 # noinspection SpellCheckingInspection
 setup(
-    name        = 'filters',
+    name        = 'phx-filters',
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
