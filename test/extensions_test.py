@@ -1,10 +1,5 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 from os.path import dirname
 from unittest import TestCase
-from warnings import catch_warnings, simplefilter
 
 from pkg_resources import working_set
 
@@ -59,45 +54,3 @@ class FilterExtensionRegistryTestCase(TestCase):
         # Check that the correct number of extension filters were
         # registered.
         self.assertEqual(len(registry), 3)
-
-    def test_legacy_extension_loader(self):
-        """
-        Loading filters using the legacy extension loader (for versions
-        of filters < 1.3).
-
-        References:
-          - /test/_support/filter_extension_legacy.egg-info/entry_points.txt
-          - :py:func:`setUpModule`
-        """
-        with catch_warnings():
-            simplefilter('error', DeprecationWarning)
-
-            # For this test, we will use a different entry point key,
-            # to minimize the potential for side effects.
-            registry = FilterExtensionRegistry('filters.extensions_test_legacy')
-
-            # The legacy extensions loader will issue a warning the
-            # first time it runs.
-            with self.assertRaises(DeprecationWarning):
-                dir(registry)
-
-            # When using the legacy loader, the filter name must always
-            # match the class name.
-            alpha = registry.TestFilterAlpha
-            self.assertIs(alpha, TestFilterAlpha)
-
-            # You can also instantiate filters using parameters.
-            bravo = registry.TestFilterBravo(name='Batman')
-            self.assertIsInstance(bravo, TestFilterBravo)
-            self.assertEqual(bravo.name, 'Batman')
-
-            # I couldn't find any Batman characters whose name begins with
-            # C... and "Commissioner Gordon" doesn't count!
-            charlie = registry.TestFilterCharlie
-            # Note that :py:data:`test.TestFilterCharlie` is a filter
-            # macro.
-            self.assertTrue(issubclass(charlie, FilterMacroType))
-
-            # Check that the correct number of extension filters were
-            # registered.
-            self.assertEqual(len(registry), 3)

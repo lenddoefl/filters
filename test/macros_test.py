@@ -1,25 +1,23 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 from datetime import datetime
 from unittest import TestCase
 
 from pytz import utc
 
 import filters as f
-from filters.macros import filter_macro, FilterMacroType
+from filters.macros import FilterMacroType, filter_macro
 
 
 class FilterMacroTestCase(TestCase):
     """
     Unit tests for :py:func:`filter_macro`.
     """
+
     def test_decorator(self):
         """
         A common use case for Filter macros is to use them as
         decorators for functions.
         """
+
         @filter_macro
         def MyFilter():
             return f.Unicode | f.Strip | f.MinLength(12)
@@ -48,6 +46,7 @@ class FilterMacroTestCase(TestCase):
         You can chain Filter macros with other Filters, the same as you
         would with any other Filter.
         """
+
         @filter_macro
         def MyFilter():
             return f.Unicode | f.Strip | f.MinLength(12)
@@ -70,6 +69,7 @@ class FilterMacroTestCase(TestCase):
         """
         Yup, you can chain Filter macros together, too.
         """
+
         @filter_macro
         def Filter1():
             return f.Unicode | f.Strip
@@ -92,6 +92,7 @@ class FilterMacroTestCase(TestCase):
         """
         A filter macro may accept optional parameters.
         """
+
         @filter_macro
         def MyFilter(min_length=12):
             return f.Unicode | f.MinLength(min_length)

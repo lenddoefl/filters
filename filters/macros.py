@@ -1,9 +1,5 @@
-# coding=utf-8
-from __future__ import absolute_import, unicode_literals
-
 from abc import ABCMeta
-from functools import partial, WRAPPER_ASSIGNMENTS
-from six import with_metaclass
+from functools import WRAPPER_ASSIGNMENTS, partial
 
 from filters.base import BaseFilter, FilterMeta
 
@@ -13,7 +9,7 @@ __all__ = [
 ]
 
 
-class FilterMacroType(with_metaclass(ABCMeta, BaseFilter)):
+class FilterMacroType(BaseFilter, metaclass=ABCMeta):
     """
     Base type for filter macros.  Doesn't do anything on its own, but
     it is useful for identifying filter macros when paired with an
@@ -68,13 +64,13 @@ def filter_macro(func, *args, **kwargs):
 
             # Note that we ignore the ``name`` argument, passing in
             # ``func.__name__`` instead.
-            return super(FilterMacroMeta, mcs)\
+            return super(FilterMacroMeta, mcs) \
                 .__new__(mcs, func.__name__, bases, attrs)
 
         def __call__(cls, *runtime_args, **runtime_kwargs):
             return filter_partial(*runtime_args, **runtime_kwargs)
 
-    class FilterMacro(with_metaclass(FilterMacroMeta, FilterMacroType)):
+    class FilterMacro(FilterMacroType, metaclass=FilterMacroMeta):
         # This method will probably never get called due to overloaded
         # ``__call__`` in the metaclass, but just in case, we'll include
         # it because it is an abstract method in `BaseFilter`.

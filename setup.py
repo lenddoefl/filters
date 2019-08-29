@@ -1,8 +1,3 @@
-# coding=utf-8
-# :bc: Not importing unicode_literals because in Python 2 distutils,
-# some values are expected to be byte strings.
-from __future__ import absolute_import, division, print_function
-
 from codecs import StreamReader, open
 from os.path import dirname, join, realpath
 
@@ -17,7 +12,7 @@ with open(join(cwd, 'README.rst'), 'r', 'utf-8') as f: # type: StreamReader
 
 
 tests_require = [
-    'detox',
+    'tox >= 3.7',
     'nose',
 ]
 
@@ -30,20 +25,17 @@ setup(
     description = 'Validation and data pipelines made easy!',
     url         = 'https://filters.readthedocs.io/',
 
-    version = '1.3.4',
+    version = '2.0.0',
 
     packages = ['filters'],
 
     long_description = long_description,
 
     install_requires = [
-        'class-registry',
+        'phx-class-registry',
         'python-dateutil',
         'pytz',
-        'py2casefold; python_version < "3.0"',
         'regex >= 2018.8.17',
-        'six',
-        'typing >= 3.6.4; python_version < "3.0"',
     ],
 
     extras_require = {
@@ -66,11 +58,11 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Filters',
     ],

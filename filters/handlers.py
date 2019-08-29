@@ -1,15 +1,9 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 import sys
+import typing
 from collections import OrderedDict
 from logging import ERROR, Logger, LoggerAdapter
 from traceback import format_exc
 from types import TracebackType
-from typing import Any, Dict, List, Text, Tuple, Union
-
-from six import iteritems, python_2_unicode_compatible, text_type
 
 from filters.base import BaseFilter, BaseInvalidValueHandler, FilterCompatible
 
@@ -25,8 +19,12 @@ class LogHandler(BaseInvalidValueHandler):
     """
     Invalid value handler that sends the details to a logger.
     """
-    def __init__(self, logger, level=ERROR):
-        # type: (Union[Logger, LoggerAdapter], int) -> None
+
+    def __init__(
+            self,
+            logger: typing.Union[Logger, LoggerAdapter],
+            level: int = ERROR,
+    ) -> None:
         """
         :param logger: The logger that log messages will get sent to.
         :param level: Level of the logged messages.
@@ -34,44 +32,54 @@ class LogHandler(BaseInvalidValueHandler):
         super(LogHandler, self).__init__()
 
         self.logger = logger
-        self.level  = level
+        self.level = level
 
-    def handle_invalid_value(self, message, exc_info, context):
+    def handle_invalid_value(
+            self,
+            message: str,
+            exc_info: bool,
+            context: typing.MutableMapping,
+    ) -> None:
         self.logger.log(
-            level       = self.level,
-            msg         = message,
-            exc_info    = exc_info,
-            extra       = {'context': context}
+            level=self.level,
+            msg=message,
+            exc_info=exc_info,
+            extra={'context': context}
         )
 
 
-@python_2_unicode_compatible
 class FilterMessage(object):
-    """Provides a consistent API for messages sent to MemoryHandler."""
-    def __init__(self, message, context, exc_info=None):
-        # type: (Text, dict, Text) -> None
+    """
+    Provides a consistent API for messages sent to MemoryHandler.
+    """
+
+    def __init__(
+            self,
+            message: str,
+            context: typing.MutableMapping,
+            exc_info: typing.Optional[str] = None,
+    ) -> None:
         """
         :param exc_info: Exception traceback (if applicable).
         """
         super(FilterMessage, self).__init__()
 
-        self.message    = message
-        self.context    = context
-        self.code       = context.get('code') or message
-        self.exc_info   = exc_info
+        self.message = message
+        self.context = context
+        self.code = context.get('code') or message
+        self.exc_info = exc_info
 
     def __repr__(self):
         return '{type}({message}, {context})'.format(
-            type    = type(self).__name__,
-            message = repr(self.message),
-            context = repr(self.context),
+            type=type(self).__name__,
+            message=repr(self.message),
+            context=repr(self.context),
         )
 
     def __str__(self):
         return self.message
 
-    def as_dict(self, with_debug_info=False):
-        # type: (bool) -> dict
+    def as_dict(self, with_debug_info: bool = False) -> dict:
         """
         Returns a dict representation of the FilterMessage.
 
@@ -80,21 +88,23 @@ class FilterMessage(object):
             result.
         """
         res = {
-            'code':     self.code,
-            'message':  self.message,
+            'code':    self.code,
+            'message': self.message,
         }
 
         if with_debug_info:
-            res['context']  = self.context
+            res['context'] = self.context
             res['exc_info'] = self.exc_info
 
         return res
 
 
 class MemoryHandler(BaseInvalidValueHandler):
-    """Invalid value handler that stores messages locally."""
-    def __init__(self, capture_exc_info=False):
-        # type: (bool) -> None
+    """
+    Invalid value handler that stores messages locally.
+    """
+
+    def __init__(self, capture_exc_info: bool = False) -> None:
         """
         :param capture_exc_info:
             Whether to capture `sys.exc_info` when an handling an
@@ -109,17 +119,22 @@ class MemoryHandler(BaseInvalidValueHandler):
         """
         super(MemoryHandler, self).__init__()
 
-        self.messages           = OrderedDict() # type: Union[OrderedDict, Dict[Text, List[FilterMessage]]]
-        self.has_exceptions     = False
-        self.capture_exc_info   = capture_exc_info
-        self.exc_info           = [] # type: List[Tuple[type, Exception, TracebackType]]
+        self.messages = OrderedDict()  # type: typing.Union[OrderedDict, typing.Dict[str, typing.List[FilterMessage]]]
+        self.has_exceptions = False
+        self.capture_exc_info = capture_exc_info
+        self.exc_info = []  # type: typing.List[typing.Tuple[type, Exception, TracebackType]]
 
-    def handle_invalid_value(self, message, exc_info, context):
+    def handle_invalid_value(
+            self,
+            message: str,
+            exc_info: bool,
+            context: typing.MutableMapping,
+    ) -> None:
         key = context.get('key', '')
         msg = FilterMessage(
-            message     = message,
-            context     = context,
-            exc_info    = format_exc() if exc_info else None,
+            message=message,
+            context=context,
+            exc_info=format_exc() if exc_info else None,
         )
 
         try:
@@ -127,7 +142,7 @@ class MemoryHandler(BaseInvalidValueHandler):
         except KeyError:
             self.messages[key] = [msg]
 
-    def handle_exception(self, message, exc):
+    def handle_exception(self, message: str, exc: Exception) -> typing.Any:
         self.has_exceptions = True
 
         if self.capture_exc_info:
@@ -136,7 +151,6 @@ class MemoryHandler(BaseInvalidValueHandler):
         return super(MemoryHandler, self).handle_exception(message, exc)
 
 
-@python_2_unicode_compatible
 class FilterRunner(object):
     """
     Wrapper for a filter that provides an API similar to what you would
@@ -147,8 +161,13 @@ class FilterRunner(object):
     initialized, it does not expect the data it is filtering to
     change.
     """
-    def __init__(self, starting_filter, incoming_data, capture_exc_info=False):
-        # type: (FilterCompatible, Any, bool) -> None
+
+    def __init__(
+            self,
+            starting_filter: FilterCompatible,
+            incoming_data: typing.Any,
+            capture_exc_info: bool = False,
+    ) -> None:
         """
         :param incoming_data: E.g., `request.POST`.
 
@@ -165,16 +184,15 @@ class FilterRunner(object):
         """
         super(FilterRunner, self).__init__()
 
-        self.filter_chain       = BaseFilter.resolve_filter(starting_filter) # type: FilterCompatible
-        self.data               = incoming_data
-        self.capture_exc_info   = capture_exc_info
+        self.filter_chain = BaseFilter.resolve_filter(starting_filter)
+        self.data = incoming_data
+        self.capture_exc_info = capture_exc_info
 
-        self._cleaned_data  = None
-        self._handler       = None # type: MemoryHandler
-
+        self._cleaned_data = None
+        self._handler = None  # type: typing.Optional[MemoryHandler]
 
     def __str__(self):
-        return text_type(self.filter_chain)
+        return str(self.filter_chain)
 
     @property
     def cleaned_data(self):
@@ -185,8 +203,7 @@ class FilterRunner(object):
         return self._cleaned_data
 
     @property
-    def errors(self):
-        # type: () -> Dict[Text, List[Dict[Text, Text]]]
+    def errors(self) -> typing.Dict[str, typing.List[typing.Dict[str, str]]]:
         """
         Returns a dict of error messages generated by the Filter, in a
         format suitable for inclusion in e.g., an API 400 response
@@ -215,8 +232,10 @@ class FilterRunner(object):
         """
         return self.get_errors()
 
-    def get_errors(self, with_context=False):
-        # type: (bool) -> Dict[Text, List[Dict[Text, Text]]]
+    def get_errors(
+            self,
+            with_context: bool = False,
+    ) -> typing.Dict[str, typing.List[typing.Dict[str, str]]]:
         """
         Returns a dict of error messages generated by the Filter, in a
         format suitable for inclusion in e.g., an API 400 response
@@ -230,23 +249,21 @@ class FilterRunner(object):
         """
         return {
             key: [m.as_dict(with_context) for m in messages]
-                for key, messages in iteritems(self.filter_messages)
+            for key, messages in self.filter_messages.items()
         }
 
     @property
-    def error_codes(self):
-        # type: () -> Dict[Text, List[Text]]
+    def error_codes(self) -> typing.Dict[str, typing.List[str]]:
         """
         Returns a dict of error codes generated by the Filter.
         """
         return {
             key: [m.code for m in messages]
-                for key, messages in iteritems(self.filter_messages)
+            for key, messages in self.filter_messages.items()
         }
 
     @property
-    def has_exceptions(self):
-        # type: () -> bool
+    def has_exceptions(self) -> bool:
         """
         Returns whether any unhandled exceptions occurred while
         filtering the value.
@@ -255,8 +272,8 @@ class FilterRunner(object):
         return self._handler.has_exceptions
 
     @property
-    def exc_info(self):
-        # type: () -> List[Tuple[type, Exception, TracebackType]]
+    def exc_info(self) -> typing.List[
+        typing.Tuple[type, Exception, TracebackType]]:
         """
         Returns tracebacks from any exceptions that were captured.
         """
@@ -264,8 +281,7 @@ class FilterRunner(object):
         return self._handler.exc_info
 
     @property
-    def filter_messages(self):
-        # type: () -> Dict[Text, List[FilterMessage]]
+    def filter_messages(self) -> typing.Dict[str, typing.List[FilterMessage]]:
         """
         Returns the raw FilterMessages that were generated by the
         Filter.
@@ -273,8 +289,7 @@ class FilterRunner(object):
         self.full_clean()
         return self._handler.messages
 
-    def is_valid(self):
-        # type: () -> bool
+    def is_valid(self) -> bool:
         """
         Returns whether the request payload successfully passed the
         filter.
@@ -282,7 +297,9 @@ class FilterRunner(object):
         return not self.filter_messages
 
     def full_clean(self):
-        """Applies the filter to the request data."""
+        """
+        Applies the filter to the request data.
+        """
         if self._handler is None:
             self._handler = MemoryHandler(self.capture_exc_info)
 

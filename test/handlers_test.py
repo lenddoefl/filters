@@ -1,15 +1,9 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 import logging
 import sys
+import typing
 from logging import WARNING, getLevelName
 from traceback import format_exc, format_exception
-from typing import Iterator, List
 from unittest import TestCase
-
-from six import text_type
 
 import filters as f
 from filters.base import ExceptionHandler
@@ -27,8 +21,8 @@ class ExceptionHandlerTestCase(TestCase):
         """
         message = 'Needs more cowbell.'
         context = {
-            'key':      'test',
-            'value':    "(Don't Fear) The Reaper",
+            'key': 'test',
+            'value': "(Don't Fear) The Reaper",
         }
 
         # When ExceptionHandler encounters an invalid value, it raises
@@ -38,7 +32,7 @@ class ExceptionHandlerTestCase(TestCase):
         with self.assertRaises(f.FilterError) as exc:
             self.handler.handle_invalid_value(message, False, context)
 
-        self.assertEqual(text_type(exc.exception), message)
+        self.assertEqual(str(exc.exception), message)
         self.assertEqual(exc.exception.context, context)
 
     def test_exception(self):
@@ -47,8 +41,8 @@ class ExceptionHandlerTestCase(TestCase):
         """
         message = 'An exception occurred!'
         context = {
-            'key':      'test',
-            'value':    "(Don't Fear) The Reaper",
+            'key': 'test',
+            'value': "(Don't Fear) The Reaper",
         }
 
         #
@@ -78,7 +72,7 @@ class ExceptionHandlerTestCase(TestCase):
             with self.assertRaises(f.FilterError) as ar_context:
                 self.handler.handle_exception(message, e)
 
-            self.assertEqual(text_type(ar_context.exception), message)
+            self.assertEqual(str(ar_context.exception), message)
             self.assertEqual(ar_context.exception.context, context)
 
 
@@ -93,35 +87,33 @@ class MemoryLogHandler(logging.Handler):
     References:
       - :py:class:`logging.handlers.BufferingHandler`
     """
-    def __init__(self, level=logging.NOTSET):
-        # type: (int) -> None
+
+    def __init__(self, level: int = logging.NOTSET) -> None:
         super(MemoryLogHandler, self).__init__(level)
 
-        self._records           = [] # type: List[logging.LogRecord]
-        self.max_level_emitted  = logging.NOTSET
+        self._records = []  # type: typing.List[logging.LogRecord]
+        self.max_level_emitted = logging.NOTSET
 
-    def __getitem__(self, index):
-        # type: (int) -> logging.LogRecord
+    def __getitem__(self, index: int) -> logging.LogRecord:
         """
         Returns the log message at the specified index.
         """
         return self._records[index]
 
-    def __iter__(self):
-        # type: () -> Iterator[logging.LogRecord]
+    def __iter__(self) -> typing.Iterator[logging.LogRecord]:
         """
         Creates an iterator for the collected records.
         """
         return iter(self._records)
 
     def __len__(self):
-        # type: () -> int
-        """Returns the number of log records collected."""
+        """
+        Returns the number of log records collected.
+        """
         return len(self._records)
 
     @property
-    def records(self):
-        # type: () -> List[logging.LogRecord]
+    def records(self) -> typing.List[logging.LogRecord]:
         """
         Returns all log messages that the handler has collected.
         """
@@ -133,8 +125,7 @@ class MemoryLogHandler(logging.Handler):
         """
         del self._records[:]
 
-    def emit(self, record):
-        # type: (logging.LogRecord) -> None
+    def emit(self, record: logging.LogRecord) -> None:
         """
         Records the log message.
         """
@@ -167,8 +158,8 @@ class LogHandlerTestCase(TestCase):
         """
         message = 'Needs more cowbell.'
         context = {
-            'key':      'test',
-            'value':    "(Don't Fear) The Reaper",
+            'key':   'test',
+            'value': "(Don't Fear) The Reaper",
         }
 
         self.handler.handle_invalid_value(message, False, context)
@@ -189,8 +180,8 @@ class LogHandlerTestCase(TestCase):
         """
         message = 'An exception occurred!'
         context = {
-            'key':      'test',
-            'value':    "(Don't Fear) The Reaper",
+            'key':   'test',
+            'value': "(Don't Fear) The Reaper",
         }
 
         try:
@@ -232,13 +223,13 @@ class MemoryHandlerTestCase(TestCase):
         """
         Sends an invalid value to the handler.
         """
-        code    = 'foo'
-        key     = 'test'
+        code = 'foo'
+        key = 'test'
         message = 'Needs more cowbell.'
         context = {
-            'code':     code,
-            'key':      key,
-            'value':    "(Don't Fear) The Reaper",
+            'code':  code,
+            'key':   key,
+            'value': "(Don't Fear) The Reaper",
         }
 
         self.handler.handle_invalid_value(message, False, context)
@@ -246,9 +237,9 @@ class MemoryHandlerTestCase(TestCase):
         # Add a couple of additional messages, just to make sure the
         # handler stores them correctly.
         self.handler.handle_invalid_value(
-            message     = 'Test message 1',
-            exc_info    = False,
-            context     = {'key':  key},
+            message='Test message 1',
+            exc_info=False,
+            context={'key': key},
         )
         self.handler.handle_invalid_value('Test message 2', False, {})
 
@@ -286,13 +277,13 @@ class MemoryHandlerTestCase(TestCase):
         """
         Sends an exception to the handler.
         """
-        code    = 'error'
-        key     = 'test'
+        code = 'error'
+        key = 'test'
         message = 'An exception occurred!'
         context = {
-            'code':     code,
-            'key':      key,
-            'value':    "(Don't Fear) The Reaper",
+            'code':  code,
+            'key':   key,
+            'value': "(Don't Fear) The Reaper",
         }
 
         try:
