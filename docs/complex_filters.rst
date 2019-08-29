@@ -1,4 +1,3 @@
-===============
 Complex Filters
 ===============
 Two common use cases for filters are:
@@ -11,7 +10,6 @@ Two common use cases for filters are:
 The Filters library provides two "complex filters" designed to address these
 use cases.
 
-----------------------
 Working with Sequences
 ----------------------
 When you need to apply the same set of filters to a sequence of values, use
@@ -127,7 +125,7 @@ The output of the above code is::
                          'list, str, tuple).'}],
     'foxtrot': [{'code': 'empty', 'message': 'This value is required.'}]}
 
----------------------
+
 Working with Mappings
 ---------------------
 Often when working with mappings (e.g., ``dict``), you want to apply a different
@@ -300,7 +298,6 @@ Note that the ``FilterMapper`` ignored the extra ``attachment`` and missing
 ``subject``, but the extra ``from`` and missing ``id`` were still treated as
 invalid.
 
--------------
 Filterception
 -------------
 Both ``FilterRepeater`` and ``FilterMapper`` can be included in a filter chain,

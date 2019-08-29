@@ -1,6 +1,5 @@
 Contents
 ========
-
 .. toctree::
    :maxdepth: 1
 
@@ -9,7 +8,6 @@ Contents
    List of Filters <filters_list>
    writing_filters
    extensions
-
 
 Filters
 =======
@@ -84,6 +82,7 @@ Parse a JSON string and check that it has correct structure:
            allow_missing_keys = False,
        )
    ).apply('{"birthday":"1879-03-14", "gender":"M", "utcOffset":"1"}')
+
 
 Requirements
 ============

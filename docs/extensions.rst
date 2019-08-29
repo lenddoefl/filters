@@ -1,4 +1,3 @@
-===============================
 Extending the Filters Namespace
 ===============================
 Once you've :doc:`written your own filters </writing_filters>`, you can start
@@ -125,7 +124,6 @@ Note in the example above that you can register as many filters as you want.
    This feature may be useful to resolve conflicts, in the event that two
    filter classes have the same name (see below).
 
----------
 Conflicts
 ---------
 In the event that two filters are registered with the same name, one of them
@@ -135,7 +133,6 @@ defined, so it is not predictable which filter will "win".
 Future versions of the Filters library may provide more elegant ways to resolve
 these conflicts.
 
----------------
 Troubleshooting
 ---------------
 Remember to ``pip install -e .`` each time you modify your entry points; this is
@@ -159,48 +156,3 @@ extension filters to load:
    DEBUG:filters.extensions:Registering extension filter filters_iso.Currency as Currency.
    DEBUG:filters.extensions:Registering extension filter filters_iso.Locale as Locale.
    Out[4]: ['Country', 'Currency', 'Locale']
-
-------------------------
-Legacy Extensions Loader
-------------------------
-In a previous version of the Filters library, you could register an entire
-module in a single entry point.
-
-This behavior is now deprecated, and it will be removed in Filters v1.4.  To
-ensure that your package remains compatible with future releases of the Filters
-library, it is recommended that you modify your package's entry points so that
-it specifies one filter per entry point.
-
-For example, change this:
-
-.. code:: python
-
-   from setuptools import setup
-
-   setup(
-     ...
-     entry_points = {
-       'filters.extensions': [
-         # Legacy behavior; registering an entire module.
-         'iso = filters_iso',
-       ],
-     },
-   )
-
-to this:
-
-.. code:: python
-
-   from setuptools import setup
-
-   setup(
-     ...
-     entry_points = {
-       'filters.extensions': [
-         # New behavior; each entry point registers one filter.
-         'Country = filters_iso:Country',
-         'Currency = filters_iso:Currency',
-         'Locale = filters_iso:Locale',
-       ],
-     },
-   )

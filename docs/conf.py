@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # Filters documentation build configuration file, created by
 # sphinx-quickstart on Sun Dec  4 10:04:17 2016.
 #

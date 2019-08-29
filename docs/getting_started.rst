@@ -1,4 +1,3 @@
-===============
 Getting Started
 ===============
 The fastest way to get started with filters is to use the ``FilterRunner``
