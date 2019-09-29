@@ -19,7 +19,6 @@ tests_require = [
 
 ##
 # Off we go!
-# noinspection SpellCheckingInspection
 setup(
     name        = 'phx-filters',
     description = 'Validation and data pipelines made easy!',
