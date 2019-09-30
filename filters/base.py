@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod as abstract_method
 from copy import copy
 from typing import Any, Callable, Iterable, List, Mapping, \
-    MutableMapping, Optional as OptionalType, Sequence, Tuple, Union
+    MutableMapping, Optional as OptionalType, Tuple, Union
 from weakref import ProxyTypes, proxy
 
 __all__ = [
@@ -601,24 +601,6 @@ class ExceptionHandler(BaseInvalidValueHandler):
         error = FilterError(message)
         error.context = context
         raise error
-
-
-# Used by :py:meth:`Type.__init__` to inject JSON data types in place of
-# Python type names in error messages.
-JSON_ALIASES = {
-    # Builtins
-    bool: 'Boolean',
-    bytes: 'String',
-    dict: 'Object',
-    float: 'Number',
-    int: 'Number',
-    list: 'Array',
-    str: 'String',
-
-    # Typing
-    Mapping: 'Array',
-    Sequence: 'Array',
-}
 
 
 # This filter is used extensively by other filters.
