@@ -8,8 +8,8 @@ from filters.string import Unicode
 __all__ = [
     'FilterMapper',
     'FilterRepeater',
+    'FilterSwitch',
     'NamedTuple',
-    'Switch',
 ]
 
 
@@ -391,6 +391,54 @@ class FilterMapper(BaseFilter):
             return repr(key)
 
 
+class FilterSwitch(BaseFilter):
+    """
+    Chooses the next filter to apply based on the output of a callable.
+    """
+
+    def __init__(
+            self,
+            getter: typing.Callable[[typing.Any], typing.Hashable],
+            cases: typing.Mapping[typing.Hashable, FilterCompatible],
+            default: typing.Optional[FilterCompatible] = None,
+    ) -> None:
+        """
+        :param getter:
+            Callable used to extract the value to match against switch
+            cases.
+
+        :param cases:
+            Mapping of possible values to the corresponding filters.
+
+        :param default:
+            Default filter to use, if none of the cases are matched.
+
+            If null (default) then the value will be considered invalid
+            if it doesn't match any cases.
+        """
+        super().__init__()
+
+        self.getter = getter
+        self.cases = cases
+        self.default = default
+
+    def _apply(self, value):
+        gotten = self.getter(value)  # type: typing.Hashable
+
+        if not self.default:
+            gotten = self._filter(gotten, Choice(self.cases.keys()))
+
+            if self._has_errors:
+                return None
+
+        if gotten in self.cases:
+            return self._filter(value, self.cases[gotten])
+
+        # If we get here, then we have set a default filter.
+        return self._filter(value, self.default)
+
+
+
 class NamedTuple(BaseFilter):
     """
     Attempts to convert the incoming value into a namedtuple.
@@ -481,50 +529,3 @@ class NamedTuple(BaseFilter):
             return self.type(**filtered)
         else:
             return value
-
-
-class Switch(BaseFilter):
-    """
-    Chooses the next filter to apply based on the output of a callable.
-    """
-
-    def __init__(
-            self,
-            getter: typing.Callable[[typing.Any], typing.Hashable],
-            cases: typing.Mapping[typing.Hashable, FilterCompatible],
-            default: typing.Optional[FilterCompatible] = None,
-    ) -> None:
-        """
-        :param getter:
-            Callable used to extract the value to match against switch
-            cases.
-
-        :param cases:
-            Mapping of possible values to the corresponding filters.
-
-        :param default:
-            Default filter to use, if none of the cases are matched.
-
-            If null (default) then the value will be considered invalid
-            if it doesn't match any cases.
-        """
-        super().__init__()
-
-        self.getter = getter
-        self.cases = cases
-        self.default = default
-
-    def _apply(self, value):
-        gotten = self.getter(value)  # type: typing.Hashable
-
-        if not self.default:
-            gotten = self._filter(gotten, Choice(self.cases.keys()))
-
-            if self._has_errors:
-                return None
-
-        if gotten in self.cases:
-            return self._filter(value, self.cases[gotten])
-
-        # If we get here, then we have set a default filter.
-        return self._filter(value, self.default)

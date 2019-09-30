@@ -321,10 +321,10 @@ These filters are covered in more detail in :doc:`/complex_filters`.
    ``FilterRepeater`` can also process mappings (e.g., ``dict``); it will apply
    the filters to every value in the mapping, preserving the keys.
 
-:py:class:`filters.Switch`
+:py:class:`filters.FilterSwitch`
    Conditionally invokes a filter based on the output of a function.
 
-   ``Switch`` takes 2-3 parameters:
+   ``FilterSwitch`` takes 2-3 parameters:
 
    - ``getter: Callable[[Any], Hashable]`` - a function that extracts the
      comparison value from the incoming value.  Whatever this function returns
@@ -336,31 +336,35 @@ These filters are covered in more detail in :doc:`/complex_filters`.
      specified, then the incoming value will be considered invalid if the
      comparison value doesn't match any cases.
 
-   Example of a ``Switch`` that selects the correct filter to use based upon the
-   incoming value's ``name`` value:
+   Example of a ``FilterSwitch`` that selects the correct filter to use based
+   upon the incoming value's ``name`` value:
 
    .. code-block:: py
 
-      runner = f.FilterRunner(
-          f.Switch(
-              # This function will extract the comparison value.
-              getter=lambda value: value['name'],
+      switch = f.FilterSwitch(
+          # This function will extract the comparison value.
+          getter=lambda value: value['name'],
 
-              # These are the cases that the comparison value might
-              # match.
-              cases={
-                  'price': f.FilterMapper({'value': f.Int | f.Min(0)}),
-                  'color': f.FilterMapper({'value': f.Choice({'r', 'g', 'b'})}),
-                  # etc.
-              },
+          # These are the cases that the comparison value might
+          # match.
+          cases={
+              'price': f.FilterMapper({'value': f.Int | f.Min(0)}),
+              'color': f.FilterMapper({'value': f.Choice({'r', 'g', 'b'})}),
+              # etc.
+          },
 
-              # This is the filter that will be used if none of the cases match.
-              default=f.FilterMapper({'value': f.Unicode}),
-          ),
-
-          # Example value.
-          {'name': price, 'value': 42},
+          # This is the filter that will be used if none of the cases match.
+          default=f.FilterMapper({'value': f.Unicode}),
       )
+
+      # Applies the 'price' filter:
+      switch.apply({'name': price, 'value': 42})
+
+      # Applies the 'color' filter:
+      switch.apply({'name': color, 'value': 'b'})
+
+      # Applies the default filter:
+      switch.apply({'name': 'mfg', 'value': 'Acme Widget Co.'})
 
 Extensions
 ==========

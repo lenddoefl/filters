@@ -1194,14 +1194,14 @@ class NamedTupleTestCase(BaseFilterTestCase):
         )
 
 
-class SwitchTestCase(BaseFilterTestCase):
-    filter_type = f.Switch
+class FilterSwitchTestCase(BaseFilterTestCase):
+    filter_type = f.FilterSwitch
 
     def test_pass_none(self):
         """
         ``None`` always passes this filter.
 
-        Use ``f.Required | f.Switch`` to reject null values.
+        Use ``f.Required | f.FilterSwitch`` to reject null values.
         """
         self.assertFilterPasses(
             self._filter(

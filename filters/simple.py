@@ -133,6 +133,7 @@ class Call(BaseFilter):
     But, in a pinch, this is a handy way to quickly integrate a custom
     function into a filter chain.
     """
+
     def __init__(self,
             callable_: typing.Callable[..., typing.Any],
             *extra_args,
