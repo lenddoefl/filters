@@ -1192,3 +1192,93 @@ class NamedTupleTestCase(BaseFilterTestCase):
                 'b': [f.Decimal.CODE_INVALID],
             },
         )
+
+
+class FilterSwitchTestCase(BaseFilterTestCase):
+    filter_type = f.FilterSwitch
+
+    def test_pass_none(self):
+        """
+        ``None`` always passes this filter.
+
+        Use ``f.Required | f.FilterSwitch`` to reject null values.
+        """
+        self.assertFilterPasses(
+            self._filter(
+                None,
+
+                getter=lambda value: value['anything'],
+                cases={},
+            ),
+        )
+
+    def test_pass_match_case(self):
+        """
+        The incoming value matches one of the switch cases.
+        """
+        self.assertFilterPasses(
+            self._filter(
+                {'name': 'positive', 'value': 42},
+
+                getter=lambda value: value['name'],
+                cases={
+                    'positive': f.FilterMapper({'value': f.Int | f.Min(0)}),
+                },
+            ),
+        )
+
+    def test_fail_match_case(self):
+        """
+        The incoming value matches one of the switch cases, but it is
+        not valid, according to the corresponding filter.
+        """
+        self.assertFilterErrors(
+            self._filter(
+                {'name': 'positive', 'value': -1},
+
+                getter=lambda value: value['name'],
+                cases={
+                    'positive': f.FilterMapper({'value': f.Int | f.Min(0)}),
+                },
+            ),
+            {'value': [f.Min.CODE_TOO_SMALL]},
+
+            # The result is the exact same as if the value were passed
+            # directly to the corresponding filter.
+            expected_value={'name': 'positive', 'value': None},
+        )
+
+    def test_pass_default(self):
+        """
+        The incoming value does not match any of the switch cases, but
+        we defined a default filter.
+        """
+        self.assertFilterPasses(
+            self._filter(
+                {'name': 'negative', 'value': -42},
+
+                getter=lambda value: value['name'],
+                cases={
+                    'positive': f.FilterMapper({'value': f.Int | f.Min(0)}),
+                },
+                default=f.FilterMapper({'value': f.Int | f.Max(0)}),
+            ),
+        )
+
+    def test_fail_no_default(self):
+        """
+        The incoming value does not match any of the switch cases, and
+        we did not define a default filter.
+        """
+        self.assertFilterErrors(
+            self._filter(
+                {'name': 'negative', 'value': -42},
+
+                getter=lambda value: value['name'],
+                cases={
+                    'positive': f.FilterMapper({'value': f.Int | f.Min(0)}),
+                },
+            ),
+
+            [f.Choice.CODE_INVALID],
+        )

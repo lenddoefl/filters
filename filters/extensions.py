@@ -46,7 +46,7 @@ class FilterExtensionRegistry(EntryPointClassRegistry):
     """
 
     def __init__(self, group: str = GROUP_NAME) -> None:
-        super(FilterExtensionRegistry, self).__init__(group)
+        super().__init__(group)
 
     def __getattr__(self, item: str) -> typing.Type[BaseFilter]:
         return self[item]

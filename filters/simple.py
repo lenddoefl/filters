@@ -12,6 +12,7 @@ from filters.number import Int, Max, Min
 __all__ = [
     'Array',
     'ByteArray',
+    'Call',
     'Choice',
     'Date',
     'Datetime',
@@ -35,10 +36,10 @@ class Array(Type):
             self,
             aliases: typing.Optional[typing.Mapping[type, str]] = None,
     ) -> None:
-        super(Array, self).__init__(typing.Sequence, True, aliases)
+        super().__init__(typing.Sequence, True, aliases)
 
     def _apply(self, value):
-        value = super(Array, self)._apply(value)  # type: typing.Sequence
+        value = super()._apply(value)  # type: typing.Sequence
 
         if self._has_errors:
             return None
@@ -73,7 +74,7 @@ class ByteArray(BaseFilter):
         :param encoding:
             The encoding to use when decoding strings into bytes.
         """
-        super(ByteArray, self).__init__()
+        super().__init__()
 
         self.encoding = encoding
 
@@ -121,6 +122,50 @@ class ByteArray(BaseFilter):
         return bytearray(filtered)
 
 
+class Call(BaseFilter):
+    """
+    Runs the value through a callable.
+
+    Usually, creating a custom filter type works better, as you have
+    more control over how invalid values are handled, you can specify
+    custom error codes, it's easier to write tests for, etc.
+
+    But, in a pinch, this is a handy way to quickly integrate a custom
+    function into a filter chain.
+    """
+
+    def __init__(self,
+            callable_: typing.Callable[..., typing.Any],
+            *extra_args,
+            **extra_kwargs
+    ) -> None:
+        """
+        :param callable_:
+            The callable that will be applied to incoming values.
+
+        :param extra_args:
+            Extra positional arguments to pass to the callable.
+
+        :param extra_kwargs:
+            Extra keyword arguments to pass to the callable.
+        """
+        super().__init__()
+
+        self.callable = callable_
+        self.extra_args = extra_args
+        self.extra_kwargs = extra_kwargs
+
+    def _apply(self, value):
+        try:
+            return self.callable(value, *self.extra_args, **self.extra_kwargs)
+        except Exception as e:
+            return self._invalid_value(
+                value,
+                reason=e,
+                exc_info=True,
+            )
+
+
 class Choice(BaseFilter):
     """
     Expects the value to match one of the items in a set.
@@ -136,7 +181,7 @@ class Choice(BaseFilter):
     }
 
     def __init__(self, choices: typing.Iterable[typing.Hashable]) -> None:
-        super(Choice, self).__init__()
+        super().__init__()
 
         self.choices = set(choices)
 
@@ -198,7 +243,7 @@ class Datetime(BaseFilter):
             IMPORTANT:  Incoming values are still converted to UTC
             before stripping tzinfo!
         """
-        super(Datetime, self).__init__()
+        super().__init__()
 
         if not isinstance(timezone, tzinfo):
             if timezone in [0, None]:
@@ -276,7 +321,7 @@ class Date(Datetime):
         if isinstance(value, date) and not isinstance(value, datetime):
             return value
 
-        filtered = super(Date, self)._apply(value)  # type: datetime
+        filtered = super()._apply(value)  # type: datetime
 
         # Normally we return `None` if we get any errors, but in this
         # case, we'll let the superclass method decide.
@@ -326,7 +371,7 @@ class Length(BaseFilter):
     }
 
     def __init__(self, length: int) -> None:
-        super(Length, self).__init__()
+        super().__init__()
 
         self.length = length
 
@@ -375,7 +420,7 @@ class MaxLength(BaseFilter):
     }
 
     def __init__(self, max_length: int) -> None:
-        super(MaxLength, self).__init__()
+        super().__init__()
 
         self.max_length = max_length
 
@@ -416,7 +461,7 @@ class MinLength(BaseFilter):
     }
 
     def __init__(self, min_length: int) -> None:
-        super(MinLength, self).__init__()
+        super().__init__()
 
         self.min_length = min_length
 
@@ -483,7 +528,7 @@ class NotEmpty(BaseFilter):
         :param allow_none:
             Whether to allow ``None``.
         """
-        super(NotEmpty, self).__init__()
+        super().__init__()
 
         self.allow_none = allow_none
 
@@ -520,7 +565,7 @@ class Required(NotEmpty):
     }
 
     def __init__(self):
-        super(Required, self).__init__(allow_none=False)
+        super().__init__(allow_none=False)
 
 
 class Optional(BaseFilter):
@@ -538,7 +583,7 @@ class Optional(BaseFilter):
         :param default:
             The default value used to replace empty values.
         """
-        super(Optional, self).__init__()
+        super().__init__()
 
         self.default = default
 

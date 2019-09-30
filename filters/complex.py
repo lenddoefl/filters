@@ -2,12 +2,13 @@ import typing
 from collections import OrderedDict
 
 from filters.base import BaseFilter, FilterCompatible, FilterError, Type
-from filters.simple import Length
+from filters.simple import Choice, Length
 from filters.string import Unicode
 
 __all__ = [
     'FilterMapper',
     'FilterRepeater',
+    'FilterSwitch',
     'NamedTuple',
 ]
 
@@ -51,7 +52,7 @@ class FilterRepeater(BaseFilter):
 
             Set to ``None`` (default) to allow any key/index.
         """
-        super(FilterRepeater, self).__init__()
+        super().__init__()
 
         self._filter_chain = self.resolve_filter(filter_chain, parent=self)
 
@@ -72,7 +73,7 @@ class FilterRepeater(BaseFilter):
         """
         Creates a shallow copy of the object.
         """
-        new_filter = super(FilterRepeater, cls).__copy__(the_filter)
+        new_filter = super().__copy__(the_filter)
 
         new_filter._filter_chain = the_filter._filter_chain
         new_filter.restrict_keys = the_filter.restrict_keys
@@ -225,7 +226,7 @@ class FilterMapper(BaseFilter):
               omitted from the filtered value.
             - <Iterable>: Only the specified extra keys are allowed.
         """
-        super(FilterMapper, self).__init__()
+        super().__init__()
 
         self._filters = OrderedDict()
 
@@ -390,6 +391,54 @@ class FilterMapper(BaseFilter):
             return repr(key)
 
 
+class FilterSwitch(BaseFilter):
+    """
+    Chooses the next filter to apply based on the output of a callable.
+    """
+
+    def __init__(
+            self,
+            getter: typing.Callable[[typing.Any], typing.Hashable],
+            cases: typing.Mapping[typing.Hashable, FilterCompatible],
+            default: typing.Optional[FilterCompatible] = None,
+    ) -> None:
+        """
+        :param getter:
+            Callable used to extract the value to match against switch
+            cases.
+
+        :param cases:
+            Mapping of possible values to the corresponding filters.
+
+        :param default:
+            Default filter to use, if none of the cases are matched.
+
+            If null (default) then the value will be considered invalid
+            if it doesn't match any cases.
+        """
+        super().__init__()
+
+        self.getter = getter
+        self.cases = cases
+        self.default = default
+
+    def _apply(self, value):
+        gotten = self.getter(value)  # type: typing.Hashable
+
+        if not self.default:
+            gotten = self._filter(gotten, Choice(self.cases.keys()))
+
+            if self._has_errors:
+                return None
+
+        if gotten in self.cases:
+            return self._filter(value, self.cases[gotten])
+
+        # If we get here, then we have set a default filter.
+        return self._filter(value, self.default)
+
+
+
 class NamedTuple(BaseFilter):
     """
     Attempts to convert the incoming value into a namedtuple.
@@ -426,7 +475,7 @@ class NamedTuple(BaseFilter):
                 >>> filter_chain.apply(['64', '128', '192'])
                 Color(r=64, g=128, b=192)
         """
-        super(NamedTuple, self).__init__()
+        super().__init__()
 
         self.type = type_
 

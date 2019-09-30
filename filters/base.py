@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod as abstract_method
 from copy import copy
 from typing import Any, Callable, Iterable, List, Mapping, \
-    MutableMapping, Optional as OptionalType, Sequence, Tuple, Union
+    MutableMapping, Optional as OptionalType, Tuple, Union
 from weakref import ProxyTypes, proxy
 
 __all__ = [
@@ -31,7 +31,7 @@ class FilterMeta(ABCMeta):
     # noinspection PyShadowingBuiltins
     def __init__(cls, what, bases=None, dict=None, **kwargs):
         # noinspection PyArgumentList
-        super(FilterMeta, cls).__init__(what, bases, dict, **kwargs)
+        super().__init__(what, bases, dict, **kwargs)
 
         if not hasattr(cls, 'templates'):
             cls.templates = {}
@@ -75,11 +75,11 @@ class BaseFilter(metaclass=FilterMeta):
     }
 
     def __init__(self):
-        super(BaseFilter, self).__init__()
+        super().__init__()
 
-        self._parent = None  # type: Optional[BaseFilter]
-        self._handler = None  # type: Optional[BaseInvalidValueHandler]
-        self._key = None  # type: Optional[str]
+        self._parent = None  # type: OptionalType[BaseFilter]
+        self._handler = None  # type: OptionalType[BaseInvalidValueHandler]
+        self._key = None  # type: OptionalType[str]
 
         #
         # Indicates whether the Filter detected any invalid values.
@@ -465,7 +465,7 @@ class FilterChain(BaseFilter):
     """
 
     def __init__(self, start_filter: FilterCompatible = None) -> None:
-        super(FilterChain, self).__init__()
+        super().__init__()
 
         self._filters = []  # type: List[BaseFilter]
 
@@ -498,7 +498,7 @@ class FilterChain(BaseFilter):
         """
         Creates a shallow copy of the object.
         """
-        new_filter = super(FilterChain, cls).__copy__(the_filter)
+        new_filter = super().__copy__(the_filter)
         new_filter._filters = the_filter._filters[:]
         # noinspection PyTypeChecker
         return new_filter
@@ -583,7 +583,7 @@ class FilterError(ValueError):
         # Exception kwargs are deprecated in Python 3, but keeping them
         # around for compatibility with Python 2.
         # noinspection PyArgumentList
-        super(FilterError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.context = {}
 
 
@@ -601,24 +601,6 @@ class ExceptionHandler(BaseInvalidValueHandler):
         error = FilterError(message)
         error.context = context
         raise error
-
-
-# Used by :py:meth:`Type.__init__` to inject JSON data types in place of
-# Python type names in error messages.
-JSON_ALIASES = {
-    # Builtins
-    bool: 'Boolean',
-    bytes: 'String',
-    dict: 'Object',
-    float: 'Number',
-    int: 'Number',
-    list: 'Array',
-    str: 'String',
-
-    # Typing
-    Mapping: 'Array',
-    Sequence: 'Array',
-}
 
 
 # This filter is used extensively by other filters.
@@ -655,7 +637,7 @@ class Type(BaseFilter):
             This is useful for providing more context- appropriate
             names to end users and/or masking native Python type names.
         """
-        super(Type, self).__init__()
+        super().__init__()
 
         # A pinch of syntactic sugar.
         self.allowed_types = (

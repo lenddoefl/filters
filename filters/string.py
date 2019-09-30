@@ -40,7 +40,7 @@ class Base64Decode(BaseFilter):
     }
 
     def __init__(self):
-        super(Base64Decode, self).__init__()
+        super().__init__()
 
         self.whitespace_re = regex.compile(b'[ \t\r\n]+', regex.ASCII)
         self.base64_re = regex.compile(b'^[-+_/A-Za-z0-9=]+$', regex.ASCII)
@@ -134,7 +134,7 @@ class IpAddress(BaseFilter):
     }
 
     def __init__(self, ipv4: bool = True, ipv6: bool = False) -> None:
-        super(IpAddress, self).__init__()
+        super().__init__()
 
         self.ipv4 = ipv4
         self.ipv6 = ipv6
@@ -209,7 +209,7 @@ class JsonDecode(BaseFilter):
     }
 
     def __init__(self, decoder: typing.Callable = json.loads) -> None:
-        super(JsonDecode, self).__init__()
+        super().__init__()
 
         self.decoder = decoder
 
@@ -269,7 +269,7 @@ class MaxBytes(BaseFilter):
 
             Note: This filter is optimized for UTF-8.
         """
-        super(MaxBytes, self).__init__()
+        super().__init__()
 
         self.encoding = encoding
         self.max_bytes = max_bytes
@@ -467,7 +467,7 @@ class Regex(BaseFilter):
             IMPORTANT:  If you specify your own compiled regex, be sure to
             add the ``UNICODE`` flag for Unicode support!
         """
-        super(Regex, self).__init__()
+        super().__init__()
 
         self.regex = (
             pattern
@@ -533,7 +533,7 @@ class Split(BaseFilter):
             IMPORTANT:  If ``keys`` is set, the split value's length
             must be less than or equal to ``len(keys)``.
         """
-        super(Split, self).__init__()
+        super().__init__()
 
         self.regex = (
             pattern
@@ -595,7 +595,7 @@ class Strip(BaseFilter):
         :param trailing:
             Regex to match at the end of the string.
         """
-        super(Strip, self).__init__()
+        super().__init__()
 
         if leading:
             self.leading = regex.compile(
@@ -667,7 +667,7 @@ class Unicode(BaseFilter):
                 - Remove non-printable characters.
                 - Convert all line endings to unix-style ('\n').
         """
-        super(Unicode, self).__init__()
+        super().__init__()
 
         self.encoding = encoding
         self.normalize = normalize
@@ -775,11 +775,11 @@ class ByteString(Unicode):
             :py:class:`ByteString`, but ``True`` by default for
             :py:class:`Unicode`.
         """
-        super(ByteString, self).__init__(encoding, normalize)
+        super().__init__(encoding, normalize)
 
     # noinspection SpellCheckingInspection
     def _apply(self, value):
-        decoded = super(ByteString, self)._apply(value)  # type: str
+        decoded = super()._apply(value)  # type: str
 
         #
         # No need to catch UnicodeEncodeErrors here; UTF-8 can handle
@@ -834,7 +834,7 @@ class Uuid(BaseFilter):
         References:
           - https://en.wikipedia.org/wiki/Uuid#RFC_4122_Variant
         """
-        super(Uuid, self).__init__()
+        super().__init__()
 
         self.version = version
 

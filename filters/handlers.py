@@ -29,7 +29,7 @@ class LogHandler(BaseInvalidValueHandler):
         :param logger: The logger that log messages will get sent to.
         :param level: Level of the logged messages.
         """
-        super(LogHandler, self).__init__()
+        super().__init__()
 
         self.logger = logger
         self.level = level
@@ -62,7 +62,7 @@ class FilterMessage(object):
         """
         :param exc_info: Exception traceback (if applicable).
         """
-        super(FilterMessage, self).__init__()
+        super().__init__()
 
         self.message = message
         self.context = context
@@ -117,7 +117,7 @@ class MemoryHandler(BaseInvalidValueHandler):
             Regardless, you can still check ``self.has_exceptions`` to
             see if an exception occurred.
         """
-        super(MemoryHandler, self).__init__()
+        super().__init__()
 
         self.messages = OrderedDict()  # type: typing.Union[OrderedDict, typing.Dict[str, typing.List[FilterMessage]]]
         self.has_exceptions = False
@@ -148,7 +148,7 @@ class MemoryHandler(BaseInvalidValueHandler):
         if self.capture_exc_info:
             self.exc_info.append(sys.exc_info())
 
-        return super(MemoryHandler, self).handle_exception(message, exc)
+        return super().handle_exception(message, exc)
 
 
 class FilterRunner(object):
@@ -182,7 +182,7 @@ class FilterRunner(object):
             Regardless, you can still check ``self.has_exceptions`` to
             see if an exception occurred.
         """
-        super(FilterRunner, self).__init__()
+        super().__init__()
 
         self.filter_chain = BaseFilter.resolve_filter(starting_filter)
         self.data = incoming_data
