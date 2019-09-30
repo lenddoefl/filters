@@ -15,7 +15,7 @@ class Lengthy(typing.Sized):
     """
 
     def __init__(self, length):
-        super(Lengthy, self).__init__()
+        super().__init__()
         self.length = length
 
     def __len__(self):
@@ -30,7 +30,7 @@ class Bytesy(object):
     """
 
     def __init__(self, value):
-        super(Bytesy, self).__init__()
+        super().__init__()
         self.value = value
 
     def __bytes__(self):
@@ -45,7 +45,7 @@ class Unicody(object):
     """
 
     def __init__(self, value):
-        super(Unicody, self).__init__()
+        super().__init__()
         self.value = value
 
     def __str__(self):
@@ -295,6 +295,89 @@ class ByteArrayTestCase(BaseFilterTestCase):
             self._filter(value, encoding='latin-1'),
             [f.ByteArray.CODE_BAD_ENCODING],
         )
+
+
+class CallTestCase(BaseFilterTestCase):
+    filter_type = f.Call
+
+    def test_pass_none(self):
+        """
+        ``None`` always passes this Filter.
+
+        Use ``Required | Call`` if you want to reject null values.
+        """
+        def always_fail(value):
+            raise ValueError('{value} is not valid!'.format(value=value))
+
+        self.assertFilterPasses(
+            self._filter(None, always_fail)
+        )
+
+    def test_pass_successful_execution(self):
+        """
+        The callable runs successfully.
+        """
+        def is_odd(value):
+            return value % 2
+
+        self.assertFilterPasses(
+            self._filter(6, is_odd),
+
+            # Note that ANY value returned by the callable is considered
+            # valid; if you want custom handling of some values, you're
+            # better off creating a custom Filter type (it's super
+            # easy!).
+            False,
+        )
+
+    def test_fail_filter_error(self):
+        """
+        The callable raises a :py:class:`FilterError`.
+        """
+        def even_only(value):
+            if value % 2:
+                raise f.FilterError('value is not even!')
+            return value
+
+        self.assertFilterErrors(
+            self._filter(5, even_only),
+            ['value is not even!']
+        )
+
+    def test_fail_filter_error_custom_code(self):
+        """
+        The callable raises a :py:class:`FilterError` with a custom
+        error code.
+        """
+        def even_only(value):
+            if value % 2:
+                # If you find yourself doing this, you would probably be
+                # better served by creating a custom filter instead.
+                error = f.FilterError('value is not even!')
+                error.context = {'code': 'not_even'}
+                raise error
+            return value
+
+        self.assertFilterErrors(
+            self._filter(5, even_only),
+            ['not_even'],
+        )
+
+    def test_error_exception(self):
+        """
+        The callable raises an exception other than a
+        :py:class:`FilterError`.
+        """
+        def even_only(value):
+            if value % 2:
+                raise ValueError('{value} is not even!')
+            return value
+
+        filter_ = self._filter(5, even_only)
+
+        # :py:class:`Call` assumes that any exception other than a
+        # :py:class:`FilterError` represents an error in the code.
+        self.assertTrue(filter_.has_exceptions)
 
 
 class ChoiceTestCase(BaseFilterTestCase):

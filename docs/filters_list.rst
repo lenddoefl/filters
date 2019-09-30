@@ -10,7 +10,7 @@ This is in contrast to :ref:`Complex Filters <complex-filters>`, which operate
 on collections of values.
 
 String Filters
---------------
+^^^^^^^^^^^^^^
 These filters are designed to operate on (or convert to) string values.
 
 *Important:* to ensure consistent behavior between Python 2 and Python 3,
@@ -129,7 +129,7 @@ string filters only accept unicode strings, unless otherwise noted.
    version in the filter initializer.
 
 Number Filters
---------------
+^^^^^^^^^^^^^^
 These filters are designed to operate on (or convert to) numeric types.
 
 :py:class:`filters.Decimal`
@@ -172,7 +172,7 @@ These filters are designed to operate on (or convert to) numeric types.
    `floating-point precision <https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems>`_.
 
 Collection Filters
-------------------
+^^^^^^^^^^^^^^^^^^
 These filters are designed to operate on collections of values.
 Most of these filters can also operate on strings, except where noted.
 
@@ -227,7 +227,7 @@ Most of these filters can also operate on strings, except where noted.
 
 
 Miscellaneous Filters
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 These filters do various things that defy categorization.
 
 :py:class:`filters.Array`
@@ -235,6 +235,18 @@ These filters do various things that defy categorization.
 
    For example, ``list`` or any class that extends ``typing.Sequence`` will
    pass, but any string type (or subclass thereof) will fail.
+
+:py:class:`filters.Call`
+   Calls an arbitrary function on the incoming value.
+
+   This filter is almost always inferior to
+   :doc:`creating a custom filter </writing_filters>`, but it can be a useful
+   way to quickly inject a function into a filter workflow to see if it will
+   work.
+
+   .. important::
+      The function must raise a :py:class:`filters.FilterError` to indicate that
+      the incoming value is not valid.
 
 :py:class:`filters.NoOp`
    This filter returns the incoming value unmodified.
@@ -308,6 +320,47 @@ These filters are covered in more detail in :doc:`/complex_filters`.
 
    ``FilterRepeater`` can also process mappings (e.g., ``dict``); it will apply
    the filters to every value in the mapping, preserving the keys.
+
+:py:class:`filters.Switch`
+   Conditionally invokes a filter based on the output of a function.
+
+   ``Switch`` takes 2-3 parameters:
+
+   - ``getter: Callable[[Any], Hashable]`` - a function that extracts the
+     comparison value from the incoming value.  Whatever this function returns
+     will be matched against the keys in ``cases``.
+   - ``cases: Mapping[Hashable, FilterCompatible]`` - a mapping of valid
+     comparison values and their corresponding filters.
+   - ``default: Optional[FilterCompatible]`` - if specified, this is the filter
+     that will be used if the comparison value doesn't match any cases.  If not
+     specified, then the incoming value will be considered invalid if the
+     comparison value doesn't match any cases.
+
+   Example of a ``Switch`` that selects the correct filter to use based upon the
+   incoming value's ``name`` value:
+
+   .. code-block:: py
+
+      runner = f.FilterRunner(
+          f.Switch(
+              # This function will extract the comparison value.
+              getter=lambda value: value['name'],
+
+              # These are the cases that the comparison value might
+              # match.
+              cases={
+                  'price': f.FilterMapper({'value': f.Int | f.Min(0)}),
+                  'color': f.FilterMapper({'value': f.Choice({'r', 'g', 'b'})}),
+                  # etc.
+              },
+
+              # This is the filter that will be used if none of the cases match.
+              default=f.FilterMapper({'value': f.Unicode}),
+          ),
+
+          # Example value.
+          {'name': price, 'value': 42},
+      )
 
 Extensions
 ==========

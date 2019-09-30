@@ -50,7 +50,7 @@ class Decimal(BaseFilter):
             tightly to Python's Decimal type, so you have the option
             to disallow it.
         """
-        super(Decimal, self).__init__()
+        super().__init__()
 
         # Convert e.g., 3 => DecimalType('.001').
         if not (
@@ -163,7 +163,7 @@ class Max(BaseFilter):
             - False (default): The incoming value must be _less than
               or equal to_ the max value.
         """
-        super(Max, self).__init__()
+        super().__init__()
 
         self.max_value = max_value
         self.exclusive = exclusive
@@ -230,7 +230,7 @@ class Min(BaseFilter):
             - False (default): The incoming value must be _greater than
               or equal to_ the min value.
         """
-        super(Min, self).__init__()
+        super().__init__()
 
         self.min_value = min_value
         self.exclusive = exclusive
@@ -296,7 +296,7 @@ class Round(BaseFilter):
         :param result_type:
             The type of result to return.
         """
-        super(Round, self).__init__()
+        super().__init__()
 
         self.to_nearest = DecimalType(to_nearest)
 

@@ -104,7 +104,7 @@ To create a new filter, write a class that extends
 
 
 Validation
-----------
+^^^^^^^^^^
 To implement validation in your filter, add the following:
 
 - Define a unique code for each validation error.
@@ -136,7 +136,7 @@ Here's the ``Pkcs7Pad`` filter with a little bit of validation logic:
 
 
 Unit Tests
-----------
+^^^^^^^^^^
 To help you unit test your custom filters, the Filters library provides a helper
 class called :py:class:`test.BaseFilterTestCase`.
 
@@ -181,7 +181,7 @@ Here's a starter test case for ``Pkcs7Pad``:
 
 
 Registering Your Filters (Optional)
------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Once you've packaged up your filters, you can register them with the Extensions
 framework to add them to the (nearly) top-level ``filters.ext`` namespace.
 

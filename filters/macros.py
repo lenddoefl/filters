@@ -64,7 +64,7 @@ def filter_macro(func, *args, **kwargs):
 
             # Note that we ignore the ``name`` argument, passing in
             # ``func.__name__`` instead.
-            return super(FilterMacroMeta, mcs) \
+            return super() \
                 .__new__(mcs, func.__name__, bases, attrs)
 
         def __call__(cls, *runtime_args, **runtime_kwargs):
