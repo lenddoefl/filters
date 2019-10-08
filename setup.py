@@ -39,8 +39,8 @@ setup(
 
     extras_require = {
         # Extensions
-        'django':['filters-django'],
-        'iso': ['filters-iso'],
+        'django':['phx-filters-django'],
+        'iso': ['phx-filters-iso'],
 
         # Utilities for Project Maintainers
         'docs-builder': ['sphinx', 'sphinx_rtd_theme'],
